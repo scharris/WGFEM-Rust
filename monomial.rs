@@ -2,7 +2,6 @@ use common::*;
 use std::option::*;
 mod common;
 
-
 pub trait Monomial: Eq +
                     TotalEq +
                     Ord +
@@ -13,6 +12,10 @@ pub trait Monomial: Eq +
                     Mul<Self,Self> {
 
   fn domain_dim(witness: Option<Self>) -> Dim;
+  
+  fn value_at(&self, x: &[R]) -> R;
+  
+  fn value_at_for_origin(&self, x: &[R], origin: &[R]) -> R;
   
   fn exp(&self, coord: Dim) -> Deg;
 
@@ -43,10 +46,22 @@ static one_4d: Mon4d = Mon4d { exps: [Deg(0),..4] };
 
 impl Monomial for Mon1d {
 
+  #[inline(always)]
   fn domain_dim(witness: Option<Mon1d>) -> Dim {
     Dim(1)
   }
 
+  #[inline(always)]
+  fn value_at(&self, x: &[R]) -> R {
+    pow(x[0], self.exps[0])
+  }
+  
+  #[inline(always)]
+  fn value_at_for_origin(&self, x: &[R], origin: &[R]) -> R {
+    pow(x[0] - origin[0], self.exps[0])
+  }
+
+  #[inline(always)]
   fn exp(&self, coord: Dim) -> Deg {
     self.exps[*coord]
   }
@@ -58,6 +73,7 @@ impl Monomial for Mon1d {
     }
   }
 
+  #[inline]
   fn one() -> Mon1d {
     one_1d
   }
@@ -65,10 +81,24 @@ impl Monomial for Mon1d {
 
 impl Monomial for Mon2d {
 
+  #[inline(always)]
   fn domain_dim(witness: Option<Mon2d>) -> Dim {
     Dim(2)
   }
+  
+  #[inline(always)]
+  fn value_at(&self, x: &[R]) -> R {
+    pow(x[0], self.exps[0]) *
+    pow(x[1], self.exps[1])
+  }
+  
+  #[inline(always)]
+  fn value_at_for_origin(&self, x: &[R], origin: &[R]) -> R {
+    pow(x[0] - origin[0], self.exps[0]) *
+    pow(x[1] - origin[1], self.exps[1])
+  }
 
+  #[inline(always)]
   fn exp(&self, coord: Dim) -> Deg {
     self.exps[*coord]
   }
@@ -81,16 +111,33 @@ impl Monomial for Mon2d {
     }
   }
 
+  #[inline(always)]
   fn one() -> Mon2d {
     one_2d
   }
 }
 impl Monomial for Mon3d {
 
+  #[inline(always)]
   fn domain_dim(witness: Option<Mon3d>) -> Dim {
     Dim(3)
   }
+  
+  #[inline(always)]
+  fn value_at(&self, x: &[R]) -> R {
+    pow(x[0], self.exps[0]) *
+    pow(x[1], self.exps[1]) *
+    pow(x[2], self.exps[2])
+  }
+  
+  #[inline(always)]
+  fn value_at_for_origin(&self, x: &[R], origin: &[R]) -> R {
+    pow(x[0] - origin[0], self.exps[0]) *
+    pow(x[1] - origin[1], self.exps[1]) *
+    pow(x[2] - origin[2], self.exps[2])
+  }
 
+  #[inline(always)]
   fn exp(&self, coord: Dim) -> Deg {
     self.exps[*coord]
   }
@@ -104,6 +151,7 @@ impl Monomial for Mon3d {
     }
   }
 
+  #[inline(always)]
   fn one() -> Mon3d {
     one_3d
   }
@@ -112,10 +160,28 @@ impl Monomial for Mon3d {
 
 impl Monomial for Mon4d {
 
+  #[inline(always)]
   fn domain_dim(witness: Option<Mon4d>) -> Dim {
     Dim(4)
   }
 
+  #[inline(always)]
+  fn value_at(&self, x: &[R]) -> R {
+    pow(x[0], self.exps[0]) *
+    pow(x[1], self.exps[1]) *
+    pow(x[2], self.exps[2]) *
+    pow(x[3], self.exps[3])
+  }
+  
+  #[inline(always)]
+  fn value_at_for_origin(&self, x: &[R], origin: &[R]) -> R {
+    pow(x[0] - origin[0], self.exps[0]) *
+    pow(x[1] - origin[1], self.exps[1]) *
+    pow(x[2] - origin[2], self.exps[2]) *
+    pow(x[3] - origin[3], self.exps[3])
+  }
+
+  #[inline(always)]
   fn exp(&self, coord: Dim) -> Deg {
     self.exps[*coord]
   }
@@ -130,6 +196,7 @@ impl Monomial for Mon4d {
     }
   }
 
+  #[inline(always)]
   fn one() -> Mon4d {
     one_4d
   }
@@ -307,6 +374,18 @@ impl Mul<Mon4d, Mon4d> for Mon4d {
   }
 }
 
+#[inline(always)]
+fn pow(base: R, exp: Deg) -> R {
+  let mut prod = 1 as R;
+  let mut i = *exp as uint;
+  while i != 0u {
+    prod *= base;
+    i -= 1;
+  } 
+  prod
+}
+
+
 //////////////////////////////////////////////////////////
 // Tests
 
@@ -317,6 +396,98 @@ fn test_domain_dims() {
   assert_eq!(Monomial::domain_dim(None::<Mon3d>), Dim(3));
   assert_eq!(Monomial::domain_dim(None::<Mon4d>), Dim(4));
 }
+
+#[test]
+fn test_value_at_1d() {
+  let one = Mon1d { exps: [Deg(0)] };
+  let x = Mon1d { exps: [Deg(1)] };
+  let x2 = Mon1d { exps: [Deg(2)] };
+  let x3 = Mon1d { exps: [Deg(3)] };
+  assert_eq!(one.value_at(&[2.]), 1.);
+  assert_eq!(x.value_at(&[2.]), 2.);
+  assert_eq!(x2.value_at(&[2.]), 4.);
+  assert_eq!(x3.value_at(&[2.]), 8.);
+}
+#[test]
+fn test_value_at_2d() {
+  let one = Mon2d { exps: [Deg(0), Deg(0)] };
+  assert_eq!(one.value_at(&[2.,3.]), 1.);
+  
+  let x1y2 = Mon2d { exps: [Deg(1), Deg(2)] };
+  assert_eq!(x1y2.value_at(&[2.,3.]), 18.);
+  
+  let x3y1 = Mon2d { exps: [Deg(3), Deg(1)] };
+  assert_eq!(x3y1.value_at(&[2.,3.]), 24.);
+}
+#[test]
+fn test_value_at_3d() {
+  let one = Mon3d { exps: [Deg(0), Deg(0), Deg(0)] };
+  assert_eq!(one.value_at(&[2.,3.,4.]), 1.);
+  
+  let x1y2z3 = Mon3d { exps: [Deg(1), Deg(2), Deg(3)] };
+  assert_eq!(x1y2z3.value_at(&[2.,3.,4.]), 18.*64.);
+  
+  let x3y1z2 = Mon3d { exps: [Deg(3), Deg(1), Deg(2)] };
+  assert_eq!(x3y1z2.value_at(&[2.,3.,4.]), 24.*16.);
+}
+#[test]
+fn test_value_at_4d() {
+  let one = Mon4d { exps: [Deg(0), Deg(0), Deg(0), Deg(0)] };
+  assert_eq!(one.value_at(&[2.,3.,4.,5.]), 1.);
+  
+  let x1y2z3t4 = Mon4d { exps: [Deg(1), Deg(2), Deg(3), Deg(4)] };
+  assert_eq!(x1y2z3t4.value_at(&[2.,3.,4.,5.]), 18.*64.*5.*5.*5.*5.);
+  
+  let x3y1z2t4 = Mon4d { exps: [Deg(3), Deg(1), Deg(2), Deg(4)] };
+  assert_eq!(x3y1z2t4.value_at(&[2.,3.,4.,5.]), 24.*16.*5.*5.*5.*5.);
+}
+
+#[test]
+fn test_value_at_for_origin_1d() {
+  let one = Mon1d { exps: [Deg(0)] };
+  let x = Mon1d { exps: [Deg(1)] };
+  let x2 = Mon1d { exps: [Deg(2)] };
+  let x3 = Mon1d { exps: [Deg(3)] };
+
+  assert_eq!(one.value_at_for_origin(&[3.],&[1.]), 1.);
+  assert_eq!(x.value_at_for_origin(&[3.],&[1.]), 2.);
+  assert_eq!(x2.value_at_for_origin(&[3.],&[1.]), 4.);
+  assert_eq!(x3.value_at_for_origin(&[3.],&[1.]), 8.);
+}
+#[test]
+fn test_value_at_for_origin_2d() {
+  let one = Mon2d { exps: [Deg(0), Deg(0)] };
+  assert_eq!(one.value_at_for_origin(&[2.,3.],&[12.,13.]), 1.);
+  
+  let x1y2 = Mon2d { exps: [Deg(1), Deg(2)] };
+  assert_eq!(x1y2.value_at_for_origin(&[2.,3.],&[-1.,-2.]), 3. * 25.);
+  
+  let x3y1 = Mon2d { exps: [Deg(3), Deg(1)] };
+  assert_eq!(x3y1.value_at_for_origin(&[2.,3.],&[-1.,1.]), 27. * 2.);
+}
+#[test]
+fn test_value_at_for_origin_3d() {
+  let one = Mon3d { exps: [Deg(0), Deg(0), Deg(0)] };
+  assert_eq!(one.value_at_for_origin(&[2.,3.,4.],&[1.,0.,2.]), 1.);
+  
+  let x1y2z3 = Mon3d { exps: [Deg(1), Deg(2), Deg(3)] };
+  assert_eq!(x1y2z3.value_at_for_origin(&[2.,3.,4.],&[3.,1.,2.]), -1. * 4. * 8.);
+  
+  let x3y1z2 = Mon3d { exps: [Deg(3), Deg(1), Deg(2)] };
+  assert_eq!(x3y1z2.value_at_for_origin(&[2.,3.,4.],&[3.,1.,2.]), -1. * 2. * 4.);
+}
+#[test]
+fn test_value_at_for_origin_4d() {
+  let one = Mon4d { exps: [Deg(0), Deg(0), Deg(0), Deg(0)] };
+  assert_eq!(one.value_at_for_origin(&[2.,3.,4.,5.],&[1.,20.,30.,40.]), 1.);
+  
+  let x1y2z3t4 = Mon4d { exps: [Deg(1), Deg(2), Deg(3), Deg(4)] };
+  assert_eq!(x1y2z3t4.value_at_for_origin(&[2.,3.,4.,5.],&[0.,5.,1.,2.]), 2. * 4. * 27. * 3.*3.*3.*3.);
+  
+  let x3y1z2t4 = Mon4d { exps: [Deg(3), Deg(1), Deg(2), Deg(4)] };
+  assert_eq!(x3y1z2t4.value_at_for_origin(&[2.,3.,4.,5.],&[0.,5.,1.,2.]), 8. * (-2.) * 9. * 3.*3.*3.*3.);
+}
+
 
 #[test]
 fn test_exp_1d() {
