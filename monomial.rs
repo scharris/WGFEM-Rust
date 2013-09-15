@@ -380,6 +380,7 @@ impl Mul<Mon4d, Mon4d> for Mon4d {
 
 trait RectangleIntegrable {
 
+  /// Integrate the monomial over the rectangle of indicated dimensions having its minimums corner at the origin.
   fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R;  
 
 }
