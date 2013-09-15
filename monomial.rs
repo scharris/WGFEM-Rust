@@ -9,7 +9,8 @@ pub trait Monomial: Eq +
                     IterBytes +
                     Clone +
                     ToStr +
-                    Mul<Self,Self> {
+                    Mul<Self,Self> +
+                    RectangleIntegrable {
 
   fn domain_dim(witness: Option<Self>) -> Dim;
   
@@ -44,6 +45,7 @@ static one_3d: Mon3d = Mon3d { exps: [Deg(0),..3] };
 static one_4d: Mon4d = Mon4d { exps: [Deg(0),..4] };
 
 
+
 impl Monomial for Mon1d {
 
   #[inline(always)]
@@ -53,12 +55,12 @@ impl Monomial for Mon1d {
 
   #[inline(always)]
   fn value_at(&self, x: &[R]) -> R {
-    pow(x[0], self.exps[0])
+    pow(x[0], *self.exps[0] as uint)
   }
   
   #[inline(always)]
   fn value_at_for_origin(&self, x: &[R], origin: &[R]) -> R {
-    pow(x[0] - origin[0], self.exps[0])
+    pow(x[0] - origin[0], *self.exps[0] as uint)
   }
 
   #[inline(always)]
@@ -88,14 +90,14 @@ impl Monomial for Mon2d {
   
   #[inline(always)]
   fn value_at(&self, x: &[R]) -> R {
-    pow(x[0], self.exps[0]) *
-    pow(x[1], self.exps[1])
+    pow(x[0], *self.exps[0] as uint) *
+    pow(x[1], *self.exps[1] as uint)
   }
   
   #[inline(always)]
   fn value_at_for_origin(&self, x: &[R], origin: &[R]) -> R {
-    pow(x[0] - origin[0], self.exps[0]) *
-    pow(x[1] - origin[1], self.exps[1])
+    pow(x[0] - origin[0], *self.exps[0] as uint) *
+    pow(x[1] - origin[1], *self.exps[1] as uint)
   }
 
   #[inline(always)]
@@ -125,16 +127,16 @@ impl Monomial for Mon3d {
   
   #[inline(always)]
   fn value_at(&self, x: &[R]) -> R {
-    pow(x[0], self.exps[0]) *
-    pow(x[1], self.exps[1]) *
-    pow(x[2], self.exps[2])
+    pow(x[0], *self.exps[0] as uint) *
+    pow(x[1], *self.exps[1] as uint) *
+    pow(x[2], *self.exps[2] as uint)
   }
   
   #[inline(always)]
   fn value_at_for_origin(&self, x: &[R], origin: &[R]) -> R {
-    pow(x[0] - origin[0], self.exps[0]) *
-    pow(x[1] - origin[1], self.exps[1]) *
-    pow(x[2] - origin[2], self.exps[2])
+    pow(x[0] - origin[0], *self.exps[0] as uint) *
+    pow(x[1] - origin[1], *self.exps[1] as uint) *
+    pow(x[2] - origin[2], *self.exps[2] as uint)
   }
 
   #[inline(always)]
@@ -167,18 +169,18 @@ impl Monomial for Mon4d {
 
   #[inline(always)]
   fn value_at(&self, x: &[R]) -> R {
-    pow(x[0], self.exps[0]) *
-    pow(x[1], self.exps[1]) *
-    pow(x[2], self.exps[2]) *
-    pow(x[3], self.exps[3])
+    pow(x[0], *self.exps[0] as uint) *
+    pow(x[1], *self.exps[1] as uint) *
+    pow(x[2], *self.exps[2] as uint) *
+    pow(x[3], *self.exps[3] as uint)
   }
   
   #[inline(always)]
   fn value_at_for_origin(&self, x: &[R], origin: &[R]) -> R {
-    pow(x[0] - origin[0], self.exps[0]) *
-    pow(x[1] - origin[1], self.exps[1]) *
-    pow(x[2] - origin[2], self.exps[2]) *
-    pow(x[3] - origin[3], self.exps[3])
+    pow(x[0] - origin[0], *self.exps[0] as uint) *
+    pow(x[1] - origin[1], *self.exps[1] as uint) *
+    pow(x[2] - origin[2], *self.exps[2] as uint) *
+    pow(x[3] - origin[3], *self.exps[3] as uint)
   }
 
   #[inline(always)]
@@ -374,10 +376,61 @@ impl Mul<Mon4d, Mon4d> for Mon4d {
   }
 }
 
+// integration over rectangles
+
+trait RectangleIntegrable {
+
+  fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R;  
+
+}
+
+impl RectangleIntegrable for Mon1d {
+  #[inline]
+  fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R {
+    let exp_plus_1 = *self.exps[0] as uint + 1;
+    pow(rect_dims[0], exp_plus_1)/(exp_plus_1 as R)
+  }
+}
+impl RectangleIntegrable for Mon2d {
+  #[inline]
+  fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R {
+    let exp0_plus_1 = *self.exps[0] as uint + 1;
+    let exp1_plus_1 = *self.exps[1] as uint + 1;
+    pow(rect_dims[0], exp0_plus_1)/(exp0_plus_1 as R) *
+    pow(rect_dims[1], exp1_plus_1)/(exp1_plus_1 as R)
+  }
+}
+impl RectangleIntegrable for Mon3d {
+  #[inline]
+  fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R {
+    let exp0_plus_1 = *self.exps[0] as uint + 1;
+    let exp1_plus_1 = *self.exps[1] as uint + 1;
+    let exp2_plus_1 = *self.exps[2] as uint + 1;
+    pow(rect_dims[0], exp0_plus_1)/(exp0_plus_1 as R) *
+    pow(rect_dims[1], exp1_plus_1)/(exp1_plus_1 as R) *
+    pow(rect_dims[2], exp2_plus_1)/(exp2_plus_1 as R)
+  }
+}
+impl RectangleIntegrable for Mon4d {
+  #[inline]
+  fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R {
+    let exp0_plus_1 = *self.exps[0] as uint + 1;
+    let exp1_plus_1 = *self.exps[1] as uint + 1;
+    let exp2_plus_1 = *self.exps[2] as uint + 1;
+    let exp3_plus_1 = *self.exps[3] as uint + 1;
+    pow(rect_dims[0], exp0_plus_1)/(exp0_plus_1 as R) *
+    pow(rect_dims[1], exp1_plus_1)/(exp1_plus_1 as R) *
+    pow(rect_dims[2], exp2_plus_1)/(exp2_plus_1 as R) *
+    pow(rect_dims[3], exp3_plus_1)/(exp3_plus_1 as R)
+  }
+}
+
+// utility functions
+
 #[inline(always)]
-fn pow(base: R, exp: Deg) -> R {
+fn pow(base: R, exp: uint) -> R {
   let mut prod = 1 as R;
-  let mut i = *exp as uint;
+  let mut i = exp;
   while i != 0u {
     prod *= base;
     i -= 1;
@@ -730,7 +783,6 @@ fn test_clone_1d() {
   assert_eq!(one, one.clone());
   assert!(!(x.clone() == one));
 }
-
 #[test]
 fn test_clone_2d() {
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
@@ -757,7 +809,6 @@ fn test_clone_4d() {
 }
 
 
-
 #[test]
 fn test_hash_1d() {
   use std::hashmap::HashSet;
@@ -770,7 +821,6 @@ fn test_hash_1d() {
   m.insert(one);
   assert!(m.contains(&one));
 }
-
 #[test]
 fn test_hash_2d() {
   use std::hashmap::HashSet;
@@ -940,4 +990,39 @@ fn test_map_exp_4d() {
   assert_eq!(t.map_exp(Dim(3), |e| Deg(*e+1)), t*t);
 }
 
-
+#[test]
+fn test_rectintg_1d() {
+  let one = Mon1d { exps: [Deg(0)] };
+  let x = Mon1d { exps: [Deg(1)] };
+  let x2 = Mon1d { exps: [Deg(2)] };
+  assert_eq!(one.integral_over_rect_at_origin(~[2.]), 2.);
+  assert_eq!(x.integral_over_rect_at_origin(~[2.]), 2.);
+  assert_eq!(x2.integral_over_rect_at_origin(~[2.]), 8./3.);
+}
+#[test]
+fn test_rectintg_2d() {
+  let one = Mon2d { exps: [Deg(0), Deg(0)] };
+  let x1y2 = Mon2d { exps: [Deg(1), Deg(2)] };
+  let x3y1 = Mon2d { exps: [Deg(3), Deg(1)] };
+  assert_eq!(one.integral_over_rect_at_origin(~[2.,3.]), 6.);
+  assert_eq!(x1y2.integral_over_rect_at_origin(~[2.,3.]), 18.);
+  assert_eq!(x3y1.integral_over_rect_at_origin(~[2.,3.]), 4.*9./2.);
+}
+#[test]
+fn test_rectintg_3d() {
+  let one = Mon3d { exps: [Deg(0), Deg(0), Deg(0)] };
+  let x1y2z3 = Mon3d { exps: [Deg(1), Deg(2), Deg(3)] };
+  let x3y1z2 = Mon3d { exps: [Deg(3), Deg(1), Deg(2)] };
+  assert_eq!(one.integral_over_rect_at_origin(~[2.,3.,4.]), 24.);
+  assert_eq!(x1y2z3.integral_over_rect_at_origin(~[2.,3.,4.]), 18.*64.);
+  assert_eq!(x3y1z2.integral_over_rect_at_origin(~[2.,3.,4.]), 4.*(9./2.)*64./3.);
+}
+#[test]
+fn test_rectintg_4d() {
+  let one = Mon4d { exps: [Deg(0), Deg(0), Deg(0), Deg(0)] };
+  let x1y2z3t4 = Mon4d { exps: [Deg(1), Deg(2), Deg(3), Deg(4)] };
+  let x3y1z2t4 = Mon4d { exps: [Deg(3), Deg(1), Deg(2), Deg(4)] };
+  assert_eq!(one.integral_over_rect_at_origin(~[2.,3.,4.,5.]), 24.*5.);
+  assert_eq!(x1y2z3t4.integral_over_rect_at_origin(~[2.,3.,4.,5.]), 18.*64.*625.);
+  assert_eq!(x3y1z2t4.integral_over_rect_at_origin(~[2.,3.,4.,5.]), 4.*(9./2.)*(64./3.)*625.);
+}
