@@ -9,8 +9,7 @@ pub trait Monomial: Eq +
                     IterBytes +
                     Clone +
                     ToStr +
-                    Mul<Self,Self> +
-                    RectangleIntegrable {
+                    Mul<Self,Self> {
 
   fn domain_dim(witness: Option<Self>) -> Dim;
   
@@ -29,12 +28,15 @@ pub trait Monomial: Eq +
 pub struct Mon1d {
   exps: [Deg,..1]
 }
+
 pub struct Mon2d {
   exps: [Deg,..2]
 }
+
 pub struct Mon3d {
   exps: [Deg,..3]
 }
+
 pub struct Mon4d {
   exps: [Deg,..4]
 }
@@ -118,6 +120,7 @@ impl Monomial for Mon2d {
     one_2d
   }
 }
+
 impl Monomial for Mon3d {
 
   #[inline(always)]
@@ -158,7 +161,6 @@ impl Monomial for Mon3d {
     one_3d
   }
 }
-
 
 impl Monomial for Mon4d {
 
@@ -204,30 +206,35 @@ impl Monomial for Mon4d {
   }
 }
 
+
 impl ToStr for Mon1d {
   fn to_str(&self) -> ~str {
     fmt!("x^%d",
          *self.exps[0] as int)
   }
 }
+
 impl ToStr for Mon2d {
   fn to_str(&self) -> ~str {
     fmt!("x^%dy^%d",
          *self.exps[0] as int, *self.exps[1] as int)
   }
 }
+
 impl ToStr for Mon3d {
   fn to_str(&self) -> ~str {
     fmt!("x^%dy^%dz^%d",
          *self.exps[0] as int, *self.exps[1] as int, *self.exps[2] as int)
   }
 }
+
 impl ToStr for Mon4d {
   fn to_str(&self) -> ~str {
     fmt!("x1^%dx2^%dx3^%dx4^%d",
          *self.exps[0] as int, *self.exps[1] as int, *self.exps[2] as int, *self.exps[3] as int)
   }
 }
+
 
 macro_rules! eq_impl(($t: ty) => {
   impl Eq for $t {
@@ -251,21 +258,25 @@ impl IterBytes for Mon1d {
     f(&[*self.exps[0]])
   }
 }
+
 impl IterBytes for Mon2d {
   fn iter_bytes(&self, lsb0: bool, f: &fn(buf: &[u8]) -> bool) -> bool {
     f(&[*self.exps[0], *self.exps[1]])
   }
 }
+
 impl IterBytes for Mon3d {
   fn iter_bytes(&self, lsb0: bool, f: &fn(buf: &[u8]) -> bool) -> bool {
     f(&[*self.exps[0], *self.exps[1], *self.exps[2]])
   }
 }
+
 impl IterBytes for Mon4d {
   fn iter_bytes(&self, lsb0: bool, f: &fn(buf: &[u8]) -> bool) -> bool {
     f(&[*self.exps[0], *self.exps[1], *self.exps[2], *self.exps[3]])
   }
 }
+
 
 macro_rules! ord_impl(($t: ty) => {
   impl Ord for $t {
@@ -288,6 +299,7 @@ ord_impl!(Mon2d)
 ord_impl!(Mon3d)
 ord_impl!(Mon4d)
 
+
 macro_rules! totord_impl(($t: ty) => {
   impl TotalOrd for $t {
     fn cmp(&self, other: &$t) -> Ordering {
@@ -301,6 +313,7 @@ totord_impl!(Mon1d)
 totord_impl!(Mon2d)
 totord_impl!(Mon3d)
 totord_impl!(Mon4d)
+
 
 macro_rules! toteq_impl(($t: ty) => {
   impl TotalEq for $t {
@@ -333,33 +346,39 @@ impl Clone for Mon1d {
     Mon1d { exps: self.exps }
   }
 }
+
 impl Clone for Mon2d {
   fn clone(&self) -> Mon2d {
     Mon2d { exps: self.exps }
   }
 }
+
 impl Clone for Mon3d {
   fn clone(&self) -> Mon3d {
     Mon3d { exps: self.exps }
   }
 }
+
 impl Clone for Mon4d {
   fn clone(&self) -> Mon4d {
     Mon4d { exps: self.exps }
   }
 }
 
+
 impl Mul<Mon1d, Mon1d> for Mon1d {
   fn mul(&self, other: &Mon1d) -> Mon1d {
     Mon1d { exps: [Deg(*self.exps[0] + *other.exps[0])] }
   }
 }
+
 impl Mul<Mon2d, Mon2d> for Mon2d {
   fn mul(&self, other: &Mon2d) -> Mon2d {
     Mon2d { exps: [Deg(*self.exps[0] + *other.exps[0]),
                    Deg(*self.exps[1] + *other.exps[1])] }
   }
 }
+
 impl Mul<Mon3d, Mon3d> for Mon3d {
   fn mul(&self, other: &Mon3d) -> Mon3d {
     Mon3d { exps: [Deg(*self.exps[0] + *other.exps[0]),
@@ -367,6 +386,7 @@ impl Mul<Mon3d, Mon3d> for Mon3d {
                    Deg(*self.exps[2] + *other.exps[2])] }
   }
 }
+
 impl Mul<Mon4d, Mon4d> for Mon4d {
   fn mul(&self, other: &Mon4d) -> Mon4d {
     Mon4d { exps: [Deg(*self.exps[0] + *other.exps[0]),
@@ -374,69 +394,6 @@ impl Mul<Mon4d, Mon4d> for Mon4d {
                    Deg(*self.exps[2] + *other.exps[2]),
                    Deg(*self.exps[3] + *other.exps[3])] }
   }
-}
-
-// integration over rectangles
-
-trait RectangleIntegrable {
-
-  /// Integrate the monomial over the rectangle of indicated dimensions having its minimums corner at the origin.
-  fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R;  
-
-}
-
-impl RectangleIntegrable for Mon1d {
-  #[inline]
-  fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R {
-    let exp_plus_1 = *self.exps[0] as uint + 1;
-    pow(rect_dims[0], exp_plus_1)/(exp_plus_1 as R)
-  }
-}
-impl RectangleIntegrable for Mon2d {
-  #[inline]
-  fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R {
-    let exp0_plus_1 = *self.exps[0] as uint + 1;
-    let exp1_plus_1 = *self.exps[1] as uint + 1;
-    pow(rect_dims[0], exp0_plus_1)/(exp0_plus_1 as R) *
-    pow(rect_dims[1], exp1_plus_1)/(exp1_plus_1 as R)
-  }
-}
-impl RectangleIntegrable for Mon3d {
-  #[inline]
-  fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R {
-    let exp0_plus_1 = *self.exps[0] as uint + 1;
-    let exp1_plus_1 = *self.exps[1] as uint + 1;
-    let exp2_plus_1 = *self.exps[2] as uint + 1;
-    pow(rect_dims[0], exp0_plus_1)/(exp0_plus_1 as R) *
-    pow(rect_dims[1], exp1_plus_1)/(exp1_plus_1 as R) *
-    pow(rect_dims[2], exp2_plus_1)/(exp2_plus_1 as R)
-  }
-}
-impl RectangleIntegrable for Mon4d {
-  #[inline]
-  fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R {
-    let exp0_plus_1 = *self.exps[0] as uint + 1;
-    let exp1_plus_1 = *self.exps[1] as uint + 1;
-    let exp2_plus_1 = *self.exps[2] as uint + 1;
-    let exp3_plus_1 = *self.exps[3] as uint + 1;
-    pow(rect_dims[0], exp0_plus_1)/(exp0_plus_1 as R) *
-    pow(rect_dims[1], exp1_plus_1)/(exp1_plus_1 as R) *
-    pow(rect_dims[2], exp2_plus_1)/(exp2_plus_1 as R) *
-    pow(rect_dims[3], exp3_plus_1)/(exp3_plus_1 as R)
-  }
-}
-
-// utility functions
-
-#[inline(always)]
-fn pow(base: R, exp: uint) -> R {
-  let mut prod = 1 as R;
-  let mut i = exp;
-  while i != 0u {
-    prod *= base;
-    i -= 1;
-  } 
-  prod
 }
 
 
@@ -991,39 +948,3 @@ fn test_map_exp_4d() {
   assert_eq!(t.map_exp(Dim(3), |e| Deg(*e+1)), t*t);
 }
 
-#[test]
-fn test_rectintg_1d() {
-  let one = Mon1d { exps: [Deg(0)] };
-  let x = Mon1d { exps: [Deg(1)] };
-  let x2 = Mon1d { exps: [Deg(2)] };
-  assert_eq!(one.integral_over_rect_at_origin(~[2.]), 2.);
-  assert_eq!(x.integral_over_rect_at_origin(~[2.]), 2.);
-  assert_eq!(x2.integral_over_rect_at_origin(~[2.]), 8./3.);
-}
-#[test]
-fn test_rectintg_2d() {
-  let one = Mon2d { exps: [Deg(0), Deg(0)] };
-  let x1y2 = Mon2d { exps: [Deg(1), Deg(2)] };
-  let x3y1 = Mon2d { exps: [Deg(3), Deg(1)] };
-  assert_eq!(one.integral_over_rect_at_origin(~[2.,3.]), 6.);
-  assert_eq!(x1y2.integral_over_rect_at_origin(~[2.,3.]), 18.);
-  assert_eq!(x3y1.integral_over_rect_at_origin(~[2.,3.]), 4.*9./2.);
-}
-#[test]
-fn test_rectintg_3d() {
-  let one = Mon3d { exps: [Deg(0), Deg(0), Deg(0)] };
-  let x1y2z3 = Mon3d { exps: [Deg(1), Deg(2), Deg(3)] };
-  let x3y1z2 = Mon3d { exps: [Deg(3), Deg(1), Deg(2)] };
-  assert_eq!(one.integral_over_rect_at_origin(~[2.,3.,4.]), 24.);
-  assert_eq!(x1y2z3.integral_over_rect_at_origin(~[2.,3.,4.]), 18.*64.);
-  assert_eq!(x3y1z2.integral_over_rect_at_origin(~[2.,3.,4.]), 4.*(9./2.)*64./3.);
-}
-#[test]
-fn test_rectintg_4d() {
-  let one = Mon4d { exps: [Deg(0), Deg(0), Deg(0), Deg(0)] };
-  let x1y2z3t4 = Mon4d { exps: [Deg(1), Deg(2), Deg(3), Deg(4)] };
-  let x3y1z2t4 = Mon4d { exps: [Deg(3), Deg(1), Deg(2), Deg(4)] };
-  assert_eq!(one.integral_over_rect_at_origin(~[2.,3.,4.,5.]), 24.*5.);
-  assert_eq!(x1y2z3t4.integral_over_rect_at_origin(~[2.,3.,4.,5.]), 18.*64.*625.);
-  assert_eq!(x3y1z2t4.integral_over_rect_at_origin(~[2.,3.,4.,5.]), 4.*(9./2.)*(64./3.)*625.);
-}
