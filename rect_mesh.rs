@@ -87,18 +87,18 @@ pub struct RectMesh<M> {
 
 impl<M:Monomial> RectMesh<M> {
   
-  fn new(min_bounds: ~[R],
-         max_bounds: ~[R],
-         mesh_ldims: ~[MeshCoord]) -> ~RectMesh<M> {
-      new_impl(min_bounds, max_bounds, mesh_ldims,
-               DEFAULT_INTEGRATION_REL_ERR, DEFAULT_INTEGRATION_ABS_ERR)
+  pub fn new(min_bounds: ~[R],
+             max_bounds: ~[R],
+             mesh_ldims: ~[MeshCoord]) -> ~RectMesh<M> {
+    new_impl(min_bounds, max_bounds, mesh_ldims,
+             DEFAULT_INTEGRATION_REL_ERR, DEFAULT_INTEGRATION_ABS_ERR)
   }
 
-  fn new_with_err_tols(min_bounds: ~[R],
-                       max_bounds: ~[R],
-                       mesh_ldims: ~[MeshCoord],
-                       integration_rel_err: R,
-                       integration_abs_err: R) -> ~RectMesh<M> {
+  pub fn new_with_err_tols(min_bounds: ~[R],
+                           max_bounds: ~[R],
+                           mesh_ldims: ~[MeshCoord],
+                           integration_rel_err: R,
+                           integration_abs_err: R) -> ~RectMesh<M> {
       new_impl(min_bounds, max_bounds, mesh_ldims,
                integration_rel_err, integration_abs_err)
   }
@@ -213,11 +213,11 @@ impl<M:Monomial> RectMesh<M> {
 
 }
 
-pub fn new_impl<M:Monomial>(min_bounds: ~[R],
-                            max_bounds: ~[R],
-                            mesh_ldims: ~[MeshCoord],
-                            integration_rel_err: R,
-                            integration_abs_err: R) -> ~RectMesh<M> {
+fn new_impl<M:Monomial>(min_bounds: ~[R],
+                        max_bounds: ~[R],
+                        mesh_ldims: ~[MeshCoord],
+                        integration_rel_err: R,
+                        integration_abs_err: R) -> ~RectMesh<M> {
 
   let space_dim = Monomial::domain_dim(None::<M>);
   assert!(min_bounds.len() == *space_dim);
@@ -299,8 +299,8 @@ pub fn new_impl<M:Monomial>(min_bounds: ~[R],
 }
 
 
-impl<M:Monomial+Integrable> Mesh<M>
-                        for RectMesh<M> {
+impl<M:Monomial+RectIntegrable> Mesh<M>
+                            for RectMesh<M> {
 
   #[inline(always)]
   fn num_fes(&self) -> uint {
@@ -586,7 +586,7 @@ fn greater_side_face_perp_to_axis(a: Dim) -> SideFace {
 
 // integrable trait
 
-trait Integrable {
+trait RectIntegrable {
 
   /// Integrate the monomial over the rectangle of indicated dimensions having its minimums corner at the origin.
   fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R;  
@@ -601,7 +601,7 @@ trait Integrable {
 
 }
 
-impl Integrable for Mon1d {
+impl RectIntegrable for Mon1d {
   #[inline]
   fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R {
     let exp_plus_1 = *self.exps[0] as uint + 1;
@@ -613,7 +613,7 @@ impl Integrable for Mon1d {
   }
 }
 
-impl Integrable for Mon2d {
+impl RectIntegrable for Mon2d {
   #[inline]
   fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R {
     let exp0_plus_1 = *self.exps[0] as uint + 1;
@@ -640,7 +640,7 @@ impl Integrable for Mon2d {
   }
 }
 
-impl Integrable for Mon3d {
+impl RectIntegrable for Mon3d {
   #[inline]
   fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R {
     let exp0_plus_1 = *self.exps[0] as uint + 1;
@@ -679,7 +679,7 @@ impl Integrable for Mon3d {
   }
 }
 
-impl Integrable for Mon4d {
+impl RectIntegrable for Mon4d {
   #[inline]
   fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R {
     let exp0_plus_1 = *self.exps[0] as uint + 1;
