@@ -44,9 +44,6 @@ pub struct RectMesh<M> {
   // Actual dimensions of any single finite element, the displacement vector from the
   // minimum coordinates corner to the maximum coordinates corner.
   fe_dims: ~[R],
-  // A vector of fe dimensions vectors where the r^th vector is fe_dims without its
-  // r^th component. The constituent vectors serve as domains for integrals on sides.
-  fe_dims_wo_dim: ~[~[R]],
 
   // Cumulative products of the main finite element mesh's logical dimensions.  The r^th
   // component is the product of the logical dimensions up to and including dimension r.
@@ -74,14 +71,89 @@ pub struct RectMesh<M> {
   // 1/rect_diameter  
   rect_diameter_inv: R,
 
-  // The constantly-one monomial for our domain.
-  one_mon: M,
-
   // integration support members
-  space_dim_zeros: ~[R],
-  space_dim_less_one_zeros: ~[R],
   integration_rel_err: R,
   integration_abs_err: R
+}
+
+
+fn new_impl<M:Monomial>(min_bounds: ~[R],
+                        max_bounds: ~[R],
+                        mesh_ldims: ~[MeshCoord],
+                        integration_rel_err: R,
+                        integration_abs_err: R) -> ~RectMesh<M> {
+
+  let space_dim = Monomial::domain_dim(None::<M>);
+  assert!(min_bounds.len() == *space_dim);
+  assert!(max_bounds.len() == *space_dim);
+  assert!(mesh_ldims.len() == *space_dim);
+  
+  let fe_dims: ~[R] =
+    vec::from_fn(*space_dim, |r| {
+      let bounds_diff = max_bounds[r] - min_bounds[r];
+      let ldim_r = *mesh_ldims[r];
+      assert!(bounds_diff > 0 as R);
+      assert!(ldim_r > 0);
+      bounds_diff/(ldim_r as R)
+    });
+
+  let fe_dims_with_drops: ~[~[R]] =
+    vec::from_fn(*space_dim, |r| {
+      if r != *space_dim-1 { fe_dims.slice_to(r) + fe_dims.slice_from(r+1) }
+      else { fe_dims.slice_to(r).to_owned() }
+    });
+  
+  let cumprods_mesh_ldims: ~[uint] =
+    mesh_ldims.iter().scan(1, |prod, &ldim| {
+      *prod *= *ldim;
+      Some(*prod)
+    }).to_owned_vec();
+
+  let cumprods_nb_side_mesh_ldims_by_perp_axis: ~[~[uint]] =
+    vec::from_fn(*space_dim, |perp_axis| {
+      vec::from_fn(*space_dim, |end_dim| {
+        let mut prod = 1u;
+        for r in range(0, end_dim) {
+          prod *= if r != perp_axis { *mesh_ldims[r] } else { *mesh_ldims[r]-1 }
+        }
+        prod
+      })
+    });
+
+  let num_fes = *cumprods_mesh_ldims.last();
+
+  let nb_side_counts_by_perp_axis = cumprods_nb_side_mesh_ldims_by_perp_axis.iter()
+                                      .map(|cumprods| *cumprods.last())
+                                      .to_owned_vec();
+
+  let num_nb_sides = nb_side_counts_by_perp_axis.iter().fold(0u, |sum, &x| sum + x);
+
+  let first_nb_side_nums_by_perp_axis: ~[NBSideNum] = {
+    ~[NBSideNum(0u)] +
+      nb_side_counts_by_perp_axis.init().iter()
+        .scan(0, |sum, &axis_nb_sides| { *sum += axis_nb_sides; Some(NBSideNum(*sum)) })
+        .to_owned_vec()
+  };
+
+  let rect_diameter = sqrt(fe_dims.iter().fold(0 as R, |sum_sq_dims, &fe_dim| sum_sq_dims + fe_dim*fe_dim));
+
+  ~RectMesh {
+    space_dim: space_dim,
+    min_bounds: min_bounds,
+    max_bounds: max_bounds,
+    mesh_ldims: mesh_ldims,
+    fe_dims: fe_dims,
+    cumprods_mesh_ldims: cumprods_mesh_ldims,
+    cumprods_nb_side_mesh_ldims_by_perp_axis: cumprods_nb_side_mesh_ldims_by_perp_axis,
+    first_nb_side_nums_by_perp_axis: first_nb_side_nums_by_perp_axis,
+    num_fes: num_fes,
+    num_nb_sides: num_nb_sides,
+    num_side_faces_per_fe: 2 * *space_dim,
+    rect_diameter: rect_diameter,
+    rect_diameter_inv: 1./rect_diameter,
+    integration_rel_err: integration_rel_err,
+    integration_abs_err: integration_abs_err
+  }
 }
 
 
@@ -210,92 +282,6 @@ impl<M:Monomial> RectMesh<M> {
     })
   }
 
-
-}
-
-fn new_impl<M:Monomial>(min_bounds: ~[R],
-                        max_bounds: ~[R],
-                        mesh_ldims: ~[MeshCoord],
-                        integration_rel_err: R,
-                        integration_abs_err: R) -> ~RectMesh<M> {
-
-  let space_dim = Monomial::domain_dim(None::<M>);
-  assert!(min_bounds.len() == *space_dim);
-  assert!(max_bounds.len() == *space_dim);
-  assert!(mesh_ldims.len() == *space_dim);
-  
-  let fe_dims: ~[R] =
-    vec::from_fn(*space_dim, |r| {
-      let bounds_diff = max_bounds[r] - min_bounds[r];
-      let ldim_r = *mesh_ldims[r];
-      assert!(bounds_diff > 0 as R);
-      assert!(ldim_r > 0);
-      bounds_diff/(ldim_r as R)
-    });
-
-  let fe_dims_with_drops: ~[~[R]] =
-    vec::from_fn(*space_dim, |r| {
-      if r != *space_dim-1 { fe_dims.slice_to(r) + fe_dims.slice_from(r+1) }
-      else { fe_dims.slice_to(r).to_owned() }
-    });
-  
-  let cumprods_mesh_ldims: ~[uint] =
-    mesh_ldims.iter().scan(1, |prod, &ldim| {
-      *prod *= *ldim;
-      Some(*prod)
-    }).to_owned_vec();
-
-  let cumprods_nb_side_mesh_ldims_by_perp_axis: ~[~[uint]] =
-    vec::from_fn(*space_dim, |perp_axis| {
-      vec::from_fn(*space_dim, |end_dim| {
-        let mut prod = 1u;
-        for r in range(0, end_dim) {
-          prod *= if r != perp_axis { *mesh_ldims[r] } else { *mesh_ldims[r]-1 }
-        }
-        prod
-      })
-    });
-
-  let num_fes = *cumprods_mesh_ldims.last();
-
-  let nb_side_counts_by_perp_axis = cumprods_nb_side_mesh_ldims_by_perp_axis.iter()
-                                      .map(|cumprods| *cumprods.last())
-                                      .to_owned_vec();
-
-  let num_nb_sides = nb_side_counts_by_perp_axis.iter().fold(0u, |sum, &x| sum + x);
-
-  let first_nb_side_nums_by_perp_axis: ~[NBSideNum] = {
-    ~[NBSideNum(0u)] +
-      nb_side_counts_by_perp_axis.init().iter()
-        .scan(0, |sum, &axis_nb_sides| { *sum += axis_nb_sides; Some(NBSideNum(*sum)) })
-        .to_owned_vec()
-  };
-
-  let rect_diameter = sqrt(fe_dims.iter().fold(0 as R, |sum_sq_dims, &fe_dim| sum_sq_dims + fe_dim*fe_dim));
-
-  let one_mon: M = Monomial::one();
-
-  ~RectMesh {
-    space_dim: space_dim,
-    min_bounds: min_bounds,
-    max_bounds: max_bounds,
-    mesh_ldims: mesh_ldims,
-    fe_dims: fe_dims,
-    fe_dims_wo_dim: fe_dims_with_drops,
-    cumprods_mesh_ldims: cumprods_mesh_ldims,
-    cumprods_nb_side_mesh_ldims_by_perp_axis: cumprods_nb_side_mesh_ldims_by_perp_axis,
-    first_nb_side_nums_by_perp_axis: first_nb_side_nums_by_perp_axis,
-    num_fes: num_fes,
-    num_nb_sides: num_nb_sides,
-    num_side_faces_per_fe: 2 * *space_dim,
-    rect_diameter: rect_diameter,
-    rect_diameter_inv: 1./rect_diameter,
-    one_mon: one_mon,
-    space_dim_zeros: vec::from_elem(*space_dim, 0 as R),
-    space_dim_less_one_zeros: vec::from_elem((*space_dim-1), 0 as R),
-    integration_rel_err: integration_rel_err,
-    integration_abs_err: integration_abs_err
-  }
 }
 
 
