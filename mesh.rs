@@ -98,44 +98,58 @@ pub trait Mesh<M> {
 
   // integration functions
   
-  fn intg_global_fn_on_fe_face(&self,
+  fn intg_global_fn_on_fe_int(&self,
        g: &fn(&[R]) -> R,
-       fe: FENum,
-       face: Face) -> R;
+       fe: FENum) -> R;
   
-  fn intg_global_fn_x_facerel_mon_on_fe_face(&self,
+  fn intg_global_fn_x_facerel_mon_on_fe_int(&self,
        g: &fn(&[R]) -> R,
        mon: M,
-       fe: FENum,
-       face: Face) -> R;
+       fe: FENum) -> R;
  
-  fn intg_facerel_poly_on_oshape_face<P:Polynomial<M>>(&self,
+  fn intg_facerel_poly_on_oshape_int<P:Polynomial<M>>(&self,
        p: P,
-       oshape: OShape,
-       face: Face) -> R;
+       oshape: OShape) -> R;
 
-  fn intg_facerel_poly_x_facerel_poly_on_oshape_face<P:Polynomial<M>>(&self,
+  fn intg_facerel_poly_x_facerel_poly_on_oshape_int<P:Polynomial<M>>(&self,
+       p1: P,
+       p2: P,
+       oshape: OShape) -> R;
+
+  fn intg_facerel_poly_x_facerel_poly_on_oshape_side<P:Polynomial<M>>(&self,
        p1: P,
        p2: P,
        oshape: OShape,
-       face: Face) -> R;
+       side_face: SideFace) -> R;
 
-  fn intg_facerel_mon_x_facerel_mon_on_oshape_face(&self,
+  fn intg_facerel_mon_x_facerel_mon_on_oshape_int(&self,
+       mon1: M,
+       mon2: M,
+       oshape: OShape) -> R;
+
+  fn intg_facerel_mon_x_facerel_mon_on_oshape_side(&self,
        mon1: M,
        mon2: M,
        oshape: OShape,
-       face: Face) -> R;
+       side_face: SideFace) -> R;
 
-  fn intg_facerel_mon_x_facerel_poly_on_oshape_face<P:Polynomial<M>>(&self,
+  fn intg_facerel_mon_x_facerel_poly_on_oshape_int<P:Polynomial<M>>(&self,
+       mon: M,
+       p: P,
+       oshape: OShape) -> R;
+
+  fn intg_facerel_mon_x_facerel_poly_on_oshape_side<P:Polynomial<M>>(&self,
        mon: M,
        p: P,
        oshape: OShape,
-       face: Face) -> R;
+       side_face: SideFace) -> R;
+
 
   fn intg_intrel_mon_x_siderel_mon_on_oshape_side(&self,
        int_mon: M,
        side_mon: M, oshape: OShape,
        side_face: SideFace) -> R;
+  
   
   fn intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(&self,
        mon: M,
@@ -143,6 +157,7 @@ pub trait Mesh<M> {
        oshape: OShape,
        side_face: SideFace) -> R;
  
+
   fn intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side<P:Polynomial<M>>(&self,
        p: P,
        q: VectorMonomial<M>,

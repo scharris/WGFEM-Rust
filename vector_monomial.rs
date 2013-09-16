@@ -7,19 +7,29 @@ mod monomial;
 // VectorMonomial, parameterized by monomial type M.
 // Represents a vector valued function with a monomial in one component and
 // which is constantly 0 in all other components.
-#[deriving(Eq,IterBytes,Clone)]
+#[deriving(Eq, IterBytes, Clone)]
 pub struct VectorMonomial<M> {
-  mon_coord_ix: Dim,
+  mon_dim: Dim,
   mon: M,
 }
 
 impl<M:Monomial> VectorMonomial<M> {
 
-  fn new(mon_coord_ix: Dim, mon: M) -> VectorMonomial<M> {
-    if *mon_coord_ix >= *Monomial::domain_dim(None::<M>) {
+  pub fn new(mon_dim: Dim, mon: M) -> VectorMonomial<M> {
+    if *mon_dim >= *Monomial::domain_dim(None::<M>) {
       fail!("Coordinate index too large for passed monomial's domain.");
     }
-    VectorMonomial { mon_coord_ix: mon_coord_ix, mon: mon }
+    VectorMonomial { mon_dim: mon_dim, mon: mon }
+  }
+
+  #[inline]
+  pub fn mon_dim(&self) -> Dim {
+    self.mon_dim
+  }
+  
+  #[inline]
+  pub fn mon(&self) -> M {
+    self.mon.clone()
   }
 
 }
