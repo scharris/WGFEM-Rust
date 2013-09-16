@@ -2,3 +2,5 @@
 *.swp
 etc/
 TODO.txt
+lib/
+scratch.rs
