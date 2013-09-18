@@ -75,7 +75,6 @@ pub trait Mesh<M> {
   // one of these may be returned depending on the mesh implementation.
   fn dependent_dim_for_oshape_side(&self, oshape: OShape, side_face: SideFace) -> Dim;
 
-  // TODO: decide how to most efficiently fetch this structure.
   fn fe_inclusions_of_nb_side(&self, side_num: NBSideNum) -> NBSideInclusions;
 
   // Return non-boundary side number of the indicated fe relative side.
