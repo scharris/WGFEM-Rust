@@ -9,14 +9,14 @@ use monomial::{Monomial, Mon1d, Mon2d, Mon3d, Mon4d};
 use polynomial::Polynomial;
 use vector_monomial::VectorMonomial;
 use mesh::*;
-use cubature::*;
+use quadrature::*;
 
 mod common;
 mod monomial;
 mod polynomial;
 mod vector_monomial;
 mod mesh;
-mod cubature;
+mod quadrature;
 
 static DEFAULT_INTEGRATION_REL_ERR: R = 1e-12;
 static DEFAULT_INTEGRATION_ABS_ERR: R = 1e-12;
@@ -411,7 +411,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
     let fe_min_corner = self.fe_coord_mins_corner(fe);
     let fe_max_corner = vec::from_fn(d, |r| fe_min_corner[r] + self.fe_dims[r]);
 
-    cubature(&f, fe_min_corner, fe_max_corner, self.integration_rel_err, self.integration_abs_err)
+    quadrature(&f, fe_min_corner, fe_max_corner, self.integration_rel_err, self.integration_abs_err)
   }
 
   #[inline]
@@ -421,9 +421,9 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
     let fe_int_origin = fe_min_corner;
     let fe_max_corner = vec::from_fn(d, |r| fe_min_corner[r] + self.fe_dims[r]);
     
-    cubature(&|x: &[R]| { f(x) * mon.value_at_for_origin(x, *fe_int_origin) },
-             *fe_min_corner, fe_max_corner,
-             self.integration_rel_err, self.integration_abs_err)
+    quadrature(&|x: &[R]| { f(x) * mon.value_at_for_origin(x, *fe_int_origin) },
+               *fe_min_corner, fe_max_corner,
+               self.integration_rel_err, self.integration_abs_err)
   }
 
   #[inline]

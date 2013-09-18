@@ -9,10 +9,10 @@ mod common;
 
 #[fixed_stack_segment]  
 #[inline(never)]
-pub fn cubature(f: & &fn(&[R]) -> R, // OK for this to be a closure address
-                min_corner: &[R],
-                max_corner: &[R],
-                rel_err: R, abs_err: R) -> R {
+pub fn quadrature(f: & &fn(&[R]) -> R, // OK for this to be a closure address
+                  min_corner: &[R],
+                  max_corner: &[R],
+                  rel_err: R, abs_err: R) -> R {
   let (val, status) = unsafe {
     let f_dom_dim = min_corner.len() as c_uint;
     let f_range_dim = 1 as c_uint;
@@ -25,16 +25,16 @@ pub fn cubature(f: & &fn(&[R]) -> R, // OK for this to be a closure address
     let mut val = 0 as R;
     let mut err = 0 as R;
     let status = 
-      hcubature(f_range_dim,
-                integrand_caller_pv,
-                f_pv,
-                f_dom_dim, min_bounds, max_bounds,
-                max_evals, rel_err, abs_err,
-                norm_unused, &mut val, &mut err);
+      hquadrature(f_range_dim,
+                  integrand_caller_pv,
+                  f_pv,
+                  f_dom_dim, min_bounds, max_bounds,
+                  max_evals, rel_err, abs_err,
+                  norm_unused, &mut val, &mut err);
     (val, status)
   };
 
-  if (status != 0) { fail!("cubature call returned non-zero status"); }
+  if (status != 0) { fail!("quadrature call returned non-zero status"); }
   
   val
 }
@@ -54,15 +54,15 @@ extern fn integrand_caller(ndim: c_uint, x: *R,
 
 
 // The external C integration routine.
-#[link_args = "lib/hcubature.o"]
+#[link_args = "lib/quadrature.o"]
 extern {
 
-  fn hcubature(fdim: c_uint,
-               f: *c_void, fdata: *c_void,
-               dim: c_uint, xmin: *R, xmax: *R, 
-               maxEval: size_t, reqAbsError: R, reqRelError: R, 
-               norm: u32,
-               val: *mut R, err: *mut R) -> c_int;
+  fn hquadrature(fdim: c_uint,
+                 f: *c_void, fdata: *c_void,
+                 dim: c_uint, xmin: *R, xmax: *R, 
+                 maxEval: size_t, reqAbsError: R, reqRelError: R, 
+                 norm: u32,
+                 val: *mut R, err: *mut R) -> c_int;
 }
 
 
@@ -73,8 +73,8 @@ fn main() {
   let f2 = |x: &[f64]| 2.0*x[0]*x[1];
   let min_bounds = ~[0.,0.];
   let max_bounds = ~[1.,1.];
-  assert_eq!(cubature(&f1, min_bounds, max_bounds, 1e-5, 1e-5), 2.0)
-  assert_eq!(cubature(&f2, min_bounds, max_bounds, 1e-5, 1e-5), 0.5)
-  assert_eq!(cubature(&f1, min_bounds, max_bounds, 1e-5, 1e-5), 2.0)
+  assert_eq!(quadrature(&f1, min_bounds, max_bounds, 1e-5, 1e-5), 2.0)
+  assert_eq!(quadrature(&f2, min_bounds, max_bounds, 1e-5, 1e-5), 0.5)
+  assert_eq!(quadrature(&f1, min_bounds, max_bounds, 1e-5, 1e-5), 2.0)
 }
 
