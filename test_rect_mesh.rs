@@ -1,4 +1,3 @@
-extern mod extra;
 use std::num::{sqrt, abs};
 use common::*;
 use monomial::{Monomial, Mon1d, Mon2d, Mon3d, Mon4d};
@@ -6,14 +5,6 @@ use polynomial::{Polynomial, poly};
 use vector_monomial::VectorMonomial;
 use mesh::*;
 use rect_mesh::*;
-
-mod common;
-mod monomial;
-mod polynomial;
-mod vector_monomial;
-mod mesh;
-mod rect_mesh;
-mod quadrature;
 
 #[test]
 fn test_3x4_constr() -> () {

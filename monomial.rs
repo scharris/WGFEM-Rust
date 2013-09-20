@@ -1,6 +1,5 @@
 use common::*;
 use std::option::*;
-mod common;
 
 pub trait Monomial: Eq +
                     TotalEq +

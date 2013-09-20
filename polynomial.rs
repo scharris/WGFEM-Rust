@@ -1,13 +1,8 @@
-extern mod extra;
 use extra::treemap::TreeMap;
 use std::vec;
 use std::iter::Zip;
 use common::*;
 use monomial::*;
-
-mod common;
-mod monomial;
-
 
 #[deriving(Eq, Clone)]
 pub struct PolyWithOwnedMons<M> {

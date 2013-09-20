@@ -1,4 +1,3 @@
-extern mod extra;
 use std::vec;
 use std::num::sqrt;
 use std::iter::range_inclusive;
@@ -9,13 +8,6 @@ use polynomial::{Polynomial, poly};
 use vector_monomial::VectorMonomial;
 use mesh::*;
 use quadrature::*;
-
-mod common;
-mod monomial;
-mod polynomial;
-mod vector_monomial;
-mod quadrature;
-mod mesh;
 
 // auxiliary types
 
@@ -113,6 +105,7 @@ fn new_impl<M:Monomial>(min_bounds: ~[R],
   let cumprods_nb_side_mesh_ldims_by_perp_axis: ~[~[uint]] =
     vec::from_fn(space_dim, |perp_axis| {
       vec::from_fn(space_dim, |prods_top_dim| {
+        // TODO: try to fold here instead 
         let mut prod = 1u;
         for r in range_inclusive(0, prods_top_dim) {
           prod *= if r != perp_axis { *mesh_ldims[r] } else { *mesh_ldims[r]-1 }
@@ -231,6 +224,7 @@ impl<M:Monomial> RectMesh<M> {
      *    which are perpendicular to axis a.
      */
     let s_a0 = self.first_nb_side_nums_by_perp_axis[*perp_axis];
+    // TODO: try to fold here instead 
     let mut sum = *s_a0 + *coords[0];
     for r in range(1, self.space_dim) {
       sum += *coords[r] * self.cumprods_nb_side_mesh_ldims_by_perp_axis[*perp_axis][r-1];
@@ -250,6 +244,7 @@ impl<M:Monomial> RectMesh<M> {
      * cumulative product of the logical mesh dimensions for lesser coordinate dimensions.
      * See Rectangular_Meshes.pdf document for the derivation.
      */
+    // TODO: try to fold here instead 
     let mut coord_contrs = *coords[0];
     for r in range(1, self.space_dim) {
       coord_contrs += *coords[r] * self.cumprods_mesh_ldims[r-1];
@@ -363,6 +358,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   
   fn num_boundary_sides(&self) -> uint {
     let d = self.space_dim;
+    // TODO: try to fold here instead 
     let mut bsides = 0u;
     for perp_axis in range(0, d) {
       let mut prod = 1u;

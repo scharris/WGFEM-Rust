@@ -1,9 +1,6 @@
 use common::*;
 use monomial::*;
 
-mod common;
-mod monomial;
-
 // VectorMonomial, parameterized by monomial type M.
 // Represents a vector valued function with a monomial in one component and
 // which is constantly 0 in all other components.

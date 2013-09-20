@@ -1,4 +1,3 @@
-extern mod extra;
 use extra::treemap::TreeMap;
 use std::vec;
 use std::iter::Zip;
@@ -6,12 +5,6 @@ use common::*;
 use monomial::Monomial;
 use polynomial::Polynomial;
 use vector_monomial::VectorMonomial;
-
-mod common;
-mod monomial;
-mod polynomial;
-mod vector_monomial;
-
 
 // An FENum identifies a finite element in the mesh.
 #[deriving(Eq,TotalEq,Ord,TotalOrd,Clone)]

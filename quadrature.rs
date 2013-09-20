@@ -1,6 +1,3 @@
-#[crate_type="lib"]
-#[link(name = "quadrature")]
-
 use std::vec;
 use std::libc::size_t;
 use std::ptr;
@@ -8,7 +5,6 @@ use std::libc::{c_uint, c_int, c_void};
 use std::cast;
 
 use common::*;
-mod common;
 
 #[fixed_stack_segment]  
 #[inline(never)]
