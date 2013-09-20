@@ -16,4 +16,8 @@ pub mod rect_mesh;
 mod quadrature;
 #[cfg(test)]
 mod test_rect_mesh;
+#[cfg(test)]
+mod test_monomial;
+#[cfg(test)]
+mod test_polynomial;
 
