@@ -67,7 +67,7 @@ extern {
 
 #[fixed_stack_segment]  
 #[test]
-fn main() {
+fn test_quadrature() {
   let f1 = |_: &[f64]| 2.0;
   let f2 = |x: &[f64]| 2.0*x[0]*x[1];
   let min_bounds = ~[0.,0.];
