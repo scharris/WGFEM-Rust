@@ -21,23 +21,29 @@ pub struct PolyWithBorrowedMons<'self,M> {
   mons: &'self [M]
 }
 
+// Convenience function to create polynomials in testing code. Performance critical code
+// should use the ::new function implementations instead which will be more efficient.
+pub fn poly<M:Monomial>(terms: ~[(R,M)]) -> PolyWithOwnedMons<M> {
+  let (coefs, mons) = vec::unzip(terms.move_iter());
+  PolyWithOwnedMons { coefs: coefs, mons: mons } 
+}
 
 impl<M:Monomial> PolyWithOwnedMons<M> {
   
-  fn new(coefs: ~[R], mons: ~[M]) -> PolyWithOwnedMons<M> {
+  pub fn new(coefs: ~[R], mons: ~[M]) -> PolyWithOwnedMons<M> {
     match (coefs.len(), mons.len()) {
       (0,0) => fail!("Empty arrays passed to polynomial constructor."),
       (x,y) if x != y => fail!("Arrays of different lengths passed to polynomial constructor."),
       _ => PolyWithOwnedMons { coefs: coefs, mons: mons }
     }
   }
-
-  fn zero() -> PolyWithOwnedMons<M> {
+  
+  pub fn zero() -> PolyWithOwnedMons<M> {
     let one_mon: M = Monomial::one();
     PolyWithOwnedMons { coefs: ~[0 as R], mons: ~[one_mon] }
   }
   
-  fn zero_with_capacity(n: uint) -> PolyWithOwnedMons<M> {
+  pub fn zero_with_capacity(n: uint) -> PolyWithOwnedMons<M> {
     let one_mon: M = Monomial::one();
     let mut coefs = vec::with_capacity(n);
     let mut mons = vec::with_capacity(n);
@@ -50,7 +56,7 @@ impl<M:Monomial> PolyWithOwnedMons<M> {
 
 impl<'self,M:Monomial> PolyWithBorrowedMons<'self,M> {
   
-  fn new(coefs: ~[R], mons: &'self [M]) -> PolyWithBorrowedMons<'self,M> {
+  pub fn new(coefs: ~[R], mons: &'self [M]) -> PolyWithBorrowedMons<'self,M> {
     match (coefs.len(), mons.len()) {
       (0,0) => fail!("Empty arrays passed to polynomial constructor."),
       (x,y) if x != y => fail!("Arrays of different lengths passed to polynomial constructor."),
@@ -62,7 +68,7 @@ impl<'self,M:Monomial> PolyWithBorrowedMons<'self,M> {
 pub trait Polynomial<M>: Add<Self,PolyWithOwnedMons<M>> +
                          Mul<Self,PolyWithOwnedMons<M>> {
 
-  fn domain_dim(witness: Option<Self>) -> Dim;
+  fn domain_dim(witness: Option<Self>) -> uint;
 
   fn num_terms(&self) -> uint;
   
@@ -112,8 +118,8 @@ impl<'self,M:Monomial> Polynomial<M>
                    for PolyWithBorrowedMons<'self,M> {
 
   #[inline]
-  fn domain_dim(witness: Option<PolyWithBorrowedMons<M>>) -> Dim {
-    Monomial::domain_dim(None::<M>)    
+  fn domain_dim(witness: Option<PolyWithBorrowedMons<M>>) -> uint {
+    Monomial::domain_dim(None::<M>)
   }
   
   #[inline]
@@ -124,9 +130,7 @@ impl<'self,M:Monomial> Polynomial<M>
   #[inline]
   fn term(&self, n: uint) -> (R,M) {
     let coef = self.coefs[n];
-    let mon = unsafe {
-      self.mons.unsafe_get(n) // bounds-checked already in coef access
-    };
+    let mon = unsafe { self.mons.unsafe_get(n) }; // bounds-checked already in coef access
     (coef,mon)
   }
   
@@ -187,7 +191,7 @@ impl<M:Monomial> Polynomial<M>
   }
 
   #[inline]
-  fn domain_dim(witness: Option<PolyWithOwnedMons<M>>) -> Dim {
+  fn domain_dim(witness: Option<PolyWithOwnedMons<M>>) -> uint {
     Monomial::domain_dim(None::<M>)
   }
   
@@ -199,15 +203,14 @@ impl<M:Monomial> Polynomial<M>
   #[inline]
   fn term(&self, n: uint) -> (R,M) {
     let coef = self.coefs[n];
-    let mon = unsafe {
-      self.mons.unsafe_get(n) // bounds-checked already in coef access
-    };
+    let mon = unsafe { self.mons.unsafe_get(n) }; // bounds-checked already in coef access
     (coef,mon)
   }
   
   fn foldl_terms<A>(&self, z: A, f: &fn(a: A, term: (R,M)) -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.mons.len()) {
+      // let term = (self.coefs[n], self.mons[n].clone());
       let term = unsafe { (self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
       acc_val = f(acc_val, term);
     }
@@ -326,7 +329,12 @@ impl<M:Monomial> ToStr
   }
 }
 
-// TODO: These should_fail tests aren't being run.
+
+
+
+// Tests
+
+
 #[test]
 #[should_fail]
 fn test_1d_owned_constr_mismatched() {
@@ -417,8 +425,6 @@ fn test_1d_owned_tostr() {
 
 
 
-
-// TODO: These should_fail tests aren't being run.
 #[test]
 #[should_fail]
 fn test_1d_borrowed_constr_mismatched() {
@@ -475,48 +481,7 @@ fn test_1d_borrowed_addition() {
   let x = PolyWithBorrowedMons::new(~[1.], x_mon_singleton);
 
   assert_eq!(one + x, PolyWithOwnedMons::new(~[1.,1.], ~[one_mon, x_mon]));
-//  assert_eq!(one + one + x, PolyWithOwnedMons::new(~[1.,1.,1.], ~[one_mon, one_mon, x_mon]));
-//  assert_eq!(one + x + x, PolyWithOwnedMons::new(~[1.,1.,1.], ~[one_mon, x_mon, x_mon]));
 }
-
-/*
-
-#[test]
-fn test_1d_owned_multiplication() {
-  let one_mon: Mon1d = Monomial::one();
-  let x_mon = Mon1d { exps: [Deg(1)] };
-  let one_plus_x = PolyWithOwnedMons::new(~[1.,1.], ~[one_mon, x_mon]);
-  let two_plus_x = PolyWithOwnedMons::new(~[2.,1.], ~[one_mon, x_mon]);
-
-  assert_eq!(one_plus_x * one_plus_x, 
-             PolyWithOwnedMons::new(~[1.,1.,1.,1.], ~[one_mon, x_mon, x_mon, x_mon*x_mon]));
-  assert_eq!(one_plus_x * two_plus_x,
-             PolyWithOwnedMons::new(~[2.,1.,2.,1.], ~[one_mon, x_mon, x_mon, x_mon*x_mon]));
-}
-
-
-#[test]
-fn test_1d_owned_canonform() {
-  let one_mon: Mon1d = Monomial::one();
-  let x_mon = Mon1d { exps: [Deg(1)] };
-
-  assert_eq!(PolyWithOwnedMons::new(~[1.,1.,1.,1.], ~[x_mon*x_mon, one_mon, x_mon, x_mon]).canonical_form(),
-             PolyWithOwnedMons::new(~[1.,2.,1.], ~[one_mon, x_mon, x_mon*x_mon]));
-
-}
-
-#[test]
-fn test_1d_owned_tostr() {
-  let one_mon: Mon1d = Monomial::one();
-  let x_mon = Mon1d { exps: [Deg(1)] };
-
-  assert_eq!(PolyWithOwnedMons::new(~[1.,2.,3.,4.], ~[x_mon*x_mon, one_mon, x_mon, x_mon]).to_str(),
-             ~"1 x^2 + 2 x^0 + 3 x^1 + 4 x^1");
-}
-
-*/
-
-
 
 
 /*

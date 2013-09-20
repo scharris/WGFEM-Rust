@@ -1,3 +1,6 @@
+#[crate_type="lib"]
+#[link(name = "quadrature")]
+
 use std::vec;
 use std::libc::size_t;
 use std::ptr;

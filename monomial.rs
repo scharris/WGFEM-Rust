@@ -11,7 +11,7 @@ pub trait Monomial: Eq +
                     ToStr +
                     Mul<Self,Self> {
 
-  fn domain_dim(witness: Option<Self>) -> Dim;
+  fn domain_dim(witness: Option<Self>) -> uint;
   
   fn value_at(&self, x: &[R]) -> R;
   
@@ -51,8 +51,8 @@ static one_4d: Mon4d = Mon4d { exps: [Deg(0),..4] };
 impl Monomial for Mon1d {
 
   #[inline(always)]
-  fn domain_dim(witness: Option<Mon1d>) -> Dim {
-    Dim(1)
+  fn domain_dim(witness: Option<Mon1d>) -> uint {
+    1u
   }
 
   #[inline(always)]
@@ -86,8 +86,8 @@ impl Monomial for Mon1d {
 impl Monomial for Mon2d {
 
   #[inline(always)]
-  fn domain_dim(witness: Option<Mon2d>) -> Dim {
-    Dim(2)
+  fn domain_dim(witness: Option<Mon2d>) -> uint {
+    2u
   }
   
   #[inline(always)]
@@ -124,8 +124,8 @@ impl Monomial for Mon2d {
 impl Monomial for Mon3d {
 
   #[inline(always)]
-  fn domain_dim(witness: Option<Mon3d>) -> Dim {
-    Dim(3)
+  fn domain_dim(witness: Option<Mon3d>) -> uint {
+    3u
   }
   
   #[inline(always)]
@@ -165,8 +165,8 @@ impl Monomial for Mon3d {
 impl Monomial for Mon4d {
 
   #[inline(always)]
-  fn domain_dim(witness: Option<Mon4d>) -> Dim {
-    Dim(4)
+  fn domain_dim(witness: Option<Mon4d>) -> uint {
+    4u
   }
 
   #[inline(always)]
@@ -402,10 +402,10 @@ impl Mul<Mon4d, Mon4d> for Mon4d {
 
 
 fn test_domain_dims() {
-  assert_eq!(Monomial::domain_dim(None::<Mon1d>), Dim(1));
-  assert_eq!(Monomial::domain_dim(None::<Mon2d>), Dim(2));
-  assert_eq!(Monomial::domain_dim(None::<Mon3d>), Dim(3));
-  assert_eq!(Monomial::domain_dim(None::<Mon4d>), Dim(4));
+  assert_eq!(Monomial::domain_dim(None::<Mon1d>), 1u);
+  assert_eq!(Monomial::domain_dim(None::<Mon2d>), 2u);
+  assert_eq!(Monomial::domain_dim(None::<Mon3d>), 3u);
+  assert_eq!(Monomial::domain_dim(None::<Mon4d>), 4u);
 }
 
 #[test]

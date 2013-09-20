@@ -16,7 +16,7 @@ pub struct VectorMonomial<M> {
 impl<M:Monomial> VectorMonomial<M> {
 
   pub fn new(mon_dim: Dim, mon: M) -> VectorMonomial<M> {
-    if *mon_dim >= *Monomial::domain_dim(None::<M>) {
+    if *mon_dim >= Monomial::domain_dim(None::<M>) {
       fail!("Coordinate index too large for passed monomial's domain.");
     }
     VectorMonomial { mon_dim: mon_dim, mon: mon }
