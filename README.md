@@ -1,4 +1,4 @@
 WGFEM-Rust
 ==========
 
-Weak Galerkin
+Weak Galerkin Finite Element Method (in progress)
