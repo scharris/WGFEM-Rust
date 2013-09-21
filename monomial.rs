@@ -326,20 +326,6 @@ toteq_impl!(Mon2d)
 toteq_impl!(Mon3d)
 toteq_impl!(Mon4d)
 
-/* TODO: report macro bug
-macro_rules! clone_impl(($t: ty) => {
-  impl Clone for $t {
-    fn clone(&self) -> $t {
-      $t { exps: self.exps }
-    }
-  }
-})
-clone_impl!(Mon1d)
-clone_impl!(Mon2d)
-clone_impl!(Mon3d)
-clone_impl!(Mon4d)
-*/
-
 impl Clone for Mon1d {
   fn clone(&self) -> Mon1d {
     Mon1d { exps: self.exps }
