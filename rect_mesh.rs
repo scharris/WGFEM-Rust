@@ -105,12 +105,9 @@ fn new_impl<M:Monomial>(min_bounds: ~[R],
   let cumprods_nb_side_mesh_ldims_by_perp_axis: ~[~[uint]] =
     vec::from_fn(space_dim, |perp_axis| {
       vec::from_fn(space_dim, |prods_top_dim| {
-        // TODO: try to fold here instead 
-        let mut prod = 1u;
-        for r in range_inclusive(0, prods_top_dim) {
-          prod *= if r != perp_axis { *mesh_ldims[r] } else { *mesh_ldims[r]-1 }
-        }
-        prod
+        range_inclusive(0, prods_top_dim).fold(1u, |ldims_prod, r| {
+          ldims_prod * (if r != perp_axis { *mesh_ldims[r] } else { *mesh_ldims[r]-1 })
+        })
       })
     });
 
@@ -224,12 +221,9 @@ impl<M:Monomial> RectMesh<M> {
      *    which are perpendicular to axis a.
      */
     let s_a0 = self.first_nb_side_nums_by_perp_axis[*perp_axis];
-    // TODO: try to fold here instead 
-    let mut sum = *s_a0 + *coords[0];
-    for r in range(1, self.space_dim) {
-      sum += *coords[r] * self.cumprods_nb_side_mesh_ldims_by_perp_axis[*perp_axis][r-1];
-    }
-    NBSideNum(sum)
+    NBSideNum(range(1, self.space_dim).fold(*s_a0 + *coords[0], |sum_coord_contrs, r| {
+      sum_coord_contrs + *coords[r] * self.cumprods_nb_side_mesh_ldims_by_perp_axis[*perp_axis][r-1]
+    }))
   }
 
   // Converts finite element/interior coords in the main mesh to a finite element/interior number.
@@ -244,12 +238,9 @@ impl<M:Monomial> RectMesh<M> {
      * cumulative product of the logical mesh dimensions for lesser coordinate dimensions.
      * See Rectangular_Meshes.pdf document for the derivation.
      */
-    // TODO: try to fold here instead 
-    let mut coord_contrs = *coords[0];
-    for r in range(1, self.space_dim) {
-      coord_contrs += *coords[r] * self.cumprods_mesh_ldims[r-1];
-    }
-    FENum(coord_contrs)
+    FENum(range(1, self.space_dim).fold(*coords[0], |sum_coord_contrs, r| {
+      sum_coord_contrs + *coords[r] * self.cumprods_mesh_ldims[r-1]
+    }))
   }
 
   #[inline]
@@ -357,17 +348,12 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   }
   
   fn num_boundary_sides(&self) -> uint {
-    let d = self.space_dim;
-    // TODO: try to fold here instead 
-    let mut bsides = 0u;
-    for perp_axis in range(0, d) {
-      let mut prod = 1u;
-      for r in range(0, d) {
-        prod *= if r == perp_axis { 2 } else { *self.mesh_ldims[r] };
-      }
-      bsides += prod;
-    }
-    bsides
+    range(0, self.space_dim).fold(0u, |perp_axis_contrs, perp_axis| {
+      perp_axis_contrs +
+      range(0, self.space_dim).fold(1u, |prod, r| {
+        prod * if r == perp_axis { 2 } else { *self.mesh_ldims[r] }
+      })
+    })
   }
   
   #[inline(always)]
