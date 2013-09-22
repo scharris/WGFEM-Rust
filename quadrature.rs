@@ -13,8 +13,8 @@ pub fn quadrature(f: & &fn(&[R]) -> R, // OK for this to be a closure address
                   max_corner: &[R],
                   rel_err: R, abs_err: R) -> R {
   let (val, status) = unsafe {
-    let f_dom_dim = min_corner.len() as c_uint;
-    let f_range_dim = 1 as c_uint;
+    let f_dom_space_dims = min_corner.len() as c_uint;
+    let f_range_space_dims = 1 as c_uint;
     let f_pv: *c_void = cast::transmute(f); 
     let integrand_caller_pv: *c_void = cast::transmute(integrand_caller);
     let min_bounds = vec::raw::to_ptr(min_corner);
@@ -24,10 +24,10 @@ pub fn quadrature(f: & &fn(&[R]) -> R, // OK for this to be a closure address
     let mut val = 0 as R;
     let mut err = 0 as R;
     let status = 
-      hquadrature(f_range_dim,
+      hquadrature(f_range_space_dims,
                   integrand_caller_pv,
                   f_pv,
-                  f_dom_dim, min_bounds, max_bounds,
+                  f_dom_space_dims, min_bounds, max_bounds,
                   max_evals, rel_err, abs_err,
                   norm_unused, &mut val, &mut err);
     (val, status)

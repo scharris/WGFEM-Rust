@@ -13,11 +13,11 @@ fn test_3x4_constr() -> () {
   let mesh_ldims = ~[MeshCoord(3), MeshCoord(4)];
   let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new_with_err_tols(mesh_min_coords.clone(), mesh_max_coords.clone(), mesh_ldims.clone(), 1e-4, 1e-5);
 
-  assert_eq!(rmesh3x4.space_dim, 2);
+  assert_eq!(rmesh3x4.space_dims, 2);
   assert_eq!(&rmesh3x4.min_bounds, &mesh_min_coords);
   assert_eq!(&rmesh3x4.max_bounds, &mesh_max_coords);
   assert_eq!(&rmesh3x4.mesh_ldims, &mesh_ldims);
-  assert_eq!(&rmesh3x4.fe_dims, &~[1./3., 1./4.]);
+  assert_eq!(&rmesh3x4.fe_side_lens, &~[1./3., 1./4.]);
   assert_approx(rmesh3x4.rect_diameter, sqrt(pow(1./3.,2) + pow(1./4.,2)));
   assert_approx(rmesh3x4.shape_diameter_inv(OShape(0)), 1./sqrt(pow(1./3.,2) + pow(1./4.,2)));
   assert_eq!(&rmesh3x4.cumprods_mesh_ldims, &~[3, 3*4]);
@@ -44,11 +44,11 @@ fn test_3x4x5_constr() -> () {
   let mesh_ldims = ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)];
   let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(mesh_min_coords.clone(), mesh_max_coords.clone(), mesh_ldims.clone());
 
-  assert_eq!(rmesh3x4x5.space_dim, 3);
+  assert_eq!(rmesh3x4x5.space_dims, 3);
   assert_eq!(&rmesh3x4x5.min_bounds, &mesh_min_coords);
   assert_eq!(&rmesh3x4x5.max_bounds, &mesh_max_coords);
   assert_eq!(&rmesh3x4x5.mesh_ldims, &mesh_ldims);
-  assert_eq!(&rmesh3x4x5.fe_dims, &~[1./3., 1./4., 1./5.]);
+  assert_eq!(&rmesh3x4x5.fe_side_lens, &~[1./3., 1./4., 1./5.]);
   assert_approx(rmesh3x4x5.rect_diameter, sqrt(pow(1./3.,2) + pow(1./4.,2) + pow(1./5.,2)));
   assert_approx(rmesh3x4x5.shape_diameter_inv(OShape(0)), 1./sqrt(pow(1./3.,2) + pow(1./4.,2) + pow(1./5.,2)));
   assert_eq!(&rmesh3x4x5.cumprods_mesh_ldims, &~[3, 3*4, 3*4*5]);
@@ -76,11 +76,11 @@ fn test_3x4x5x6_constr() -> () {
   let mesh_ldims = ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)];
   let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(mesh_min_coords.clone(), mesh_max_coords.clone(), mesh_ldims.clone());
 
-  assert_eq!(rmesh3x4x5x6.space_dim, 4);
+  assert_eq!(rmesh3x4x5x6.space_dims, 4);
   assert_eq!(&rmesh3x4x5x6.min_bounds, &mesh_min_coords);
   assert_eq!(&rmesh3x4x5x6.max_bounds, &mesh_max_coords);
   assert_eq!(&rmesh3x4x5x6.mesh_ldims, &mesh_ldims);
-  assert_eq!(&rmesh3x4x5x6.fe_dims, &~[1./3., 1./4., 1./5., 1./6.]);
+  assert_eq!(&rmesh3x4x5x6.fe_side_lens, &~[1./3., 1./4., 1./5., 1./6.]);
   assert_approx(rmesh3x4x5x6.rect_diameter, sqrt(pow(1./3.,2) + pow(1./4.,2) + pow(1./5.,2) + pow(1./6.,2)));
   assert_approx(rmesh3x4x5x6.shape_diameter_inv(OShape(0)), 1./sqrt(pow(1./3.,2) + pow(1./4.,2) + pow(1./5.,2) + pow(1./6.,2)));
   assert_eq!(&rmesh3x4x5x6.cumprods_mesh_ldims, &~[3, 3*4, 3*4*5, 3*4*5*6]);

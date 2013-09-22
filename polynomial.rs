@@ -62,7 +62,7 @@ impl<'self,M:Monomial> PolyWithBorrowedMons<'self,M> {
 pub trait Polynomial<M>: Add<Self,PolyWithOwnedMons<M>> +
                          Mul<Self,PolyWithOwnedMons<M>> {
 
-  fn domain_dim(_: Option<Self>) -> uint;
+  fn domain_space_dims(_: Option<Self>) -> uint;
 
   fn num_terms(&self) -> uint;
   
@@ -112,8 +112,8 @@ impl<'self,M:Monomial> Polynomial<M>
                    for PolyWithBorrowedMons<'self,M> {
 
   #[inline]
-  fn domain_dim(_: Option<PolyWithBorrowedMons<M>>) -> uint {
-    Monomial::domain_dim(None::<M>)
+  fn domain_space_dims(_: Option<PolyWithBorrowedMons<M>>) -> uint {
+    Monomial::domain_space_dims(None::<M>)
   }
   
   #[inline]
@@ -185,8 +185,8 @@ impl<M:Monomial> Polynomial<M>
   }
 
   #[inline]
-  fn domain_dim(_: Option<PolyWithOwnedMons<M>>) -> uint {
-    Monomial::domain_dim(None::<M>)
+  fn domain_space_dims(_: Option<PolyWithOwnedMons<M>>) -> uint {
+    Monomial::domain_space_dims(None::<M>)
   }
   
   #[inline]

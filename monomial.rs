@@ -12,7 +12,7 @@ pub trait Monomial: Eq +
                     ToStr +
                     Mul<Self,Self> {
 
-  fn domain_dim(_: Option<Self>) -> uint;
+  fn domain_space_dims(_: Option<Self>) -> uint;
   
   fn value_at(&self, x: &[R]) -> R;
   
@@ -53,7 +53,7 @@ static one_4d: Mon4d = Mon4d { exps: [Deg(0),..4] };
 impl Monomial for Mon1d {
 
   #[inline(always)]
-  fn domain_dim(_: Option<Mon1d>) -> uint {
+  fn domain_space_dims(_: Option<Mon1d>) -> uint {
     1u
   }
 
@@ -92,7 +92,7 @@ impl Monomial for Mon1d {
 impl Monomial for Mon2d {
 
   #[inline(always)]
-  fn domain_dim(_: Option<Mon2d>) -> uint {
+  fn domain_space_dims(_: Option<Mon2d>) -> uint {
     2u
   }
   
@@ -127,7 +127,7 @@ impl Monomial for Mon2d {
   }
 
   fn mons_of_deg_le(deg: Deg) -> ~[Mon2d] {
-    let mut mons: ~[Mon2d] = vec::with_capacity(num_mons_of_deg_le(deg, Dim(2)));
+    let mut mons: ~[Mon2d] = vec::with_capacity(num_mons_of_deg_le(deg, 2));
     for e0 in range_inclusive(0, *deg) {
       for e1 in range_inclusive(0, *deg - e0) {
         mons.push(Mon2d { exps: [Deg(e0), Deg(e1)] });
@@ -141,7 +141,7 @@ impl Monomial for Mon2d {
 impl Monomial for Mon3d {
 
   #[inline(always)]
-  fn domain_dim(_: Option<Mon3d>) -> uint {
+  fn domain_space_dims(_: Option<Mon3d>) -> uint {
     3u
   }
   
@@ -179,7 +179,7 @@ impl Monomial for Mon3d {
   }
   
   fn mons_of_deg_le(deg: Deg) -> ~[Mon3d] {
-    let mut mons: ~[Mon3d] = vec::with_capacity(num_mons_of_deg_le(deg, Dim(3)));
+    let mut mons: ~[Mon3d] = vec::with_capacity(num_mons_of_deg_le(deg, 3));
     for e0 in range_inclusive(0, *deg) {
       for e1 in range_inclusive(0, *deg - e0) {
         for e2 in range_inclusive(0, *deg - e0 - e1) {
@@ -194,7 +194,7 @@ impl Monomial for Mon3d {
 impl Monomial for Mon4d {
 
   #[inline(always)]
-  fn domain_dim(_: Option<Mon4d>) -> uint {
+  fn domain_space_dims(_: Option<Mon4d>) -> uint {
     4u
   }
 
@@ -235,7 +235,7 @@ impl Monomial for Mon4d {
   }
   
   fn mons_of_deg_le(deg: Deg) -> ~[Mon4d] {
-    let mut mons: ~[Mon4d] = vec::with_capacity(num_mons_of_deg_le(deg, Dim(4)));
+    let mut mons: ~[Mon4d] = vec::with_capacity(num_mons_of_deg_le(deg, 4));
     for e0 in range_inclusive(0, *deg) {
       for e1 in range_inclusive(0, *deg - e0) {
         for e2 in range_inclusive(0, *deg - e0 - e1) {
@@ -429,13 +429,13 @@ impl Mul<Mon4d, Mon4d> for Mon4d {
 // auxiliary functions
 
 
-fn num_mons_of_deg_eq(deg: Deg, dom_dim: Dim) -> uint {
-  multiset_choose(*dom_dim as uint, *deg as uint)
+fn num_mons_of_deg_eq(deg: Deg, dom_space_dims: uint) -> uint {
+  multiset_choose(dom_space_dims, *deg as uint)
 }
 
-pub fn num_mons_of_deg_le(max_deg: Deg, dom_dim: Dim) -> uint {
+pub fn num_mons_of_deg_le(max_deg: Deg, dom_space_dims: uint) -> uint {
   range_inclusive(0, *max_deg)
-    .map(|deg| num_mons_of_deg_eq(Deg(deg), dom_dim))
+    .map(|deg| num_mons_of_deg_eq(Deg(deg), dom_space_dims))
     .sum()
 }
 
@@ -469,3 +469,4 @@ fn test_binomial() {
   assert_eq!(binomial(5, 1), 5);
   assert_eq!(binomial(5, 2), 10);
 }
+

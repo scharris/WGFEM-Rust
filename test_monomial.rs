@@ -2,10 +2,10 @@ use common::*;
 use monomial::{Monomial, Mon1d, Mon2d, Mon3d, Mon4d};
 
 fn test_domain_dims() {
-  assert_eq!(Monomial::domain_dim(None::<Mon1d>), 1u);
-  assert_eq!(Monomial::domain_dim(None::<Mon2d>), 2u);
-  assert_eq!(Monomial::domain_dim(None::<Mon3d>), 3u);
-  assert_eq!(Monomial::domain_dim(None::<Mon4d>), 4u);
+  assert_eq!(Monomial::domain_space_dims(None::<Mon1d>), 1u);
+  assert_eq!(Monomial::domain_space_dims(None::<Mon2d>), 2u);
+  assert_eq!(Monomial::domain_space_dims(None::<Mon3d>), 3u);
+  assert_eq!(Monomial::domain_space_dims(None::<Mon4d>), 4u);
 }
 
 #[test]
@@ -544,4 +544,12 @@ fn test_map_exp_4d() {
   assert_eq!(t.map_exp(Dim(3), |e| Deg(*e+1)), t*t);
 }
 
+/*
 // TODO: test counting and generation of monomials not exceeding a given degree
+#[test]
+fn test_num_mons_of_deg_le() {
+  assert_eq!(monomial::num_mons_of_deg_le(Deg(2), Dim(2)) == 6
+@test length(mons_of_deg_le(deg(5), dim(4))) == count_mons_of_deg_le(deg(5), dim(4))
+@test length(mons_of_deg_le(deg(6), dim(5))) == count_mons_of_deg_le(deg(6), dim(5))
+}
+*/ 

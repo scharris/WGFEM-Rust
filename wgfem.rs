@@ -13,11 +13,13 @@ pub mod polynomial;
 pub mod vector_monomial;
 pub mod mesh;
 pub mod rect_mesh;
+pub mod weak_grad;
 mod quadrature;
-#[cfg(test)]
-mod test_rect_mesh;
 #[cfg(test)]
 mod test_monomial;
 #[cfg(test)]
+mod test_vector_monomial;
+#[cfg(test)]
 mod test_polynomial;
-
+#[cfg(test)]
+mod test_rect_mesh;

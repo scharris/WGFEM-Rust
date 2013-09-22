@@ -23,8 +23,8 @@ pub struct NBSideGeom {
 
 pub struct RectMesh<M> {
 
-  // The dimension of the Euclidiean space containing the mesh. 
-  space_dim: uint,
+  // The number of spatial dimensions of the Euclidiean space containing the mesh. 
+  space_dims: uint,
 
   // Mesh coordinate ranges in R^d defining the boundaries of the mesh.
   min_bounds: ~[R],
@@ -36,7 +36,7 @@ pub struct RectMesh<M> {
 
   // Actual dimensions of any single finite element, the displacement vector from the
   // minimum coordinates corner to the maximum coordinates corner.
-  fe_dims: ~[R],
+  fe_side_lens: ~[R],
 
   // Cumulative products of the logical dimensions of the main finite element mesh. The r^th 
   // component is the product of the logical dimensions up to and including dimension r.
@@ -76,13 +76,13 @@ fn new_impl<M:Monomial>(min_bounds: ~[R],
                         integration_rel_err: R,
                         integration_abs_err: R) -> ~RectMesh<M> {
 
-  let space_dim = Monomial::domain_dim(None::<M>);
-  assert!(min_bounds.len() == space_dim);
-  assert!(max_bounds.len() == space_dim);
-  assert!(mesh_ldims.len() == space_dim);
+  let space_dims = Monomial::domain_space_dims(None::<M>);
+  assert!(min_bounds.len() == space_dims);
+  assert!(max_bounds.len() == space_dims);
+  assert!(mesh_ldims.len() == space_dims);
   
-  let fe_dims: ~[R] =
-    vec::from_fn(space_dim, |r| {
+  let fe_side_lens: ~[R] =
+    vec::from_fn(space_dims, |r| {
       let bounds_diff = max_bounds[r] - min_bounds[r];
       let ldim_r = *mesh_ldims[r];
       assert!(bounds_diff > 0 as R);
@@ -97,8 +97,8 @@ fn new_impl<M:Monomial>(min_bounds: ~[R],
     }).to_owned_vec();
 
   let cumprods_nb_side_mesh_ldims_by_perp_axis: ~[~[uint]] =
-    vec::from_fn(space_dim, |perp_axis| {
-      vec::from_fn(space_dim, |prods_top_dim| {
+    vec::from_fn(space_dims, |perp_axis| {
+      vec::from_fn(space_dims, |prods_top_dim| {
         range_inclusive(0, prods_top_dim).fold(1u, |ldims_prod, r| {
           ldims_prod * (if r != perp_axis { *mesh_ldims[r] } else { *mesh_ldims[r]-1 })
         })
@@ -120,20 +120,20 @@ fn new_impl<M:Monomial>(min_bounds: ~[R],
       .to_owned_vec()
   };
 
-  let rect_diameter = sqrt(fe_dims.iter().fold(0 as R, |sum_sq_dims, &fe_dim| sum_sq_dims + fe_dim*fe_dim));
+  let rect_diameter = sqrt(fe_side_lens.iter().fold(0 as R, |sum_sq_lens, &len| sum_sq_lens + len*len));
 
   ~RectMesh {
-    space_dim: space_dim,
+    space_dims: space_dims,
     min_bounds: min_bounds,
     max_bounds: max_bounds,
     mesh_ldims: mesh_ldims,
-    fe_dims: fe_dims,
+    fe_side_lens: fe_side_lens,
     cumprods_mesh_ldims: cumprods_mesh_ldims,
     cumprods_nb_side_mesh_ldims_by_perp_axis: cumprods_nb_side_mesh_ldims_by_perp_axis,
     first_nb_side_nums_by_perp_axis: first_nb_side_nums_by_perp_axis,
     num_fes: num_fes,
     num_nb_sides: num_nb_sides,
-    num_side_faces_per_fe: 2 * space_dim,
+    num_side_faces_per_fe: 2 * space_dims,
     rect_diameter: rect_diameter,
     rect_diameter_inv: 1./rect_diameter,
     integration_rel_err: integration_rel_err,
@@ -167,7 +167,7 @@ impl<M:Monomial> RectMesh<M> {
   #[inline]
   pub fn perp_axis_for_nb_side(&self, n: NBSideNum) -> Dim {
     assert!(*n < self.num_nb_sides);
-    let mut r = self.space_dim-1;
+    let mut r = self.space_dims-1;
     loop {
       if self.first_nb_side_nums_by_perp_axis[r] <= n { return Dim(r) }
       else if r == 0 { fail!("cannot find perpendicular axis for non-boundary side"); }
@@ -190,7 +190,7 @@ impl<M:Monomial> RectMesh<M> {
     let a = self.perp_axis_for_nb_side(n);
     let orientation_rel_side_num = *n - *self.first_nb_side_nums_by_perp_axis[*a];
     let cumprods_ldims_through = &self.cumprods_nb_side_mesh_ldims_by_perp_axis[*a];
-    let sidemesh_coords = vec::from_fn(self.space_dim, |r| {
+    let sidemesh_coords = vec::from_fn(self.space_dims, |r| {
       let cumprods_preceeding_ldims = if r == 0 { 1 } else { cumprods_ldims_through[r-1] };
       MeshCoord((orientation_rel_side_num % cumprods_ldims_through[r]) / cumprods_preceeding_ldims)
     });
@@ -215,7 +215,7 @@ impl<M:Monomial> RectMesh<M> {
      *    which are perpendicular to axis a.
      */
     let s_a0 = self.first_nb_side_nums_by_perp_axis[*perp_axis];
-    NBSideNum(range(1, self.space_dim).fold(*s_a0 + *coords[0], |sum_coord_contrs, r| {
+    NBSideNum(range(1, self.space_dims).fold(*s_a0 + *coords[0], |sum_coord_contrs, r| {
       sum_coord_contrs + *coords[r] * self.cumprods_nb_side_mesh_ldims_by_perp_axis[*perp_axis][r-1]
     }))
   }
@@ -232,14 +232,14 @@ impl<M:Monomial> RectMesh<M> {
      * cumulative product of the logical mesh dimensions for lesser coordinate dimensions.
      * See Rectangular_Meshes.pdf document for the derivation.
      */
-    FENum(range(1, self.space_dim).fold(*coords[0], |sum_coord_contrs, r| {
+    FENum(range(1, self.space_dims).fold(*coords[0], |sum_coord_contrs, r| {
       sum_coord_contrs + *coords[r] * self.cumprods_mesh_ldims[r-1]
     }))
   }
 
   #[inline]
   pub fn fe_mesh_coords(&self, fe: FENum) -> ~[MeshCoord] {
-    vec::from_fn(self.space_dim, |r| self.fe_mesh_coord(Dim(r), fe))
+    vec::from_fn(self.space_dims, |r| self.fe_mesh_coord(Dim(r), fe))
   }
   #[inline]
   pub fn fe_mesh_coord(&self, r: Dim, fe: FENum) -> MeshCoord {
@@ -249,7 +249,7 @@ impl<M:Monomial> RectMesh<M> {
      * where k_i is the i^th component of the mesh dimensions.
      * See Rectangular_Meshes.pdf document for the derivation.
      */
-    assert!(*r < self.space_dim);
+    assert!(*r < self.space_dims);
     assert!(*fe < self.num_fes);
     let cumprods_preceeding_ldims = if *r == 0 { 1 } else { self.cumprods_mesh_ldims[*r-1] };
     MeshCoord((*fe % self.cumprods_mesh_ldims[*r]) / cumprods_preceeding_ldims)
@@ -257,9 +257,9 @@ impl<M:Monomial> RectMesh<M> {
   
   #[inline]
   pub fn fe_coord_mins_corner(&self, fe: FENum) -> ~[R] {
-    vec::from_fn(self.space_dim, |r| {
+    vec::from_fn(self.space_dims, |r| {
       let fe_mesh_coord_r = *self.fe_mesh_coord(Dim(r), fe) as R;
-      self.min_bounds[r] + fe_mesh_coord_r * self.fe_dims[r]
+      self.min_bounds[r] + fe_mesh_coord_r * self.fe_side_lens[r]
     })
   }
 
@@ -349,9 +349,9 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   }
   
   fn num_boundary_sides(&self) -> uint {
-    range(0, self.space_dim).fold(0u, |perp_axis_contrs, perp_axis| {
+    range(0, self.space_dims).fold(0u, |perp_axis_contrs, perp_axis| {
       perp_axis_contrs +
-      range(0, self.space_dim).fold(1u, |prod, r| {
+      range(0, self.space_dims).fold(1u, |prod, r| {
         prod * if r == perp_axis { 2 } else { *self.mesh_ldims[r] }
       })
     })
@@ -389,19 +389,19 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
 
   #[inline]
   fn intg_global_fn_on_fe_int(&self, f: &fn(&[R]) -> R, fe: FENum) -> R {
-    let d = self.space_dim;
+    let d = self.space_dims;
     let fe_min_corner = self.fe_coord_mins_corner(fe);
-    let fe_max_corner = vec::from_fn(d, |r| fe_min_corner[r] + self.fe_dims[r]);
+    let fe_max_corner = vec::from_fn(d, |r| fe_min_corner[r] + self.fe_side_lens[r]);
 
     quadrature(&f, fe_min_corner, fe_max_corner, self.integration_rel_err, self.integration_abs_err)
   }
 
   #[inline]
   fn intg_global_fn_x_facerel_mon_on_fe_int(&self, f: &fn(&[R]) -> R, mon: M, fe: FENum) -> R {
-    let d = self.space_dim;
+    let d = self.space_dims;
     let fe_min_corner = &self.fe_coord_mins_corner(fe);
     let fe_int_origin = fe_min_corner;
-    let fe_max_corner = vec::from_fn(d, |r| fe_min_corner[r] + self.fe_dims[r]);
+    let fe_max_corner = vec::from_fn(d, |r| fe_min_corner[r] + self.fe_side_lens[r]);
     
     quadrature(&|x: &[R]| { f(x) * mon.value_at_for_origin(x, *fe_int_origin) },
                *fe_min_corner, fe_max_corner,
@@ -412,7 +412,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   fn intg_facerel_poly_on_oshape_int<P:Polynomial<M>>(&self, p: &P, oshape: OShape) -> R {
     assert!(*oshape == 0);
     p.foldl_terms(0 as R, |sum, (coef, mon)| {
-      sum + coef * mon.integral_over_rect_at_origin(self.fe_dims)  
+      sum + coef * mon.integral_over_rect_at_origin(self.fe_side_lens)  
     })
   }
 
@@ -421,7 +421,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
     assert!(*oshape == 0);
     p1.foldl_terms(0 as R, |sum, (coef1, mon1)| {
       p2.foldl_terms(sum, |sum, (coef2, mon2)| {
-        sum + coef1 * coef2 * (mon1*mon2).integral_over_rect_at_origin(self.fe_dims)
+        sum + coef1 * coef2 * (mon1*mon2).integral_over_rect_at_origin(self.fe_side_lens)
       })
     })
   }
@@ -433,7 +433,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
     let a = side_face_perp_axis(side_face);
     p1.foldl_terms(0 as R, |sum, (coef1, mon1)| {
       p2.foldl_terms(sum, |sum, (coef2, mon2)| {
-        sum + coef1 * coef2 * (mon1*mon2).surface_integral_siderel_over_rect_side(self.fe_dims, a)
+        sum + coef1 * coef2 * (mon1*mon2).surface_integral_siderel_over_rect_side(self.fe_side_lens, a)
       })
     })
   }
@@ -441,7 +441,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   #[inline]
   fn intg_facerel_mon_on_oshape_int(&self, mon: M, oshape: OShape) -> R {
     assert!(*oshape == 0);
-    mon.integral_over_rect_at_origin(self.fe_dims)
+    mon.integral_over_rect_at_origin(self.fe_side_lens)
   }
 
   #[inline]
@@ -449,14 +449,14 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
     assert!(*oshape == 0);
     assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);
-    mon.surface_integral_siderel_over_rect_side(self.fe_dims, a)
+    mon.surface_integral_siderel_over_rect_side(self.fe_side_lens, a)
   }
 
   #[inline]
   fn intg_facerel_mon_x_facerel_poly_on_oshape_int<P:Polynomial<M>>(&self, mon: M, p: &P, oshape: OShape) -> R {
     assert!(*oshape == 0);
     p.foldl_terms(0 as R, |sum, (coef, p_mon)| {
-      sum + coef * (mon*p_mon).integral_over_rect_at_origin(self.fe_dims)
+      sum + coef * (mon*p_mon).integral_over_rect_at_origin(self.fe_side_lens)
     })
   }
 
@@ -466,7 +466,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
     assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);
     p.foldl_terms(0 as R, |sum, (coef, p_mon)| {
-      sum + coef * (mon*p_mon).surface_integral_siderel_over_rect_side(self.fe_dims, a)
+      sum + coef * (mon*p_mon).surface_integral_siderel_over_rect_side(self.fe_side_lens, a)
     })
   }
 
@@ -476,7 +476,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
     assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);
     let is_lesser_side = side_face_is_lesser_on_perp_axis(side_face);
-    let side_intrel_a_coord = if is_lesser_side { 0 as R } else { self.fe_dims[*a] };
+    let side_intrel_a_coord = if is_lesser_side { 0 as R } else { self.fe_side_lens[*a] };
 
     /* Here we break the interior-relative monomial on the side into the constant a-dim factor and the monomial
        of other dimension factors. Since the interior and side-relative coordinate systems differ only in dimension 
@@ -484,7 +484,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
     let int_mon_dim_a_fac = pow(side_intrel_a_coord, *int_mon.exp(a) as uint);
     let int_mon_wo_dim_a_fac = int_mon.map_exp(a, |_| Deg(0));
 
-    int_mon_dim_a_fac * (int_mon_wo_dim_a_fac * side_mon).surface_integral_siderel_over_rect_side(self.fe_dims, a)
+    int_mon_dim_a_fac * (int_mon_wo_dim_a_fac * side_mon).surface_integral_siderel_over_rect_side(self.fe_side_lens, a)
   }
 
   #[inline]
@@ -496,7 +496,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
       Dim(r) if r == *a => {
         let int_vmon_mon = int_vmon.mon();
         let is_lesser_side = side_face_is_lesser_on_perp_axis(side_face);
-        let side_intrel_a_coord = if is_lesser_side { 0 as R } else { self.fe_dims[*a] };
+        let side_intrel_a_coord = if is_lesser_side { 0 as R } else { self.fe_side_lens[*a] };
 
         /* Here we break the interior-relative monomial on the side into the constant a-dim factor and the monomial
            of other dimension factors. Since the interior and side-relative coordinate systems differ only in dimension 
@@ -508,7 +508,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
 
         outward_sense * 
         int_vmon_mon_dim_a_fac *
-        (int_vmon_mon_wo_dim_a_fac * side_mon).surface_integral_siderel_over_rect_side(self.fe_dims, a)
+        (int_vmon_mon_wo_dim_a_fac * side_mon).surface_integral_siderel_over_rect_side(self.fe_side_lens, a)
       }
       _ => 0 as R
     }
@@ -522,7 +522,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
       Dim(r) if r == *a => {
         let int_vmon_mon = int_vmon.mon();
         let is_lesser_side = side_face_is_lesser_on_perp_axis(side_face);
-        let side_intrel_a_coord = if is_lesser_side { 0 as R } else { self.fe_dims[*a] };
+        let side_intrel_a_coord = if is_lesser_side { 0 as R } else { self.fe_side_lens[*a] };
 
         /* Here we break the interior-relative monomial on the side into the constant a-dim factor and the monomial
            of other dimension factors. Since the interior and side-relative coordinate systems differ only in dimension 
@@ -535,7 +535,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
         outward_sense * 
         int_vmon_mon_dim_a_fac *
         p.foldl_terms(0 as R, |sum, (coef, mon)| {
-          sum + coef * (int_vmon_mon_wo_dim_a_fac * mon).surface_integral_siderel_over_rect_side(self.fe_dims, a)
+          sum + coef * (int_vmon_mon_wo_dim_a_fac * mon).surface_integral_siderel_over_rect_side(self.fe_side_lens, a)
         })
       }
       _ => 0 as R
@@ -550,7 +550,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
 pub trait RectIntegrable {
 
   /// Integrate the monomial over the rectangle of indicated dimensions having its minimums corner at the origin.
-  fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R;  
+  fn integral_over_rect_at_origin(&self, side_lens: &[R]) -> R;  
 
   /// Integrate a *side-relative* monomial over a side face of a rectangle of given dimenions, the side being
   /// perpendicular to the indicated axis. The monomial's origin is the side's corner of minimum coordinates.
@@ -558,15 +558,15 @@ pub trait RectIntegrable {
   /// indicated axis is chosen as the domain of integration, because of the side local coordinates used to
   /// interpet the monomial (the  monomial will either have 0 exponent for the perpendicular axis variable
   /// and thus be independent of values in that coordinate, or else the integral will be 0).
-  fn surface_integral_siderel_over_rect_side(&self, rect_dims: &[R], side_perp_axis: Dim) -> R;
+  fn surface_integral_siderel_over_rect_side(&self, side_lens: &[R], side_perp_axis: Dim) -> R;
 
 }
 
 impl RectIntegrable for Mon1d {
   #[inline]
-  fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R {
+  fn integral_over_rect_at_origin(&self, side_lens: &[R]) -> R {
     let exp_plus_1 = *self.exps[0] as uint + 1;
-    pow(rect_dims[0], exp_plus_1)/(exp_plus_1 as R)
+    pow(side_lens[0], exp_plus_1)/(exp_plus_1 as R)
   }
 
   fn surface_integral_siderel_over_rect_side(&self, _: &[R], _: Dim) -> R {
@@ -576,24 +576,24 @@ impl RectIntegrable for Mon1d {
 
 impl RectIntegrable for Mon2d {
   #[inline]
-  fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R {
+  fn integral_over_rect_at_origin(&self, side_lens: &[R]) -> R {
     let exp0_plus_1 = *self.exps[0] as uint + 1;
     let exp1_plus_1 = *self.exps[1] as uint + 1;
-    pow(rect_dims[0], exp0_plus_1)/(exp0_plus_1 as R) *
-    pow(rect_dims[1], exp1_plus_1)/(exp1_plus_1 as R)
+    pow(side_lens[0], exp0_plus_1)/(exp0_plus_1 as R) *
+    pow(side_lens[1], exp1_plus_1)/(exp1_plus_1 as R)
   }
   #[inline]
-  fn surface_integral_siderel_over_rect_side(&self, rect_dims: &[R], side_perp_axis: Dim) -> R {
+  fn surface_integral_siderel_over_rect_side(&self, side_lens: &[R], side_perp_axis: Dim) -> R {
     if *self.exps[*side_perp_axis] != 0u8 { 0 as R }
     else {
       match side_perp_axis {
         Dim(0) => {
           let exp1_plus_1 = *self.exps[1] as uint + 1;
-          pow(rect_dims[1], exp1_plus_1)/(exp1_plus_1 as R)
+          pow(side_lens[1], exp1_plus_1)/(exp1_plus_1 as R)
         }
         Dim(1) => {
           let exp0_plus_1 = *self.exps[0] as uint + 1;
-          pow(rect_dims[0], exp0_plus_1)/(exp0_plus_1 as R)
+          pow(side_lens[0], exp0_plus_1)/(exp0_plus_1 as R)
         }
         _ => fail!("Dimension out of range.")
       }
@@ -603,37 +603,37 @@ impl RectIntegrable for Mon2d {
 
 impl RectIntegrable for Mon3d {
   #[inline]
-  fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R {
+  fn integral_over_rect_at_origin(&self, side_lens: &[R]) -> R {
     let exp0_plus_1 = *self.exps[0] as uint + 1;
     let exp1_plus_1 = *self.exps[1] as uint + 1;
     let exp2_plus_1 = *self.exps[2] as uint + 1;
 
-    pow(rect_dims[0], exp0_plus_1)/(exp0_plus_1 as R) *
-    pow(rect_dims[1], exp1_plus_1)/(exp1_plus_1 as R) *
-    pow(rect_dims[2], exp2_plus_1)/(exp2_plus_1 as R)
+    pow(side_lens[0], exp0_plus_1)/(exp0_plus_1 as R) *
+    pow(side_lens[1], exp1_plus_1)/(exp1_plus_1 as R) *
+    pow(side_lens[2], exp2_plus_1)/(exp2_plus_1 as R)
   }
   #[inline]
-  fn surface_integral_siderel_over_rect_side(&self, rect_dims: &[R], side_perp_axis: Dim) -> R {
+  fn surface_integral_siderel_over_rect_side(&self, side_lens: &[R], side_perp_axis: Dim) -> R {
     if *self.exps[*side_perp_axis] != 0u8 { 0 as R }
     else {
       match side_perp_axis {
         Dim(0) => {
           let exp1_plus_1 = *self.exps[1] as uint + 1;
           let exp2_plus_1 = *self.exps[2] as uint + 1;
-          pow(rect_dims[1], exp1_plus_1)/(exp1_plus_1 as R) *
-          pow(rect_dims[2], exp2_plus_1)/(exp2_plus_1 as R)
+          pow(side_lens[1], exp1_plus_1)/(exp1_plus_1 as R) *
+          pow(side_lens[2], exp2_plus_1)/(exp2_plus_1 as R)
         }
         Dim(1) => {
           let exp0_plus_1 = *self.exps[0] as uint + 1;
           let exp2_plus_1 = *self.exps[2] as uint + 1;
-          pow(rect_dims[0], exp0_plus_1)/(exp0_plus_1 as R) *
-          pow(rect_dims[2], exp2_plus_1)/(exp2_plus_1 as R)
+          pow(side_lens[0], exp0_plus_1)/(exp0_plus_1 as R) *
+          pow(side_lens[2], exp2_plus_1)/(exp2_plus_1 as R)
         }
         Dim(2) => {
           let exp0_plus_1 = *self.exps[0] as uint + 1;
           let exp1_plus_1 = *self.exps[1] as uint + 1;
-          pow(rect_dims[0], exp0_plus_1)/(exp0_plus_1 as R) *
-          pow(rect_dims[1], exp1_plus_1)/(exp1_plus_1 as R)
+          pow(side_lens[0], exp0_plus_1)/(exp0_plus_1 as R) *
+          pow(side_lens[1], exp1_plus_1)/(exp1_plus_1 as R)
         }
         _ => fail!("Dimension out of range.")
       }
@@ -643,18 +643,18 @@ impl RectIntegrable for Mon3d {
 
 impl RectIntegrable for Mon4d {
   #[inline]
-  fn integral_over_rect_at_origin(&self, rect_dims: &[R]) -> R {
+  fn integral_over_rect_at_origin(&self, side_lens: &[R]) -> R {
     let exp0_plus_1 = *self.exps[0] as uint + 1;
     let exp1_plus_1 = *self.exps[1] as uint + 1;
     let exp2_plus_1 = *self.exps[2] as uint + 1;
     let exp3_plus_1 = *self.exps[3] as uint + 1;
-    pow(rect_dims[0], exp0_plus_1)/(exp0_plus_1 as R) *
-    pow(rect_dims[1], exp1_plus_1)/(exp1_plus_1 as R) *
-    pow(rect_dims[2], exp2_plus_1)/(exp2_plus_1 as R) *
-    pow(rect_dims[3], exp3_plus_1)/(exp3_plus_1 as R)
+    pow(side_lens[0], exp0_plus_1)/(exp0_plus_1 as R) *
+    pow(side_lens[1], exp1_plus_1)/(exp1_plus_1 as R) *
+    pow(side_lens[2], exp2_plus_1)/(exp2_plus_1 as R) *
+    pow(side_lens[3], exp3_plus_1)/(exp3_plus_1 as R)
   }
   #[inline]
-  fn surface_integral_siderel_over_rect_side(&self, rect_dims: &[R], side_perp_axis: Dim) -> R {
+  fn surface_integral_siderel_over_rect_side(&self, side_lens: &[R], side_perp_axis: Dim) -> R {
     if *self.exps[*side_perp_axis] != 0u8 { 0 as R }
     else {
       match side_perp_axis {
@@ -662,33 +662,33 @@ impl RectIntegrable for Mon4d {
           let exp1_plus_1 = *self.exps[1] as uint + 1;
           let exp2_plus_1 = *self.exps[2] as uint + 1;
           let exp3_plus_1 = *self.exps[3] as uint + 1;
-          pow(rect_dims[1], exp1_plus_1)/(exp1_plus_1 as R) *
-          pow(rect_dims[2], exp2_plus_1)/(exp2_plus_1 as R) *
-          pow(rect_dims[3], exp3_plus_1)/(exp3_plus_1 as R)
+          pow(side_lens[1], exp1_plus_1)/(exp1_plus_1 as R) *
+          pow(side_lens[2], exp2_plus_1)/(exp2_plus_1 as R) *
+          pow(side_lens[3], exp3_plus_1)/(exp3_plus_1 as R)
         }
         Dim(1) => {
           let exp0_plus_1 = *self.exps[0] as uint + 1;
           let exp2_plus_1 = *self.exps[2] as uint + 1;
           let exp3_plus_1 = *self.exps[3] as uint + 1;
-          pow(rect_dims[0], exp0_plus_1)/(exp0_plus_1 as R) *
-          pow(rect_dims[2], exp2_plus_1)/(exp2_plus_1 as R) *
-          pow(rect_dims[3], exp3_plus_1)/(exp3_plus_1 as R)
+          pow(side_lens[0], exp0_plus_1)/(exp0_plus_1 as R) *
+          pow(side_lens[2], exp2_plus_1)/(exp2_plus_1 as R) *
+          pow(side_lens[3], exp3_plus_1)/(exp3_plus_1 as R)
         }
         Dim(2) => {
           let exp0_plus_1 = *self.exps[0] as uint + 1;
           let exp1_plus_1 = *self.exps[1] as uint + 1;
           let exp3_plus_1 = *self.exps[3] as uint + 1;
-          pow(rect_dims[0], exp0_plus_1)/(exp0_plus_1 as R) *
-          pow(rect_dims[1], exp1_plus_1)/(exp1_plus_1 as R) *
-          pow(rect_dims[3], exp3_plus_1)/(exp3_plus_1 as R)
+          pow(side_lens[0], exp0_plus_1)/(exp0_plus_1 as R) *
+          pow(side_lens[1], exp1_plus_1)/(exp1_plus_1 as R) *
+          pow(side_lens[3], exp3_plus_1)/(exp3_plus_1 as R)
         }
         Dim(3) => {
           let exp0_plus_1 = *self.exps[0] as uint + 1;
           let exp1_plus_1 = *self.exps[1] as uint + 1;
           let exp2_plus_1 = *self.exps[2] as uint + 1;
-          pow(rect_dims[0], exp0_plus_1)/(exp0_plus_1 as R) *
-          pow(rect_dims[1], exp1_plus_1)/(exp1_plus_1 as R) *
-          pow(rect_dims[2], exp2_plus_1)/(exp2_plus_1 as R)
+          pow(side_lens[0], exp0_plus_1)/(exp0_plus_1 as R) *
+          pow(side_lens[1], exp1_plus_1)/(exp1_plus_1 as R) *
+          pow(side_lens[2], exp2_plus_1)/(exp2_plus_1 as R)
         }
         _ => fail!("Dimension out of range.")
       }
