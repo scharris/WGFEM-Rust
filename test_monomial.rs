@@ -1,4 +1,5 @@
 use common::*;
+use monomial;
 use monomial::{Monomial, Mon1d, Mon2d, Mon3d, Mon4d};
 
 fn test_domain_dims() {
@@ -544,12 +545,77 @@ fn test_map_exp_4d() {
   assert_eq!(t.map_exp(Dim(3), |e| Deg(*e+1)), t*t);
 }
 
-/*
-// TODO: test counting and generation of monomials not exceeding a given degree
 #[test]
 fn test_num_mons_of_deg_le() {
-  assert_eq!(monomial::num_mons_of_deg_le(Deg(2), Dim(2)) == 6
-@test length(mons_of_deg_le(deg(5), dim(4))) == count_mons_of_deg_le(deg(5), dim(4))
-@test length(mons_of_deg_le(deg(6), dim(5))) == count_mons_of_deg_le(deg(6), dim(5))
+  assert_eq!(monomial::num_mons_of_deg_le(Deg(2), 2), 6);
+
+  let mons_4d_deg_le_5: ~[Mon4d] = Monomial::mons_of_deg_le(Deg(5));
+  assert_eq!(mons_4d_deg_le_5.len(), monomial::num_mons_of_deg_le(Deg(5), 4));
+
+  assert_eq!(monomial::num_mons_of_deg_le(Deg(1), 3), 4);
+
+  assert_eq!(monomial::num_mons_of_deg_le(Deg(0), 2), 1);
 }
-*/ 
+
+#[test]
+fn test_mons_of_deg_le_2d() {
+  let one: Mon2d = Monomial::one();
+  let x = Mon2d { exps: [Deg(1), Deg(0)] };
+  let y = Mon2d { exps: [Deg(0), Deg(1)] };
+  
+  let mons_2d_deg_le_0: ~[Mon2d] = Monomial::mons_of_deg_le(Deg(0));
+  assert_eq!(&mons_2d_deg_le_0, &~[one]);
+  assert_eq!(mons_2d_deg_le_0.len(), monomial::num_mons_of_deg_le(Deg(0), 2));
+  
+  let mons_2d_deg_le_1: ~[Mon2d] = Monomial::mons_of_deg_le(Deg(1));
+  assert_eq!(&mons_2d_deg_le_1, &~[one, y, x]);
+  assert_eq!(mons_2d_deg_le_1.len(), monomial::num_mons_of_deg_le(Deg(1), 2));
+ 
+  let mons_2d_deg_le_2: ~[Mon2d] = Monomial::mons_of_deg_le(Deg(2));
+  assert_eq!(&mons_2d_deg_le_2, &~[one, y, y*y, x, x*y, x*x]);
+  assert_eq!(mons_2d_deg_le_2.len(), monomial::num_mons_of_deg_le(Deg(2), 2));
+}
+
+#[test]
+fn test_mons_of_deg_le_3d() {
+  let one: Mon3d = Monomial::one();
+  let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
+  let y = Mon3d { exps: [Deg(0), Deg(1), Deg(0)] };
+  let z = Mon3d { exps: [Deg(0), Deg(0), Deg(1)] };
+  
+  let mons_3d_deg_le_0: ~[Mon3d] = Monomial::mons_of_deg_le(Deg(0));
+  assert_eq!(&mons_3d_deg_le_0, &~[one]);
+  assert_eq!(mons_3d_deg_le_0.len(), monomial::num_mons_of_deg_le(Deg(0), 3));
+  
+  let mons_3d_deg_le_1: ~[Mon3d] = Monomial::mons_of_deg_le(Deg(1));
+  assert_eq!(&mons_3d_deg_le_1, &~[one, z, y, x]);
+  assert_eq!(mons_3d_deg_le_1.len(), monomial::num_mons_of_deg_le(Deg(1), 3));
+ 
+  let mons_3d_deg_le_2: ~[Mon3d] = Monomial::mons_of_deg_le(Deg(2));
+  assert_eq!(&mons_3d_deg_le_2, &~[one, z, z*z, y, y*z, y*y, x, x*z, x*y, x*x]);
+  assert_eq!(mons_3d_deg_le_2.len(), monomial::num_mons_of_deg_le(Deg(2), 3));
+}
+
+
+#[test]
+fn test_mons_of_deg_le_4d() {
+  let one: Mon4d = Monomial::one();
+  let x = Mon4d { exps: [Deg(1), Deg(0), Deg(0), Deg(0)] };
+  let y = Mon4d { exps: [Deg(0), Deg(1), Deg(0), Deg(0)] };
+  let z = Mon4d { exps: [Deg(0), Deg(0), Deg(1), Deg(0)] };
+  let t = Mon4d { exps: [Deg(0), Deg(0), Deg(0), Deg(1)] };
+  
+  let mons_4d_deg_le_0: ~[Mon4d] = Monomial::mons_of_deg_le(Deg(0));
+  assert_eq!(&mons_4d_deg_le_0, &~[one]);
+  assert_eq!(mons_4d_deg_le_0.len(), monomial::num_mons_of_deg_le(Deg(0), 4));
+  
+  let mons_4d_deg_le_1: ~[Mon4d] = Monomial::mons_of_deg_le(Deg(1));
+  assert_eq!(&mons_4d_deg_le_1, &~[one, t, z, y, x]);
+  assert_eq!(mons_4d_deg_le_1.len(), monomial::num_mons_of_deg_le(Deg(1), 4));
+ 
+  let mons_4d_deg_le_2: ~[Mon4d] = Monomial::mons_of_deg_le(Deg(2));
+  assert_eq!(&mons_4d_deg_le_2, 
+             &~[one, t, t*t, z, z*t, z*z, y, y*t, y*z, y*y, x, x*t, x*z, x*y, x*x]);
+  assert_eq!(mons_4d_deg_le_2.len(), monomial::num_mons_of_deg_le(Deg(2), 4));
+}
+
