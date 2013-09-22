@@ -29,6 +29,13 @@ impl<M:Monomial> VectorMonomial<M> {
     self.mon.clone()
   }
 
+  #[inline]
+  pub fn divergence_coef_and_mon(&self) -> (R,M) {
+    match self.mon.exp(self.mon_dim) {
+      Deg(0) => (0.,self.mon.clone()),
+      Deg(e) => (e as R, self.mon.map_exp(self.mon_dim, |e| Deg(*e-1)))
+    }
+  }
 }
 
 
@@ -45,4 +52,25 @@ fn test_improper_construction() {
   let vmon: VectorMonomial<Mon2d> = VectorMonomial::new(Dim(3), x);
 }
 
+#[test]
+fn test_divergence() {
+  let one = Mon2d { exps: [Deg(0), Deg(0)] };
+  let x = Mon2d { exps: [Deg(1), Deg(0)] };
+  let y = Mon2d { exps: [Deg(0), Deg(1)] };
+  
+  let x_dim0_vmon: VectorMonomial<Mon2d> = VectorMonomial::new(Dim(0), x);
+  assert_eq!(x_dim0_vmon.divergence_coef_and_mon(), (1.,one));
+  
+  let y_dim0_vmon: VectorMonomial<Mon2d> = VectorMonomial::new(Dim(0), y);
+  assert_eq!(y_dim0_vmon.divergence_coef_and_mon(), (0.,y));
+  
+  let y_dim1_vmon: VectorMonomial<Mon2d> = VectorMonomial::new(Dim(1), y);
+  assert_eq!(y_dim1_vmon.divergence_coef_and_mon(), (1.,one));
+  
+  let xy_dim0_vmon: VectorMonomial<Mon2d> = VectorMonomial::new(Dim(0), x*y);
+  assert_eq!(xy_dim0_vmon.divergence_coef_and_mon(), (1.,y));
+
+  let x2y3_dim1_vmon: VectorMonomial<Mon2d> = VectorMonomial::new(Dim(1), x*x*y*y*y);
+  assert_eq!(x2y3_dim1_vmon.divergence_coef_and_mon(), (3., x*x*y*y));
+}
 
