@@ -4,7 +4,7 @@ use std::iter::range_inclusive;
 
 use common::*;
 use monomial::{Monomial, Mon1d, Mon2d, Mon3d, Mon4d};
-use polynomial::{Polynomial, poly};
+use polynomial::Polynomial;
 use vector_monomial::VectorMonomial;
 use mesh::*;
 use quadrature::*;
@@ -90,12 +90,6 @@ fn new_impl<M:Monomial>(min_bounds: ~[R],
       bounds_diff/(ldim_r as R)
     });
 
-  let fe_dims_with_drops: ~[~[R]] =
-    vec::from_fn(space_dim, |r| {
-      if r != space_dim-1 { fe_dims.slice_to(r) + fe_dims.slice_from(r+1) }
-      else { fe_dims.slice_to(r).to_owned() }
-    });
- 
   let cumprods_mesh_ldims: ~[uint] =
     mesh_ldims.iter().scan(1, |prod, &ldim| {
       *prod *= *ldim;
@@ -292,21 +286,26 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   
   #[inline(always)]
   fn oriented_shape_for_fe(&self, fe: FENum) -> OShape {
+    assert!(*fe < self.num_fes);
     OShape(0)
   }
   
   #[inline(always)]
   fn num_side_faces_for_fe(&self, fe: FENum) -> uint {
+    assert!(*fe < self.num_fes);
     self.num_side_faces_per_fe
   }
   
   #[inline(always)]
   fn num_side_faces_for_shape(&self, oshape: OShape) -> uint {
+    assert!(*oshape == 0);
     self.num_side_faces_per_fe 
   }
   
   #[inline(always)]
   fn dependent_dim_for_oshape_side(&self, oshape: OShape, side_face: SideFace) -> Dim {
+    assert!(*oshape == 0);
+    assert!((*side_face as uint) < self.num_side_faces_per_fe);
     side_face_perp_axis(side_face)
   }
   
@@ -324,6 +323,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   
   #[inline]
   fn nb_side_num_for_fe_side(&self, fe: FENum, side_face: SideFace) -> NBSideNum {
+    assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);
     let side_mesh_coords = {
       if side_face_is_lesser_on_perp_axis(side_face) {
@@ -341,6 +341,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
 
   #[inline]
   fn is_boundary_side(&self, fe: FENum, side_face: SideFace) -> bool {
+    assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);
     let coord_a = self.fe_mesh_coord(a, fe);
     let is_lesser_side = side_face_is_lesser_on_perp_axis(side_face);
@@ -358,6 +359,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   
   #[inline(always)]
   fn shape_diameter_inv(&self, oshape: OShape) -> R {
+    assert!(*oshape == 0);
     self.rect_diameter_inv    
   }
 
@@ -408,6 +410,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
 
   #[inline]
   fn intg_facerel_poly_on_oshape_int<P:Polynomial<M>>(&self, p: &P, oshape: OShape) -> R {
+    assert!(*oshape == 0);
     p.foldl_terms(0 as R, |sum, (coef, mon)| {
       sum + coef * mon.integral_over_rect_at_origin(self.fe_dims)  
     })
@@ -415,6 +418,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
 
   #[inline]
   fn intg_facerel_poly_x_facerel_poly_on_oshape_int<P:Polynomial<M>>(&self, p1: &P, p2: &P, oshape: OShape) -> R {
+    assert!(*oshape == 0);
     p1.foldl_terms(0 as R, |sum, (coef1, mon1)| {
       p2.foldl_terms(sum, |sum, (coef2, mon2)| {
         sum + coef1 * coef2 * (mon1*mon2).integral_over_rect_at_origin(self.fe_dims)
@@ -424,6 +428,8 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
 
   #[inline]
   fn intg_facerel_poly_x_facerel_poly_on_oshape_side<P:Polynomial<M>>(&self, p1: &P, p2: &P, oshape: OShape, side_face: SideFace) -> R {
+    assert!(*oshape == 0);
+    assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);
     p1.foldl_terms(0 as R, |sum, (coef1, mon1)| {
       p2.foldl_terms(sum, |sum, (coef2, mon2)| {
@@ -434,17 +440,21 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
 
   #[inline]
   fn intg_facerel_mon_on_oshape_int(&self, mon: M, oshape: OShape) -> R {
+    assert!(*oshape == 0);
     mon.integral_over_rect_at_origin(self.fe_dims)
   }
 
   #[inline]
   fn intg_facerel_mon_on_oshape_side(&self, mon: M, oshape: OShape, side_face: SideFace) -> R {
+    assert!(*oshape == 0);
+    assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);
     mon.surface_integral_siderel_over_rect_side(self.fe_dims, a)
   }
 
   #[inline]
   fn intg_facerel_mon_x_facerel_poly_on_oshape_int<P:Polynomial<M>>(&self, mon: M, p: &P, oshape: OShape) -> R {
+    assert!(*oshape == 0);
     p.foldl_terms(0 as R, |sum, (coef, p_mon)| {
       sum + coef * (mon*p_mon).integral_over_rect_at_origin(self.fe_dims)
     })
@@ -452,6 +462,8 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
 
   #[inline]
   fn intg_facerel_mon_x_facerel_poly_on_oshape_side<P:Polynomial<M>>(&self, mon: M, p: &P, oshape: OShape, side_face: SideFace) -> R {
+    assert!(*oshape == 0);
+    assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);
     p.foldl_terms(0 as R, |sum, (coef, p_mon)| {
       sum + coef * (mon*p_mon).surface_integral_siderel_over_rect_side(self.fe_dims, a)
@@ -460,6 +472,8 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
 
   #[inline]
   fn intg_intrel_mon_x_siderel_mon_on_oshape_side(&self, int_mon: M, side_mon: M, oshape: OShape, side_face: SideFace) -> R {
+    assert!(*oshape == 0);
+    assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);
     let is_lesser_side = side_face_is_lesser_on_perp_axis(side_face);
     let side_intrel_a_coord = if is_lesser_side { 0 as R } else { self.fe_dims[*a] };
@@ -475,6 +489,8 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
 
   #[inline]
   fn intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(&self, side_mon: M, int_vmon: &VectorMonomial<M>, oshape: OShape, side_face: SideFace) -> R {
+    assert!(*oshape == 0);
+    assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);
     match int_vmon.mon_dim() {
       Dim(r) if r == *a => {
@@ -499,6 +515,8 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   }
  
   fn intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side<P:Polynomial<M>>(&self, p: &P, int_vmon: &VectorMonomial<M>, oshape: OShape, side_face: SideFace) -> R {
+    assert!(*oshape == 0);
+    assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);
     match int_vmon.mon_dim() {
       Dim(r) if r == *a => {
@@ -551,7 +569,7 @@ impl RectIntegrable for Mon1d {
     pow(rect_dims[0], exp_plus_1)/(exp_plus_1 as R)
   }
 
-  fn surface_integral_siderel_over_rect_side(&self, rect_dims: &[R], side_perp_axis: Dim) -> R {
+  fn surface_integral_siderel_over_rect_side(&self, _: &[R], _: Dim) -> R {
     if *self.exps[0] != 0u8 {0 as R} else {1 as R}
   }
 }
@@ -683,7 +701,7 @@ impl RectIntegrable for Mon4d {
 // Find the axis which is perpendicular to the given side face.
 #[inline]
 fn side_face_perp_axis(side_face: SideFace) -> Dim {
-  Dim(*side_face as uint / 2)
+  Dim((*side_face as uint) / 2)
 }
 
 // Determine whether a side face is the one with lesser axis value along its perpendicular axis.
