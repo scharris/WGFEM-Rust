@@ -110,7 +110,7 @@ fn test_exp_1d() {
 #[should_fail]
 fn test_exp_fail_1d() {
   let one: Mon1d = Monomial::one();
-  let bad = one.exp(Dim(1)); 
+  one.exp(Dim(1)); 
 }
 
 #[test]
@@ -123,7 +123,7 @@ fn test_exp_2d() {
 #[should_fail]
 fn test_exp_fail_2d() {
   let one: Mon2d = Monomial::one();
-  let bad = one.exp(Dim(2)); 
+  one.exp(Dim(2)); 
 }
 #[test]
 fn test_exp_3d() {
@@ -136,7 +136,7 @@ fn test_exp_3d() {
 #[should_fail]
 fn test_exp_fail_3d() {
   let one: Mon3d = Monomial::one();
-  let bad = one.exp(Dim(3)); 
+  one.exp(Dim(3)); 
 }
 #[test]
 fn test_exp_4d() {
@@ -150,7 +150,7 @@ fn test_exp_4d() {
 #[should_fail]
 fn test_exp_fail_4d() {
   let one: Mon4d = Monomial::one();
-  let bad = one.exp(Dim(4)); 
+  one.exp(Dim(4)); 
 }
 
 #[test]
@@ -443,14 +443,12 @@ fn test_hash_4d() {
 
 #[test]
 fn test_mul_1d() {
-  use std::hashmap::HashSet;
   let one: Mon1d = Monomial::one();
   let x = Mon1d { exps: [Deg(1)] };
   assert_eq!(x * x, Mon1d { exps: [Deg(2)] });
   assert_eq!(x * one, x);
 }
 fn test_mul_2d() {
-  use std::hashmap::HashSet;
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
   let y = Mon2d { exps: [Deg(0), Deg(1)] };
   let one: Mon2d = Monomial::one();
@@ -461,7 +459,6 @@ fn test_mul_2d() {
 
 #[test]
 fn test_mul_3d() {
-  use std::hashmap::HashSet;
   let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
   let y = Mon3d { exps: [Deg(0), Deg(1), Deg(0)] };
   let z = Mon3d { exps: [Deg(0), Deg(0), Deg(1)] };
@@ -475,7 +472,6 @@ fn test_mul_3d() {
 }
 #[test]
 fn test_mul_4d() {
-  use std::hashmap::HashSet;
   let x = Mon4d { exps: [Deg(1), Deg(0), Deg(0), Deg(0)] };
   let y = Mon4d { exps: [Deg(0), Deg(1), Deg(0), Deg(0)] };
   let z = Mon4d { exps: [Deg(0), Deg(0), Deg(1), Deg(0)] };
@@ -548,3 +544,4 @@ fn test_map_exp_4d() {
   assert_eq!(t.map_exp(Dim(3), |e| Deg(*e+1)), t*t);
 }
 
+// TODO: test counting and generation of monomials not exceeding a given degree

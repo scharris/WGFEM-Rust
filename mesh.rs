@@ -1,8 +1,4 @@
-use extra::treemap::TreeMap;
-use std::vec;
-use std::iter::Zip;
 use common::*;
-use monomial::Monomial;
 use polynomial::Polynomial;
 use vector_monomial::VectorMonomial;
 

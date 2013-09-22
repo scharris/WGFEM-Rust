@@ -1,7 +1,7 @@
 use std::num::{sqrt, abs};
 use common::*;
-use monomial::{Monomial, Mon1d, Mon2d, Mon3d, Mon4d};
-use polynomial::{Polynomial, poly};
+use monomial::{Mon1d, Mon2d, Mon3d, Mon4d};
+use polynomial::{poly};
 use vector_monomial::VectorMonomial;
 use mesh::*;
 use rect_mesh::*;
@@ -317,7 +317,7 @@ fn test_3x4_bad_mesh_coords() -> () {
   let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
                                                  ~[2f64, 3.],
                                                  ~[MeshCoord(3), MeshCoord(4)]);
-  let bad_access = rmesh3x4.fe_mesh_coord(Dim(0), FENum(3*4));
+  rmesh3x4.fe_mesh_coord(Dim(0), FENum(3*4));
 }
 
 #[test]
@@ -326,7 +326,7 @@ fn test_3x4x5_bad_mesh_coords() -> () {
   let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
-  let bad_access = rmesh3x4x5.fe_mesh_coord(Dim(0), FENum(3*4*5));
+  rmesh3x4x5.fe_mesh_coord(Dim(0), FENum(3*4*5));
 }
 
 #[test]
@@ -335,7 +335,7 @@ fn test_3x4x5x6_bad_mesh_coords() -> () {
   let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
                                                      ~[2f64, 3., 4., 5.],
                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
-  let bad_access = rmesh3x4x5x6.fe_mesh_coord(Dim(0), FENum(3*4*5*6));
+  rmesh3x4x5x6.fe_mesh_coord(Dim(0), FENum(3*4*5*6));
 }
 
 fn test_3x4_boundary_side_determ() -> () {
@@ -547,7 +547,7 @@ fn test_3x4_bad_is_boundary_side_fenum() -> () {
                                                  ~[2f64, 3.],
                                                  ~[MeshCoord(3), MeshCoord(4)]);
   let top_side = greater_side_face_perp_to_axis(Dim(1));
-  let bad = rmesh3x4.is_boundary_side(FENum(12), top_side);
+  rmesh3x4.is_boundary_side(FENum(12), top_side);
 }
 
 #[test]
@@ -557,7 +557,7 @@ fn test_3x4x5_bad_is_boundary_side_fenum() -> () {
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let front_side = greater_side_face_perp_to_axis(Dim(2));
-  let bad = rmesh3x4x5.is_boundary_side(FENum(5*12), front_side);
+  rmesh3x4x5.is_boundary_side(FENum(5*12), front_side);
 }
 
 #[test]
@@ -567,7 +567,7 @@ fn test_3x4x5x6_bad_is_boundary_side_fenum() -> () {
                                                      ~[2f64, 3., 4.],
                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let front_side = greater_side_face_perp_to_axis(Dim(2));
-  let bad = rmesh3x4x5x6.is_boundary_side(FENum(3*4*5*6), front_side);
+  rmesh3x4x5x6.is_boundary_side(FENum(3*4*5*6), front_side);
 }
 
 // Test the non-boundary sides perpendicular to axis 0 for 2d mesh.
@@ -1058,7 +1058,7 @@ fn test_3x4x5_nonboundary_bad_side_coords_axis2() -> () {
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let first_axis2 = 2*4*5 + 3*3*5;
-  let sgeom = rmesh3x4x5.nb_side_geom(NBSideNum(first_axis2+48));
+  rmesh3x4x5.nb_side_geom(NBSideNum(first_axis2+48));
 }
 
 
@@ -1369,7 +1369,6 @@ fn test_intg_global_fn_x_facerel_mon_on_fe16_int_4d() -> () {
   let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
                                                      ~[2f64, 3., 4., 5.],
                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
-  let x = Mon4d { exps: [Deg(1), Deg(0), Deg(0), Deg(0)] };
   let y = Mon4d { exps: [Deg(0), Deg(1), Deg(0), Deg(0)] };
   let z = Mon4d { exps: [Deg(0), Deg(0), Deg(1), Deg(0)] };
   let t = Mon4d { exps: [Deg(0), Deg(0), Deg(0), Deg(1)] };
@@ -1481,7 +1480,6 @@ fn test_intg_facerel_poly_x_facerel_poly_on_oshape_int_4d() -> () {
   let x = Mon4d { exps: [Deg(1), Deg(0), Deg(0), Deg(0)] };
   let y = Mon4d { exps: [Deg(0), Deg(1), Deg(0), Deg(0)] };
   let z = Mon4d { exps: [Deg(0), Deg(0), Deg(1), Deg(0)] };
-  let t = Mon4d { exps: [Deg(0), Deg(0), Deg(0), Deg(1)] };
 
   // (2yz^2 + 3xyz)(x - 2y) = 2xyz^2 - 4y^2z^2 + 3x^2yz - 6xy^2z
   assert_approx(rmesh3x4x5x6.intg_facerel_poly_x_facerel_poly_on_oshape_int(&poly(~[(2.,y*z*z), (3.,x*y*z)]), &poly(~[(1.,x), (-2.,y)]), OShape(0)),
@@ -1882,7 +1880,6 @@ fn test_intg_facerel_mon_x_facerel_poly_on_oshape_side() -> () {
   let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
   let y = Mon3d { exps: [Deg(0), Deg(1), Deg(0)] };
   let z = Mon3d { exps: [Deg(0), Deg(0), Deg(1)] };
-  let one_poly = ~poly(~[(1.,one)]);
 
   assert_approx(rmesh3x4x5.intg_facerel_mon_x_facerel_poly_on_oshape_side(one, &poly(~[(1.2,y*z*z), (3.4,x*x*x*y*y*y*y)]), OShape(0), left_side),
                 1.2 * pow(1./4.,2)/2. * pow(1./5.,3)/3.);
@@ -1929,11 +1926,9 @@ fn test_intg_intrel_mon_x_siderel_mon_on_oshape_side() -> () {
   let back_side = lesser_side_face_perp_to_axis(Dim(2));
   let front_side = greater_side_face_perp_to_axis(Dim(2));
 
-  let one = Mon3d { exps: [Deg(0), Deg(0), Deg(0)] };
   let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
   let y = Mon3d { exps: [Deg(0), Deg(1), Deg(0)] };
   let z = Mon3d { exps: [Deg(0), Deg(0), Deg(1)] };
-  let one_poly = ~poly(~[(1.,one)]);
 
   // xy yz^2 = x y^2z^2 where x is 0 or 1/3 for the left and right sides, respectively.
   assert_approx(rmesh3x4x5.intg_intrel_mon_x_siderel_mon_on_oshape_side(x*y, y*z*z, OShape(0), left_side),
@@ -1970,7 +1965,6 @@ fn test_intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side_dim0() -> () {
   let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
   let y = Mon3d { exps: [Deg(0), Deg(1), Deg(0)] };
   let z = Mon3d { exps: [Deg(0), Deg(0), Deg(1)] };
-  let one_poly = ~poly(~[(1.,one)]);
 
   assert_eq!(rmesh3x4x5.intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(
                one, &VectorMonomial{mon: x*x*x*y*y*y*y*z, mon_dim: Dim(0)}, OShape(0), left_side),
@@ -2028,7 +2022,6 @@ fn test_intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side_dim1() -> () {
   let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
   let y = Mon3d { exps: [Deg(0), Deg(1), Deg(0)] };
   let z = Mon3d { exps: [Deg(0), Deg(0), Deg(1)] };
-  let one_poly = ~poly(~[(1.,one)]);
 
   assert_eq!(rmesh3x4x5.intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(
                one, &VectorMonomial{mon: x*x*x*y*y*y*y*z, mon_dim: Dim(1)}, OShape(0), back_side),
@@ -2075,7 +2068,6 @@ fn test_intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side_dim2() -> () {
   let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
   let y = Mon3d { exps: [Deg(0), Deg(1), Deg(0)] };
   let z = Mon3d { exps: [Deg(0), Deg(0), Deg(1)] };
-  let one_poly = ~poly(~[(1.,one)]);
 
   assert_eq!(rmesh3x4x5.intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(
                one, &VectorMonomial{mon: x*x*x*y*y*y*y*z, mon_dim: Dim(2)}, OShape(0), left_side),

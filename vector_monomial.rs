@@ -42,14 +42,14 @@ impl<M:Monomial> VectorMonomial<M> {
 #[test]
 fn test_construction() {
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
-  let vmon: VectorMonomial<Mon2d> = VectorMonomial::new(Dim(1), x);
+  let _: VectorMonomial<Mon2d> = VectorMonomial::new(Dim(1), x);
 }
 
 #[test]
 #[should_fail]
 fn test_improper_construction() {
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
-  let vmon: VectorMonomial<Mon2d> = VectorMonomial::new(Dim(3), x);
+  let _: VectorMonomial<Mon2d> = VectorMonomial::new(Dim(3), x);
 }
 
 #[test]

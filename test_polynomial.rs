@@ -228,7 +228,6 @@ fn test_2d_owned_canonform() {
 
 #[test]
 fn test_2d_owned_tostr() {
-  let one_mon: Mon2d = Monomial::one();
   let x_mon = Mon2d { exps: [Deg(1), Deg(0)] };
   let y_mon = Mon2d { exps: [Deg(0), Deg(1)] };
 
@@ -430,7 +429,6 @@ fn test_3d_owned_canonform() {
 
 #[test]
 fn test_3d_owned_tostr() {
-  let one_mon: Mon3d = Monomial::one();
   let z_mon = Mon3d { exps: [Deg(0), Deg(0), Deg(1)] };
   let y_mon = Mon3d { exps: [Deg(0), Deg(1), Deg(0)] };
 
@@ -576,7 +574,6 @@ fn test_4d_owned_canonform() {
 
 #[test]
 fn test_4d_owned_tostr() {
-  let one_mon: Mon4d = Monomial::one();
   let x_mon = Mon4d { exps: [Deg(1), Deg(0), Deg(0), Deg(0)] };
   let y_mon = Mon4d { exps: [Deg(0), Deg(1), Deg(0), Deg(0)] };
 

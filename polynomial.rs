@@ -1,6 +1,5 @@
 use extra::treemap::TreeMap;
 use std::vec;
-use std::iter::Zip;
 use common::*;
 use monomial::*;
 
@@ -63,7 +62,7 @@ impl<'self,M:Monomial> PolyWithBorrowedMons<'self,M> {
 pub trait Polynomial<M>: Add<Self,PolyWithOwnedMons<M>> +
                          Mul<Self,PolyWithOwnedMons<M>> {
 
-  fn domain_dim(witness: Option<Self>) -> uint;
+  fn domain_dim(_: Option<Self>) -> uint;
 
   fn num_terms(&self) -> uint;
   
@@ -113,7 +112,7 @@ impl<'self,M:Monomial> Polynomial<M>
                    for PolyWithBorrowedMons<'self,M> {
 
   #[inline]
-  fn domain_dim(witness: Option<PolyWithBorrowedMons<M>>) -> uint {
+  fn domain_dim(_: Option<PolyWithBorrowedMons<M>>) -> uint {
     Monomial::domain_dim(None::<M>)
   }
   
@@ -186,7 +185,7 @@ impl<M:Monomial> Polynomial<M>
   }
 
   #[inline]
-  fn domain_dim(witness: Option<PolyWithOwnedMons<M>>) -> uint {
+  fn domain_dim(_: Option<PolyWithOwnedMons<M>>) -> uint {
     Monomial::domain_dim(None::<M>)
   }
   
