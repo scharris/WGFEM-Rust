@@ -30,3 +30,7 @@ pub fn pow(radix: R, exp: uint) -> R {
   }
  prod 
 }
+
+pub fn sq(x: uint) -> uint {
+  x * x
+}

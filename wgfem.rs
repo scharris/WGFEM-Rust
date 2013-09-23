@@ -13,6 +13,7 @@ pub mod polynomial;
 pub mod vector_monomial;
 pub mod mesh;
 pub mod rect_mesh;
+pub mod dense_matrix;
 pub mod weak_grad;
 mod quadrature;
 #[cfg(test)]
