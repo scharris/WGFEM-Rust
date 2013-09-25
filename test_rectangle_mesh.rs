@@ -4,7 +4,7 @@ use monomial::{Mon1d, Mon2d, Mon3d, Mon4d};
 use polynomial::{poly};
 use vector_monomial::VectorMonomial;
 use mesh::*;
-use rect_mesh::*;
+use rectangle_mesh::*;
 
 #[test]
 fn test_3x4_constr() -> () {

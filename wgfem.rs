@@ -12,7 +12,7 @@ pub mod monomial;
 pub mod polynomial;
 pub mod vector_monomial;
 pub mod mesh;
-pub mod rect_mesh;
+pub mod rectangle_mesh;
 pub mod dense_matrix;
 pub mod weak_gradient;
 mod quadrature;
@@ -23,7 +23,7 @@ mod test_vector_monomial;
 #[cfg(test)]
 mod test_polynomial;
 #[cfg(test)]
-mod test_rect_mesh;
+mod test_rectangle_mesh;
 #[cfg(test)]
 mod test_weak_gradient;
 

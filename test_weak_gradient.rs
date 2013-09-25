@@ -3,7 +3,7 @@ use common::*;
 use polynomial::{PolyWithBorrowedMons, poly};
 use monomial::{Monomial, Mon2d}; 
 use mesh::{OShape};
-use rect_mesh::{RectMesh, MeshCoord, lesser_side_face_perp_to_axis, greater_side_face_perp_to_axis};
+use rectangle_mesh::{RectMesh, MeshCoord, lesser_side_face_perp_to_axis, greater_side_face_perp_to_axis};
 use weak_gradient::*;
 
 fn test_wgrad_xy() {
