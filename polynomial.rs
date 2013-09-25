@@ -1,5 +1,6 @@
 use extra::treemap::TreeMap;
 use std::vec;
+use std::num::abs;
 use common::*;
 use monomial::*;
 
@@ -80,6 +81,7 @@ pub trait Polynomial<M>: Add<Self,PolyWithOwnedMons<M>> +
   
   fn equiv<P: Polynomial<M>>(&self, other: &P) -> bool;
 
+  fn approx_equiv<P: Polynomial<M>>(&self, other: &P, tol: R) -> bool;
 }
 
 
@@ -168,6 +170,12 @@ impl<'self,M:Monomial> Polynomial<M>
     self_can_coefs == other_can.coefs && self_can_mons == other_can.mons 
   }
   
+  fn approx_equiv<P: Polynomial<M>>(&self, other: &P, tol: R) -> bool {
+    let (self_can_coefs, self_can_mons) = canonical_form_impl(self.coefs, self.mons);
+    let other_can = other.canonical_form();
+    self_can_coefs.iter().zip(other_can.coefs.iter()).all(|(&c1,&c2)| abs(c1-c2) <= tol) &&
+    self_can_mons == other_can.mons 
+  }
 }
 
 impl<M:Monomial> Polynomial<M>
@@ -231,6 +239,12 @@ impl<M:Monomial> Polynomial<M>
     self_can_coefs == other_can.coefs && self_can_mons == other_can.mons 
   }
 
+  fn approx_equiv<P: Polynomial<M>>(&self, other: &P, tol: R) -> bool {
+    let (self_can_coefs, self_can_mons) = canonical_form_impl(self.coefs, self.mons);
+    let other_can = other.canonical_form();
+    self_can_coefs.iter().zip(other_can.coefs.iter()).all(|(&c1,&c2)| abs(c1-c2) <= tol) &&
+    self_can_mons == other_can.mons 
+  }
 }
 
 fn mul_polys_impl<M:Monomial>(coefs1: &[R], mons1: &[M], coefs2: &[R], mons2: &[M]) -> PolyWithOwnedMons<M> {

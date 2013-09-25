@@ -178,6 +178,22 @@ fn test_2d_owned_equiv() {
 }  
 
 #[test]
+fn test_2d_owned_approx_equiv() {
+  let one: Mon2d = Monomial::one();
+  let y = Mon2d { exps: [Deg(0), Deg(1)] };
+
+  assert!(poly(~[(1.,one),(2.0000001,y), (1.,one), (3.,y)])
+            .approx_equiv(&poly(~[(2.,one),(5.,y)]), 0.001));
+
+  let mons = ~[one, y];
+  assert!(poly(~[(1.,one),(2.0000001,y), (1.,one), (3.,y)])
+            .approx_equiv(&PolyWithBorrowedMons::new(~[2.,5.], mons), 0.0001));
+  
+  assert!(!poly(~[(1.,one),(2.01,y), (1.,one), (3.,y)])
+            .approx_equiv(&poly(~[(2.,one),(5.,y)]), 0.001));
+}  
+
+#[test]
 fn test_2d_owned_scaling() {
   let one: Mon2d = Monomial::one();
   let y = Mon2d { exps: [Deg(1), Deg(0)] };
