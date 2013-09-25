@@ -40,6 +40,8 @@ impl<M:Monomial> VectorMonomial<M> {
     }
   }
 
+  /// Vector monomials of degree not exceeding that indicated, ordered by component dimension in ascending order,
+  /// and then by monomial in increasing lexicographical order of exponents.
   pub fn vector_mons_of_deg_le(max_deg: Deg) -> ~[VectorMonomial<M>] {
     let dom_dim = Monomial::domain_space_dims(None::<M>);
     let mons: ~[M] = Monomial::mons_of_deg_le(max_deg); 
