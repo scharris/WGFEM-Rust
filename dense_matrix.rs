@@ -61,14 +61,6 @@ impl DenseMatrix {
     self.data.clone()
   }
 
-/*
-  #[inline]
-  pub fn copy_data_into(&self, buf: &mut [R]) -> () {
-    use std::vec::MutableCloneableVector;
-    let ncopied = buf.copy_from(self.data);
-    assert!(ncopied == self.data.len());
-  }
-*/
 }
 
 
