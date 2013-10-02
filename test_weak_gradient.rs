@@ -1,8 +1,7 @@
 use common::*;
-use std::num::abs;
 
-use polynomial::{Polynomial, PolyOwned};
-use monomial::{Monomial, Mon2d, MaxMonDeg}; 
+use polynomial::{PolyOwning, approx_equiv};
+use monomial::{Mon2d, MaxMonDeg}; 
 use mesh::{OShape};
 use rectangle_mesh::{RectMesh, MeshCoord};
 use weak_gradient::*;
@@ -41,11 +40,11 @@ fn test_wgrad_xy() {
 
   let wgrad = &WeakGrad::lcomb([(1., xy_on_int_wgrad), (1., y_on_right_side_wgrad), (1., x_on_top_side_wgrad)]);
 
-  let wgrad_comp0 = PolyOwned::new(wgrad.comp_mon_coefs[0].clone(), wgrad_solver.wgrad_comp_mons.clone());
-  let wgrad_comp1 = PolyOwned::new(wgrad.comp_mon_coefs[1].clone(), wgrad_solver.wgrad_comp_mons.clone());
+  let wgrad_comp0 = PolyOwning::new(wgrad.comp_mon_coefs[0].clone(), wgrad_solver.wgrad_comp_mons.clone());
+  let wgrad_comp1 = PolyOwning::new(wgrad.comp_mon_coefs[1].clone(), wgrad_solver.wgrad_comp_mons.clone());
  
-  assert!(approx_equiv(&wgrad_comp0, &PolyOwned::new(~[1.],~[y]), 1e-9));
-  assert!(approx_equiv(&wgrad_comp1, &PolyOwned::new(~[1.],~[x]), 1e-9));
+  assert!(approx_equiv(&wgrad_comp0, &PolyOwning::new(~[1.],~[y]), 1e-9));
+  assert!(approx_equiv(&wgrad_comp1, &PolyOwning::new(~[1.],~[x]), 1e-9));
 }
 
 #[test]
@@ -73,17 +72,10 @@ fn test_wgrad_x2y() {
 
   let wgrad = &WeakGrad::lcomb([(1., x2y_on_int_wgrad), (1., y_on_right_side_wgrad), (1., x2_on_top_side_wgrad)]);
 
-  let wgrad_comp0 = PolyOwned::new(wgrad.comp_mon_coefs[0].clone(), wgrad_solver.wgrad_comp_mons.clone());
-  let wgrad_comp1 = PolyOwned::new(wgrad.comp_mon_coefs[1].clone(), wgrad_solver.wgrad_comp_mons.clone());
+  let wgrad_comp0 = PolyOwning::new(wgrad.comp_mon_coefs[0].clone(), wgrad_solver.wgrad_comp_mons.clone());
+  let wgrad_comp1 = PolyOwning::new(wgrad.comp_mon_coefs[1].clone(), wgrad_solver.wgrad_comp_mons.clone());
  
-  assert!(approx_equiv(&wgrad_comp0, &PolyOwned::new(~[2.],~[x*y]), 1e-9));
-  assert!(approx_equiv(&wgrad_comp1, &PolyOwned::new(~[1.],~[x*x]), 1e-9));
-}
-
-
-fn approx_equiv<M:Monomial,P:Polynomial<M>>(p1: &P, p2: &P, tol: R) -> bool {
-  let diff = p1 + p2.scaled(-1.);
-  let diff_canon = diff.canonical_form();
-  diff_canon.coefs.iter().all(|&c| abs(c) <= tol)
+  assert!(approx_equiv(&wgrad_comp0, &PolyOwning::new(~[2.],~[x*y]), 1e-9));
+  assert!(approx_equiv(&wgrad_comp1, &PolyOwning::new(~[1.],~[x*x]), 1e-9));
 }
 
