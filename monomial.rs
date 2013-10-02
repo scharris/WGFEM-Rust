@@ -2,6 +2,8 @@ use common::*;
 use std::option::*;
 use std::vec;
 use std::iter::{range_inclusive, AdditiveIterator};
+use std::num::pow_with_uint;
+
 
 pub trait Monomial: Eq +
                     TotalEq +
@@ -24,9 +26,8 @@ pub trait Monomial: Eq +
 
   fn one() -> Self;
 
-  fn mons_of_deg_le(deg: Deg) -> ~[Self];
+  fn mons_with_deg_lim_asc(deg_lim: DegLim) -> ~[Self];
 }
-
 
 pub struct Mon1d {
   exps: [Deg,..1]
@@ -44,11 +45,10 @@ pub struct Mon4d {
   exps: [Deg,..4]
 }
 
-static one_1d: Mon1d = Mon1d { exps: [Deg(0),..1] };
-static one_2d: Mon2d = Mon2d { exps: [Deg(0),..2] };
-static one_3d: Mon3d = Mon3d { exps: [Deg(0),..3] };
-static one_4d: Mon4d = Mon4d { exps: [Deg(0),..4] };
-
+pub enum DegLim {
+  MaxMonDeg(u8),
+  MaxMonFactorDeg(u8)
+}
 
 impl Monomial for Mon1d {
 
@@ -84,8 +84,11 @@ impl Monomial for Mon1d {
     one_1d
   }
 
-  fn mons_of_deg_le(deg: Deg) -> ~[Mon1d] {
-    vec::from_fn(*deg as uint + 1, |e| Mon1d { exps: [ Deg(e as u8) ] }) 
+  fn mons_with_deg_lim_asc(deg_lim: DegLim) -> ~[Mon1d] {
+    match deg_lim {
+      MaxMonDeg(deg) => vec::from_fn(deg as uint + 1, |e| Mon1d { exps: [ Deg(e as u8) ] }),
+      MaxMonFactorDeg(deg) =>  vec::from_fn(deg as uint + 1, |e| Mon1d { exps: [ Deg(e as u8) ] })
+    }  
   }
 }
 
@@ -126,14 +129,27 @@ impl Monomial for Mon2d {
     one_2d
   }
 
-  fn mons_of_deg_le(deg: Deg) -> ~[Mon2d] {
-    let mut mons: ~[Mon2d] = vec::with_capacity(num_mons_of_deg_le(deg, 2));
-    for e0 in range_inclusive(0, *deg) {
-      for e1 in range_inclusive(0, *deg - e0) {
-        mons.push(Mon2d { exps: [Deg(e0), Deg(e1)] });
+  fn mons_with_deg_lim_asc(deg_lim: DegLim) -> ~[Mon2d] {
+    match deg_lim {
+      MaxMonDeg(deg) => {
+        let mut mons: ~[Mon2d] = vec::with_capacity(num_mons_of_deg_le(Deg(deg), 2));
+        for e0 in range_inclusive(0, deg) {
+          for e1 in range_inclusive(0, deg - e0) {
+            mons.push(Mon2d { exps: [Deg(e0), Deg(e1)] });
+          }
+        }
+        mons
       }
-    }
-    mons
+      MaxMonFactorDeg(deg) => {
+        let mut mons: ~[Mon2d] = vec::with_capacity(sq(deg as uint + 1));
+        for e0 in range_inclusive(0, deg) {
+          for e1 in range_inclusive(0, deg) {
+            mons.push(Mon2d { exps: [Deg(e0), Deg(e1)] });
+          }
+        }
+        mons
+      }
+    }  
   }
 
 }
@@ -177,17 +193,32 @@ impl Monomial for Mon3d {
   fn one() -> Mon3d {
     one_3d
   }
-  
-  fn mons_of_deg_le(deg: Deg) -> ~[Mon3d] {
-    let mut mons: ~[Mon3d] = vec::with_capacity(num_mons_of_deg_le(deg, 3));
-    for e0 in range_inclusive(0, *deg) {
-      for e1 in range_inclusive(0, *deg - e0) {
-        for e2 in range_inclusive(0, *deg - e0 - e1) {
-          mons.push(Mon3d { exps: [Deg(e0), Deg(e1), Deg(e2)] });
+
+  fn mons_with_deg_lim_asc(deg_lim: DegLim) -> ~[Mon3d] {
+    match deg_lim {
+      MaxMonDeg(deg) => {
+        let mut mons: ~[Mon3d] = vec::with_capacity(num_mons_of_deg_le(Deg(deg), 3));
+        for e0 in range_inclusive(0, deg) {
+          for e1 in range_inclusive(0, deg - e0) {
+            for e2 in range_inclusive(0, deg - e0 - e1) {
+              mons.push(Mon3d { exps: [Deg(e0), Deg(e1), Deg(e2)] });
+            }
+          }
         }
+        mons
       }
-    }
-    mons
+      MaxMonFactorDeg(deg) => {
+        let mut mons: ~[Mon3d] = vec::with_capacity(pow_with_uint(deg as uint + 1, 3));
+        for e0 in range_inclusive(0, deg) {
+          for e1 in range_inclusive(0, deg) {
+            for e2 in range_inclusive(0, deg) {
+              mons.push(Mon3d { exps: [Deg(e0), Deg(e1), Deg(e2)] });
+            }
+          }
+        }
+        mons
+      }
+    }  
   }
 }
 
@@ -233,19 +264,36 @@ impl Monomial for Mon4d {
   fn one() -> Mon4d {
     one_4d
   }
-  
-  fn mons_of_deg_le(deg: Deg) -> ~[Mon4d] {
-    let mut mons: ~[Mon4d] = vec::with_capacity(num_mons_of_deg_le(deg, 4));
-    for e0 in range_inclusive(0, *deg) {
-      for e1 in range_inclusive(0, *deg - e0) {
-        for e2 in range_inclusive(0, *deg - e0 - e1) {
-          for e3 in range_inclusive(0, *deg - e0 - e1 - e2) {
-            mons.push(Mon4d { exps: [Deg(e0), Deg(e1), Deg(e2), Deg(e3)] });
+
+  fn mons_with_deg_lim_asc(deg_lim: DegLim) -> ~[Mon4d] {
+    match deg_lim {
+      MaxMonDeg(deg) => {
+        let mut mons: ~[Mon4d] = vec::with_capacity(num_mons_of_deg_le(Deg(deg), 4));
+        for e0 in range_inclusive(0, deg) {
+          for e1 in range_inclusive(0, deg - e0) {
+            for e2 in range_inclusive(0, deg - e0 - e1) {
+              for e3 in range_inclusive(0, deg - e0 - e1 - e2) {
+                mons.push(Mon4d { exps: [Deg(e0), Deg(e1), Deg(e2), Deg(e3)] });
+              }
+            }
           }
         }
+        mons
       }
-    }
-    mons
+      MaxMonFactorDeg(deg) => {
+        let mut mons: ~[Mon4d] = vec::with_capacity(pow_with_uint(deg as uint + 1, 4));
+        for e0 in range_inclusive(0, deg) {
+          for e1 in range_inclusive(0, deg) {
+            for e2 in range_inclusive(0, deg) {
+              for e3 in range_inclusive(0, deg) {
+                mons.push(Mon4d { exps: [Deg(e0), Deg(e1), Deg(e2), Deg(e3)] });
+              }
+            }
+          }
+        }
+        mons
+      }
+    }  
   }
 }
 
@@ -426,6 +474,12 @@ impl Mul<Mon4d, Mon4d> for Mon4d {
 }
 
 
+static one_1d: Mon1d = Mon1d { exps: [Deg(0),..1] };
+static one_2d: Mon2d = Mon2d { exps: [Deg(0),..2] };
+static one_3d: Mon3d = Mon3d { exps: [Deg(0),..3] };
+static one_4d: Mon4d = Mon4d { exps: [Deg(0),..4] };
+
+
 // auxiliary functions
 
 
@@ -437,6 +491,13 @@ pub fn num_mons_of_deg_le(max_deg: Deg, dom_space_dims: uint) -> uint {
   range_inclusive(0, *max_deg)
     .map(|deg| num_mons_of_deg_eq(Deg(deg), dom_space_dims))
     .sum()
+}
+
+pub fn num_mons_with_deg_lim(deg_lim: DegLim, dom_space_dims: uint) -> uint {
+  match deg_lim {
+    MaxMonDeg(max_deg) => range_inclusive(0, max_deg).map(|deg| num_mons_of_deg_eq(Deg(deg), dom_space_dims)).sum(),
+    MaxMonFactorDeg(max_deg) => pow_with_uint(max_deg as uint + 1, dom_space_dims)
+  }
 }
 
 #[inline]

@@ -40,14 +40,13 @@ impl<M:Monomial> VectorMonomial<M> {
     }
   }
 
-  /// Vector monomials of degree not exceeding that indicated, ordered by component dimension in ascending order,
+  /// All vector monomials with the indicated component monomials, ordered by component dimension in ascending order,
   /// and then by monomial in increasing lexicographical order of exponents.
-  pub fn vector_mons_of_deg_le(max_deg: Deg) -> ~[VectorMonomial<M>] {
+  pub fn with_comp_mons_ordered_by_comp_and_mon(comp_mons: &[M]) -> ~[VectorMonomial<M>] {
     let dom_dim = Monomial::domain_space_dims(None::<M>);
-    let mons: ~[M] = Monomial::mons_of_deg_le(max_deg); 
-    let mut vmons: ~[VectorMonomial<M>] = vec::with_capacity(mons.len() * dom_dim);
+    let mut vmons: ~[VectorMonomial<M>] = vec::with_capacity(comp_mons.len() * dom_dim);
     for r in range(0, dom_dim) {
-      for mon in mons.iter() {
+      for mon in comp_mons.iter() {
         vmons.push(VectorMonomial::new(Dim(r), mon.clone()));
       }
     }
