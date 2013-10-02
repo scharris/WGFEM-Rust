@@ -1,3 +1,6 @@
+use std::libc::{c_int};
+use std::num::{Num,Zero};
+use std::vec;
 
 // types and type aliases
 
@@ -9,10 +12,14 @@ pub struct Deg(u8);
 #[deriving(Eq, IterBytes, TotalOrd, TotalEq, Clone, Ord)]
 pub struct Dim(uint);
 
+pub type lapack_int = c_int; // Adjust according to whether LP64 or ILP64 libraries are being linked
+
+
 // constants
 
 pub static DEFAULT_INTEGRATION_REL_ERR: R = 1e-12;
 pub static DEFAULT_INTEGRATION_ABS_ERR: R = 1e-12;
+
 
 #[inline]
 pub fn pow(radix: R, exp: uint) -> R {
@@ -31,6 +38,40 @@ pub fn pow(radix: R, exp: uint) -> R {
  prod 
 }
 
-pub fn sq(x: uint) -> uint {
-  x * x
+#[inline(always)]
+pub fn sq<T:Mul<T,T>>(x: T) -> T {
+  x.mul(&x)
+}
+
+pub fn cumulative_sums_prev_elems<T:Num+Clone>(xs: &[T]) -> ~[T] {
+  let mut cum_sums = vec::with_capacity(xs.len());
+  let mut sum: T =  Zero::zero();
+  for x in xs.iter() {
+    cum_sums.push(sum.clone());
+    sum = sum.add(x);
+  }
+  cum_sums
+}
+
+#[test]
+fn test_pow() {
+  assert_eq!(pow(2.,2), 4.);
+  assert_eq!(pow(2.,3), 8.);
+  assert_eq!(pow(0.,3), 0.);
+  assert_eq!(pow(1.,3), 1.);
+  assert_eq!(pow(0.,0), 1.); // In context of integral exponents and continuous radix, this def is most appropriate.
+}
+
+#[test]
+fn test_sq() {
+  assert_eq!(sq(0.), 0.);
+  assert_eq!(sq(1.), 1.);
+  assert_eq!(sq(2.), 4.);
+  assert_eq!(sq(2.2), 2.2*2.2);
+}
+
+#[test]
+fn test_cum_sums_prev() {
+  let xs =  ~[1u, 2u, 3u];
+  assert_eq!(cumulative_sums_prev_elems(xs), ~[0u, 1u, 3u]);
 }
