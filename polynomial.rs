@@ -4,63 +4,63 @@ use common::*;
 use monomial::*;
 
 #[deriving(Eq, Clone)]
-pub struct PolyWithOwnedMons<M> {
+pub struct PolyOwned<M> {
   coefs: ~[R],
   mons:  ~[M]
 }
 
 #[deriving(Eq, Clone)]
-pub struct PolyWithBorrowedMons<'self,M> {
+pub struct PolyBorrowedMons<'self,M> {
   coefs: ~[R],
   mons: &'self [M]
 }
 
 // Convenience function to create polynomials in testing code. Performance critical code
 // should use the ::new function implementations instead which will be more efficient.
-pub fn poly<M:Monomial>(terms: ~[(R,M)]) -> PolyWithOwnedMons<M> {
+pub fn poly<M:Monomial>(terms: ~[(R,M)]) -> PolyOwned<M> {
   let (coefs, mons) = vec::unzip(terms.move_iter());
-  PolyWithOwnedMons { coefs: coefs, mons: mons } 
+  PolyOwned { coefs: coefs, mons: mons } 
 }
 
-impl<M:Monomial> PolyWithOwnedMons<M> {
+impl<M:Monomial> PolyOwned<M> {
   
-  pub fn new(coefs: ~[R], mons: ~[M]) -> PolyWithOwnedMons<M> {
+  pub fn new(coefs: ~[R], mons: ~[M]) -> PolyOwned<M> {
     match (coefs.len(), mons.len()) {
       (0,0) => fail!("Empty arrays passed to polynomial constructor."),
       (x,y) if x != y => fail!("Arrays of different lengths passed to polynomial constructor."),
-      _ => PolyWithOwnedMons { coefs: coefs, mons: mons }
+      _ => PolyOwned { coefs: coefs, mons: mons }
     }
   }
   
-  pub fn zero() -> PolyWithOwnedMons<M> {
+  pub fn zero() -> PolyOwned<M> {
     let one_mon: M = Monomial::one();
-    PolyWithOwnedMons { coefs: ~[0 as R], mons: ~[one_mon] }
+    PolyOwned { coefs: ~[0 as R], mons: ~[one_mon] }
   }
   
-  pub fn zero_with_capacity(n: uint) -> PolyWithOwnedMons<M> {
+  pub fn zero_with_capacity(n: uint) -> PolyOwned<M> {
     let one_mon: M = Monomial::one();
     let mut coefs = vec::with_capacity(n);
     let mut mons = vec::with_capacity(n);
     coefs.push(0 as R);
     mons.push(one_mon);
-    PolyWithOwnedMons { coefs: coefs, mons: mons }
+    PolyOwned { coefs: coefs, mons: mons }
   }
 }
 
 
-impl<'self,M:Monomial> PolyWithBorrowedMons<'self,M> {
+impl<'self,M:Monomial> PolyBorrowedMons<'self,M> {
   
-  pub fn new(coefs: ~[R], mons: &'self [M]) -> PolyWithBorrowedMons<'self,M> {
+  pub fn new(coefs: ~[R], mons: &'self [M]) -> PolyBorrowedMons<'self,M> {
     match (coefs.len(), mons.len()) {
       (0,0) => fail!("Empty arrays passed to polynomial constructor."),
       (x,y) if x != y => fail!("Arrays of different lengths passed to polynomial constructor."),
-      _ => PolyWithBorrowedMons { coefs: coefs, mons: mons }
+      _ => PolyBorrowedMons { coefs: coefs, mons: mons }
     }
   }
 }
 
-pub trait Polynomial<M>: Add<Self,PolyWithOwnedMons<M>> +
-                         Mul<Self,PolyWithOwnedMons<M>> {
+pub trait Polynomial<M>: Add<Self,PolyOwned<M>> +
+                         Mul<Self,PolyOwned<M>> {
 
   fn domain_space_dims(_: Option<Self>) -> uint;
 
@@ -76,7 +76,7 @@ pub trait Polynomial<M>: Add<Self,PolyWithOwnedMons<M>> +
 
   fn scale(&mut self, r: R) -> ();
 
-  fn canonical_form(&self) -> PolyWithOwnedMons<M>;
+  fn canonical_form(&self) -> PolyOwned<M>;
   
   fn equiv<P: Polynomial<M>>(&self, other: &P) -> bool;
 
@@ -109,10 +109,10 @@ fn canonical_form_impl<M: Monomial>(coefs: &[R], mons: &[M]) -> (~[R], ~[M]) {
 
 
 impl<'self,M:Monomial> Polynomial<M>
-                   for PolyWithBorrowedMons<'self,M> {
+                   for PolyBorrowedMons<'self,M> {
 
   #[inline]
-  fn domain_space_dims(_: Option<PolyWithBorrowedMons<M>>) -> uint {
+  fn domain_space_dims(_: Option<PolyBorrowedMons<M>>) -> uint {
     Monomial::domain_space_dims(None::<M>)
   }
   
@@ -143,9 +143,9 @@ impl<'self,M:Monomial> Polynomial<M>
     }
   }
 
-  fn scaled(&self, r: R) -> PolyWithBorrowedMons<'self, M> {
+  fn scaled(&self, r: R) -> PolyBorrowedMons<'self, M> {
     let scaled_coefs = vec::from_fn(self.coefs.len(), |i| r * self.coefs[i]);
-    PolyWithBorrowedMons { coefs: scaled_coefs, mons: self.mons }
+    PolyBorrowedMons { coefs: scaled_coefs, mons: self.mons }
   }
   
   fn scale(&mut self, r: R) -> () {
@@ -154,11 +154,11 @@ impl<'self,M:Monomial> Polynomial<M>
     }
   }
   
-  fn canonical_form(&self) -> PolyWithOwnedMons<M> {
+  fn canonical_form(&self) -> PolyOwned<M> {
     let (can_coefs, can_mons) = canonical_form_impl(self.coefs, self.mons);
     match can_mons.len() {
-      0 => { let zero: PolyWithOwnedMons<M> = PolyWithOwnedMons::zero(); zero}
-      _ => PolyWithOwnedMons::new(can_coefs, can_mons)
+      0 => { let zero: PolyOwned<M> = PolyOwned::zero(); zero}
+      _ => PolyOwned::new(can_coefs, can_mons)
     }
   }
   
@@ -171,11 +171,11 @@ impl<'self,M:Monomial> Polynomial<M>
 }
 
 impl<M:Monomial> Polynomial<M>
-             for PolyWithOwnedMons<M> {
+             for PolyOwned<M> {
 
-  fn scaled(&self, r: R) -> PolyWithOwnedMons<M> {
+  fn scaled(&self, r: R) -> PolyOwned<M> {
     let scaled_coefs = vec::from_fn(self.coefs.len(), |i| r * self.coefs[i]);
-    PolyWithOwnedMons { coefs: scaled_coefs, mons: self.mons.clone() }
+    PolyOwned { coefs: scaled_coefs, mons: self.mons.clone() }
   }
   
   fn scale(&mut self, r: R) -> () {
@@ -185,7 +185,7 @@ impl<M:Monomial> Polynomial<M>
   }
 
   #[inline]
-  fn domain_space_dims(_: Option<PolyWithOwnedMons<M>>) -> uint {
+  fn domain_space_dims(_: Option<PolyOwned<M>>) -> uint {
     Monomial::domain_space_dims(None::<M>)
   }
   
@@ -217,11 +217,11 @@ impl<M:Monomial> Polynomial<M>
     }
   }
 
-  fn canonical_form(&self) -> PolyWithOwnedMons<M> {
+  fn canonical_form(&self) -> PolyOwned<M> {
     let (can_coefs, can_mons) = canonical_form_impl(self.coefs, self.mons);
     match can_mons.len() {
-      0 => { let m: PolyWithOwnedMons<M> = PolyWithOwnedMons::zero(); m}
-      _ => PolyWithOwnedMons::new(can_coefs, can_mons)
+      0 => { let m: PolyOwned<M> = PolyOwned::zero(); m}
+      _ => PolyOwned::new(can_coefs, can_mons)
     }
   }
  
@@ -233,7 +233,7 @@ impl<M:Monomial> Polynomial<M>
 
 }
 
-fn mul_polys_impl<M:Monomial>(coefs1: &[R], mons1: &[M], coefs2: &[R], mons2: &[M]) -> PolyWithOwnedMons<M> {
+fn mul_polys_impl<M:Monomial>(coefs1: &[R], mons1: &[M], coefs2: &[R], mons2: &[M]) -> PolyOwned<M> {
   let (n1, n2) = (mons1.len(), mons2.len());
   let n = n1 * n2;
   let mut mons = vec::with_capacity(n);
@@ -244,60 +244,60 @@ fn mul_polys_impl<M:Monomial>(coefs1: &[R], mons1: &[M], coefs2: &[R], mons2: &[
       coefs.push(coefs1[i1] * coefs2[i2]);
     }
   }
-  PolyWithOwnedMons { coefs: coefs, mons: mons }
+  PolyOwned { coefs: coefs, mons: mons }
 }
 
-impl<'self,M:Monomial> Mul<PolyWithBorrowedMons<'self,M>, PolyWithOwnedMons<M>>
-                   for PolyWithBorrowedMons<'self,M> {
+impl<'self,M:Monomial> Mul<PolyBorrowedMons<'self,M>, PolyOwned<M>>
+                   for PolyBorrowedMons<'self,M> {
 
   #[inline]
-  fn mul(&self, other: &PolyWithBorrowedMons<'self,M>) -> PolyWithOwnedMons<M> {
+  fn mul(&self, other: &PolyBorrowedMons<'self,M>) -> PolyOwned<M> {
     mul_polys_impl(self.coefs, self.mons, other.coefs, other.mons)
   }
 }
 
-impl<M:Monomial> Mul<PolyWithOwnedMons<M>, PolyWithOwnedMons<M>>
-             for PolyWithOwnedMons<M> {
+impl<M:Monomial> Mul<PolyOwned<M>, PolyOwned<M>>
+             for PolyOwned<M> {
     
   #[inline]
-  fn mul(&self, other: &PolyWithOwnedMons<M>) -> PolyWithOwnedMons<M> {
+  fn mul(&self, other: &PolyOwned<M>) -> PolyOwned<M> {
     mul_polys_impl(self.coefs, self.mons, other.coefs, other.mons)
   }
 }
 
-impl<'self,M:Monomial> Add<PolyWithBorrowedMons<'self,M>, PolyWithOwnedMons<M>>
-                   for PolyWithBorrowedMons<'self,M> {
+impl<'self,M:Monomial> Add<PolyBorrowedMons<'self,M>, PolyOwned<M>>
+                   for PolyBorrowedMons<'self,M> {
 
   #[inline]
-  fn add(&self, other: &PolyWithBorrowedMons<'self,M>) -> PolyWithOwnedMons<M> {
-    PolyWithOwnedMons::new(self.coefs + other.coefs, self.mons + other.mons) 
+  fn add(&self, other: &PolyBorrowedMons<'self,M>) -> PolyOwned<M> {
+    PolyOwned::new(self.coefs + other.coefs, self.mons + other.mons) 
   }
 }
 
-impl<M:Monomial> Add<PolyWithOwnedMons<M>, PolyWithOwnedMons<M>>
-             for PolyWithOwnedMons<M> {
+impl<M:Monomial> Add<PolyOwned<M>, PolyOwned<M>>
+             for PolyOwned<M> {
     
   #[inline]
-  fn add(&self, other: &PolyWithOwnedMons<M>) -> PolyWithOwnedMons<M> {
-    PolyWithOwnedMons::new(self.coefs + other.coefs, self.mons + other.mons)
+  fn add(&self, other: &PolyOwned<M>) -> PolyOwned<M> {
+    PolyOwned::new(self.coefs + other.coefs, self.mons + other.mons)
   }
 }
 
-impl<'self,M:Monomial> Sub<PolyWithBorrowedMons<'self,M>, PolyWithOwnedMons<M>>
-                   for PolyWithBorrowedMons<'self,M> {
+impl<'self,M:Monomial> Sub<PolyBorrowedMons<'self,M>, PolyOwned<M>>
+                   for PolyBorrowedMons<'self,M> {
 
   #[inline]
-  fn sub(&self, other: &PolyWithBorrowedMons<'self,M>) -> PolyWithOwnedMons<M> {
-    PolyWithOwnedMons::new(self.coefs + other.coefs.map(|&c| -c), self.mons + other.mons) 
+  fn sub(&self, other: &PolyBorrowedMons<'self,M>) -> PolyOwned<M> {
+    PolyOwned::new(self.coefs + other.coefs.map(|&c| -c), self.mons + other.mons) 
   }
 }
 
-impl<M:Monomial> Sub<PolyWithOwnedMons<M>, PolyWithOwnedMons<M>>
-             for PolyWithOwnedMons<M> {
+impl<M:Monomial> Sub<PolyOwned<M>, PolyOwned<M>>
+             for PolyOwned<M> {
     
   #[inline]
-  fn sub(&self, other: &PolyWithOwnedMons<M>) -> PolyWithOwnedMons<M> {
-    PolyWithOwnedMons::new(self.coefs + other.coefs.map(|&c| -c), self.mons + other.mons) 
+  fn sub(&self, other: &PolyOwned<M>) -> PolyOwned<M> {
+    PolyOwned::new(self.coefs + other.coefs.map(|&c| -c), self.mons + other.mons) 
   }
 }
 
@@ -310,14 +310,14 @@ fn to_str_impl<M: Monomial>(coefs: &[R], mons: &[M]) -> ~str {
 
 
 impl<'self,M:Monomial> ToStr
-                   for PolyWithBorrowedMons<'self,M> {
+                   for PolyBorrowedMons<'self,M> {
   fn to_str(&self) -> ~str {
     to_str_impl(self.coefs, self.mons)
   }
 }
 
 impl<M:Monomial> ToStr
-             for PolyWithOwnedMons<M> {
+             for PolyOwned<M> {
   fn to_str(&self) -> ~str {
     to_str_impl(self.coefs, self.mons)
   }

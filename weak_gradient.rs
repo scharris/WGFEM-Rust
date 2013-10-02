@@ -47,7 +47,8 @@ impl WeakGrad {
             terms.iter().fold(0 as R, |sum, &(c, wgrad)| sum + c * wgrad.comp_mon_coefs[d][mon_num])))
     }
   }
-  
+
+  // TODO: dot prod
 }
 
 

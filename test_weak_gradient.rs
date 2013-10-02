@@ -1,7 +1,7 @@
 use common::*;
 use std::num::abs;
 
-use polynomial::{Polynomial, PolyWithOwnedMons};
+use polynomial::{Polynomial, PolyOwned};
 use monomial::{Monomial, Mon2d, MaxMonDeg}; 
 use mesh::{OShape};
 use rectangle_mesh::{RectMesh, MeshCoord};
@@ -41,11 +41,11 @@ fn test_wgrad_xy() {
 
   let wgrad = &WeakGrad::lcomb([(1., xy_on_int_wgrad), (1., y_on_right_side_wgrad), (1., x_on_top_side_wgrad)]);
 
-  let wgrad_comp0 = PolyWithOwnedMons::new(wgrad.comp_mon_coefs[0].clone(), wgrad_solver.wgrad_comp_mons.clone());
-  let wgrad_comp1 = PolyWithOwnedMons::new(wgrad.comp_mon_coefs[1].clone(), wgrad_solver.wgrad_comp_mons.clone());
+  let wgrad_comp0 = PolyOwned::new(wgrad.comp_mon_coefs[0].clone(), wgrad_solver.wgrad_comp_mons.clone());
+  let wgrad_comp1 = PolyOwned::new(wgrad.comp_mon_coefs[1].clone(), wgrad_solver.wgrad_comp_mons.clone());
  
-  assert!(approx_equiv(&wgrad_comp0, &PolyWithOwnedMons::new(~[1.],~[y]), 1e-9));
-  assert!(approx_equiv(&wgrad_comp1, &PolyWithOwnedMons::new(~[1.],~[x]), 1e-9));
+  assert!(approx_equiv(&wgrad_comp0, &PolyOwned::new(~[1.],~[y]), 1e-9));
+  assert!(approx_equiv(&wgrad_comp1, &PolyOwned::new(~[1.],~[x]), 1e-9));
 }
 
 #[test]
@@ -73,11 +73,11 @@ fn test_wgrad_x2y() {
 
   let wgrad = &WeakGrad::lcomb([(1., x2y_on_int_wgrad), (1., y_on_right_side_wgrad), (1., x2_on_top_side_wgrad)]);
 
-  let wgrad_comp0 = PolyWithOwnedMons::new(wgrad.comp_mon_coefs[0].clone(), wgrad_solver.wgrad_comp_mons.clone());
-  let wgrad_comp1 = PolyWithOwnedMons::new(wgrad.comp_mon_coefs[1].clone(), wgrad_solver.wgrad_comp_mons.clone());
+  let wgrad_comp0 = PolyOwned::new(wgrad.comp_mon_coefs[0].clone(), wgrad_solver.wgrad_comp_mons.clone());
+  let wgrad_comp1 = PolyOwned::new(wgrad.comp_mon_coefs[1].clone(), wgrad_solver.wgrad_comp_mons.clone());
  
-  assert!(approx_equiv(&wgrad_comp0, &PolyWithOwnedMons::new(~[2.],~[x*y]), 1e-9));
-  assert!(approx_equiv(&wgrad_comp1, &PolyWithOwnedMons::new(~[1.],~[x*x]), 1e-9));
+  assert!(approx_equiv(&wgrad_comp0, &PolyOwned::new(~[2.],~[x*y]), 1e-9));
+  assert!(approx_equiv(&wgrad_comp1, &PolyOwned::new(~[1.],~[x*x]), 1e-9));
 }
 
 
