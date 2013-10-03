@@ -369,50 +369,20 @@ impl<M:Monomial> Scalable
   }
 }
 
-/*
-// Implement Mul trait.
 
-fn mul_polys_impl<M:Monomial>(coefs1: &[R], mons1: &[M], coefs2: &[R], mons2: &[M]) -> PolyOwning<M> {
-  let (n1, n2) = (mons1.len(), mons2.len());
-  let n = n1 * n2;
+pub fn mul_polys<M:Monomial,P1:Polynomial<M>,P2:Polynomial<M>>(p1: &P1, p2: &P2) -> PolyOwning<M> {
+  let n = p1.num_terms() * p2.num_terms();
   let mut mons = vec::with_capacity(n);
   let mut coefs = vec::with_capacity(n);
-  for i1 in range(0, n1) {
-    for i2 in range(0, n2) {
-      mons.push(mons1[i1] * mons2[i2]);
-      coefs.push(coefs1[i1] * coefs2[i2]);
-    }
-  }
+  p1.each_term(|(c1,m1)| 
+    p2.each_term(|(c2,m2)| {
+      mons.push(m1 * m2);
+      coefs.push(c1 * c2);
+    })
+  );
   PolyOwning { coefs: coefs, mons: mons }
 }
 
-impl<M:Monomial> Mul<PolyOwning<M>, PolyOwning<M>>
-             for PolyOwning<M> {
-    
-  #[inline]
-  fn mul(&self, other: &PolyOwning<M>) -> PolyOwning<M> {
-    mul_polys_impl(self.coefs, self.mons, other.coefs, other.mons)
-  }
-}
-
-impl<'self,M:Monomial> Mul<PolyBorrowing<'self,M>, PolyOwning<M>>
-                   for PolyBorrowing<'self,M> {
-
-  #[inline]
-  fn mul(&self, other: &PolyBorrowing<'self,M>) -> PolyOwning<M> {
-    mul_polys_impl(self.coefs, self.mons, other.coefs, other.mons)
-  }
-}
-
-impl<'self,M:Monomial> Mul<PolyBorrowingMons<'self,M>, PolyOwning<M>>
-                   for PolyBorrowingMons<'self,M> {
-
-  #[inline]
-  fn mul(&self, other: &PolyBorrowingMons<'self,M>) -> PolyOwning<M> {
-    mul_polys_impl(self.coefs, self.mons, other.coefs, other.mons)
-  }
-}
-*/
 
 // Convenience function to create polynomials in testing code. Performance critical code
 // should use the ::new function implementations instead which will be more efficient.
