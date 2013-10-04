@@ -3,7 +3,8 @@ use std::vec::raw::to_ptr;
 
 use common::*;
 use vector_monomial::VectorMonomial;
-use monomial::{Monomial, DegLim};
+use monomial::{Monomial, DegLim, MaxMonDeg, MaxMonFactorDeg};
+use polynomial::{PolyBorrowing};
 use mesh::{Mesh, OShape, SideFace};
 use dense_matrix::DenseMatrix;
 use std::libc::{c_double};
@@ -35,34 +36,19 @@ pub struct WeakGrad {
   comp_mon_coefs: ~[~[R]]
 }
 
-impl WeakGrad {
-
-  pub fn lcomb(terms: &[(R,&WeakGrad)]) -> WeakGrad {
-    if terms.len() == 0 { fail!("lcomb_wgrads: At least one weak gradient is required.") }
-    let (space_dims, num_comp_mons) = match terms[0] { (_, wgrad) => (wgrad.comp_mon_coefs.len(), wgrad.comp_mon_coefs[0].len()) };
-    WeakGrad {
-      comp_mon_coefs: 
-        vec::from_fn(space_dims, |d| 
-          vec::from_fn(num_comp_mons, |mon_num|
-            terms.iter().fold(0 as R, |sum, &(c, wgrad)| sum + c * wgrad.comp_mon_coefs[d][mon_num])))
-    }
-  }
-
-  // TODO: dot prod
-}
-
-
 pub struct OShapeWeakGrads {
   int_mon_wgrads: ~[WeakGrad],    // interior monomial weak gradients, indexed by interior monomial number
-  side_mon_wgrads: ~[~[WeakGrad]] // sifn add(&self, rhs: &RHS) -> Result;de monomial weak gradients, indexed by side number then monomial number on the side
+  side_mon_wgrads: ~[~[WeakGrad]] // side monomial weak gradients, indexed by side number then monomial number on the side
 }
 
 
 pub struct WeakGradSolver<M> {
 
-  basis_vmons: ~[VectorMonomial<M>], // ordered ascending by (monomial component dimension, monomial exponents tuple).
-
+  wgrad_comp_mons_deg_lim: DegLim,
+  
   wgrad_comp_mons: ~[M],
+
+  basis_vmons: ~[VectorMonomial<M>], // ordered ascending by (monomial component dimension, monomial exponents tuple).
 
   ips_basis_vmons_utmat_by_oshape: ~[DenseMatrix] // basis inner products are in upper triangular part of the matrix
 
@@ -70,8 +56,8 @@ pub struct WeakGradSolver<M> {
 
 impl <M:Monomial> WeakGradSolver<M> {
 
-  pub fn new<MESHT:Mesh<M>>(deg_lim: DegLim, mesh: &MESHT) -> WeakGradSolver<M> {
-    let comp_mons: ~[M] = Monomial::mons_with_deg_lim_asc(deg_lim);
+  pub fn new<MESHT:Mesh<M>>(comp_mons_deg_lim: DegLim, mesh: &MESHT) -> WeakGradSolver<M> {
+    let comp_mons: ~[M] = Monomial::mons_with_deg_lim_asc(comp_mons_deg_lim);
     let vmons = VectorMonomial::with_comp_mons_ordered_by_comp_and_mon(comp_mons);
     let ips = vec::from_fn(mesh.num_oriented_element_shapes(), |os| {
       DenseMatrix::upper_triangular_from_fn(vmons.len(), vmons.len(), |i,j| {
@@ -81,9 +67,10 @@ impl <M:Monomial> WeakGradSolver<M> {
         }
       })
     });
-    WeakGradSolver { 
-      basis_vmons: vmons,
+    WeakGradSolver {
+      wgrad_comp_mons_deg_lim: comp_mons_deg_lim,
       wgrad_comp_mons: comp_mons,
+      basis_vmons: vmons,
       ips_basis_vmons_utmat_by_oshape: ips
     }
   }
@@ -189,8 +176,8 @@ impl <M:Monomial> WeakGradSolver<M> {
       // Produce a vector of wgrads for this side.
       let side_start_ix = side_start_ixs[side_num];
       let side_wgrad_coefs = sides_wgrad_coefs.slice(side_start_ix, side_start_ix + num_vmons * num_side_mons_by_side[side_num]);
-      side_wgrad_coefs                                               // Solution coefficients for all monomials on this side.
-        .chunk_iter(num_vmons)                                       // Chunk into sections corresponding to wgrads of individual side monomials.
+      side_wgrad_coefs           // Solution coefficients for all monomials on this side.
+        .chunk_iter(num_vmons)   // Chunk into sections corresponding to wgrads of individual side monomials.
         .map(|wgrad_vmon_coefs|
              WeakGrad {
                comp_mon_coefs: wgrad_vmon_coefs.chunk_iter(self.wgrad_comp_mons.len()) // Divide coefs into sections of common component dimension.
@@ -201,7 +188,80 @@ impl <M:Monomial> WeakGradSolver<M> {
     }).collect()   // Collect weak gradient collections by side number.
   }
 
+
+  pub fn weak_grad_ops(&self) -> ~WeakGradOps<M> {
+    use std::hashmap::HashMap;
+
+    let comp_mons = self.wgrad_comp_mons.clone(); // TWEAK: Could try borrowing this instead (adding lifetime param to the type). 
+
+    let prod_mons = { 
+      let prod_mons_deg_lim = match self.wgrad_comp_mons_deg_lim {
+        MaxMonDeg(l) => MaxMonDeg(2*l),
+        MaxMonFactorDeg(l) => MaxMonFactorDeg(2*l) 
+      };
+      Monomial::mons_with_deg_lim_asc(prod_mons_deg_lim)
+    };
+      
+    let (num_comp_mons, num_prod_mons) = (comp_mons.len(), prod_mons.len());
+
+    let comp_monns_by_prod_monn = {
+      let mut comp_monns_by_prod_monn: HashMap<M,~[(uint,uint)]> = HashMap::with_capacity(num_prod_mons);
+      for fac1_monn in range(0, num_comp_mons) {
+        for fac2_monn in range(fac1_monn, num_comp_mons) {
+          let prod_mon = comp_mons[fac1_monn] * comp_mons[fac2_monn];
+          let approx_twice_avg_num_fac_pairs = sq(num_comp_mons)/num_prod_mons;
+          comp_monns_by_prod_monn.find_or_insert_with(prod_mon, |_| vec::with_capacity(approx_twice_avg_num_fac_pairs))
+                                 .push((fac1_monn, fac2_monn));
+        }
+      }
+      vec::from_fn(num_prod_mons, |prod_monn| { comp_monns_by_prod_monn.get(&prod_mons[prod_monn]).clone() })
+    };
+
+    ~WeakGradOps {
+      dotprod_coefs_buf: vec::from_elem(num_prod_mons, 0 as R),
+      dotprod_mons: prod_mons,
+      wgrad_comp_mons: comp_mons,
+      wgrad_comp_monns_by_dotprod_monn: comp_monns_by_prod_monn
+    }
+  }
+
 } // WeakGradSolver impl
+
+/// This class holds context information and work buffers used to perform efficient operations on weak gradients. 
+pub struct WeakGradOps<M> {
+  wgrad_comp_mons: ~[M],
+  // dot product support
+  dotprod_coefs_buf: ~[R],
+  dotprod_mons: ~[M],
+  wgrad_comp_monns_by_dotprod_monn: ~[~[(uint,uint)]]
+}
+
+impl<M:Monomial> WeakGradOps<M> {
+
+  pub fn dot<'a>(&'a mut self, wgrad1: &WeakGrad, wgrad2: &WeakGrad) -> PolyBorrowing<'a,M> {
+    let space_dims = wgrad1.comp_mon_coefs.len();
+    assert!(space_dims == wgrad2.comp_mon_coefs.len());
+
+    // Set the coefficients for the product monomials in the dot product coefficients buffer.
+    for prod_monn in range(0, self.dotprod_mons.len()) {
+      // Get the monomial numbers of the the component monomials which produce this product monomial (only non-descending pairs included).
+      let ref fac_monn_pairs = self.wgrad_comp_monns_by_dotprod_monn[prod_monn];
+      // Sum the products of all coefficient pairs where the corresponding monomials multiply to give the product monomial.
+      let sum_coef_prods = fac_monn_pairs.iter().fold(0 as R, |sum_coef_prods, &(fac1_monn, fac2_monn)|
+        sum_coef_prods
+          + range(0, space_dims).fold(0 as R, |dim_contrs, d| { // sum the contributions for this factor pair over the space dimensions
+              dim_contrs
+                + wgrad1.comp_mon_coefs[d][fac1_monn] * wgrad2.comp_mon_coefs[d][fac2_monn]
+                + if fac1_monn != fac2_monn { wgrad1.comp_mon_coefs[d][fac2_monn] * wgrad2.comp_mon_coefs[d][fac1_monn] } else { 0 as R }
+            })
+      );
+      
+      self.dotprod_coefs_buf[prod_monn] = sum_coef_prods;
+    }
+    
+    PolyBorrowing::new(self.dotprod_coefs_buf, self.dotprod_mons)
+  }
+}
 
 #[link_args = "-Llib/mkl lib/lapack_wrappers.o -lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -lmkl_core -lmkl_intel_thread -lmkl_core -liomp5"]
 extern {
