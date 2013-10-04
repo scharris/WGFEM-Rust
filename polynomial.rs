@@ -370,7 +370,7 @@ impl<M:Monomial> Scalable
 }
 
 
-pub fn mul_polys<M:Monomial,P1:Polynomial<M>,P2:Polynomial<M>>(p1: &P1, p2: &P2) -> PolyOwning<M> {
+pub fn mul<M:Monomial,P1:Polynomial<M>,P2:Polynomial<M>>(p1: &P1, p2: &P2) -> PolyOwning<M> {
   let n = p1.num_terms() * p2.num_terms();
   let mut mons = vec::with_capacity(n);
   let mut coefs = vec::with_capacity(n);

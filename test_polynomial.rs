@@ -57,9 +57,9 @@ fn test_1d_owned_multiplication() {
   let one_plus_x = PolyOwning::new(~[1.,1.], ~[one_mon, x_mon]);
   let two_plus_x = PolyOwning::new(~[2.,1.], ~[one_mon, x_mon]);
 
-  assert_eq!(mul_polys(&one_plus_x,  &one_plus_x), 
+  assert_eq!(mul(&one_plus_x,  &one_plus_x), 
              PolyOwning::new(~[1.,1.,1.,1.], ~[one_mon, x_mon, x_mon, x_mon*x_mon]));
-  assert_eq!(mul_polys(&one_plus_x, &two_plus_x),
+  assert_eq!(mul(&one_plus_x, &two_plus_x),
              PolyOwning::new(~[2.,1.,2.,1.], ~[one_mon, x_mon, x_mon, x_mon*x_mon]));
 }
 
@@ -205,9 +205,9 @@ fn test_2d_owned_multiplication() {
   let one_plus_y = PolyOwning::new(~[1.,1.], ~[one_mon, y_mon]);
   let two_plus_y = PolyOwning::new(~[2.,1.], ~[one_mon, y_mon]);
 
-  assert_eq!(mul_polys(&one_plus_y, &one_plus_y), 
+  assert_eq!(mul(&one_plus_y, &one_plus_y), 
              PolyOwning::new(~[1.,1.,1.,1.], ~[one_mon, y_mon, y_mon, y_mon*y_mon]));
-  assert_eq!(mul_polys(&one_plus_y, &two_plus_y),
+  assert_eq!(mul(&one_plus_y, &two_plus_y),
              PolyOwning::new(~[2.,1.,2.,1.], ~[one_mon, y_mon, y_mon, y_mon*y_mon]));
 }
 
@@ -294,9 +294,9 @@ fn test_2d_borrowed_multiplication() {
   let one_plus_y = PolyBorrowingMons::new(~[1.,1.], one_y_mons);
   let two_plus_y = PolyBorrowingMons::new(~[2.,1.], one_y_mons);
 
-  assert_eq!(mul_polys(&one_plus_y, &one_plus_y), 
+  assert_eq!(mul(&one_plus_y, &one_plus_y), 
              PolyOwning::new(~[1.,1.,1.,1.], ~[one_mon, y_mon, y_mon, y_mon*y_mon]));
-  assert_eq!(mul_polys(&one_plus_y, &two_plus_y),
+  assert_eq!(mul(&one_plus_y, &two_plus_y),
              PolyOwning::new(~[2.,1.,2.,1.], ~[one_mon, y_mon, y_mon, y_mon*y_mon]));
 }
 
@@ -407,9 +407,9 @@ fn test_3d_owned_multiplication() {
   let one_plus_z = PolyOwning::new(~[1.,1.], ~[one_mon, z_mon]);
   let two_plus_z = PolyOwning::new(~[2.,1.], ~[one_mon, z_mon]);
 
-  assert_eq!(mul_polys(&one_plus_z, &one_plus_z), 
+  assert_eq!(mul(&one_plus_z, &one_plus_z), 
              PolyOwning::new(~[1.,1.,1.,1.], ~[one_mon, z_mon, z_mon, z_mon*z_mon]));
-  assert_eq!(mul_polys(&one_plus_z, &two_plus_z),
+  assert_eq!(mul(&one_plus_z, &two_plus_z),
              PolyOwning::new(~[2.,1.,2.,1.], ~[one_mon, z_mon, z_mon, z_mon*z_mon]));
 }
 
@@ -543,9 +543,9 @@ fn test_4d_owned_multiplication() {
   let one_plus_t = PolyOwning::new(~[1.,1.], ~[one_mon, t_mon]);
   let two_plus_t = PolyOwning::new(~[2.,1.], ~[one_mon, t_mon]);
 
-  assert_eq!(mul_polys(&one_plus_t, &one_plus_t), 
+  assert_eq!(mul(&one_plus_t, &one_plus_t), 
              PolyOwning::new(~[1.,1.,1.,1.], ~[one_mon, t_mon, t_mon, t_mon*t_mon]));
-  assert_eq!(mul_polys(&one_plus_t, &two_plus_t),
+  assert_eq!(mul(&one_plus_t, &two_plus_t),
              PolyOwning::new(~[2.,1.,2.,1.], ~[one_mon, t_mon, t_mon, t_mon*t_mon]));
 }
 
