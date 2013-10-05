@@ -5,4 +5,5 @@ TODO.txt
 lib/
 scratch.rs
 *.o
-scratch
+scratch*.rs
+
