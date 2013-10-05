@@ -15,6 +15,7 @@ pub mod mesh;
 pub mod rectangle_mesh;
 pub mod dense_matrix;
 pub mod weak_gradient;
+pub mod lapack;
 mod quadrature;
 #[cfg(test)]
 mod test_monomial;
