@@ -22,7 +22,7 @@ fn test_wgrad_xy() {
   let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0f64, 0.],
                                               ~[3f64, 3.],
                                               ~[MeshCoord(3), MeshCoord(3)]);
-  let wgrad_solver: WeakGradSolver<Mon2d> = WeakGradSolver::new(MaxMonDeg(3), rmesh);
+  let mut wgrad_solver: WeakGradSolver<Mon2d> = WeakGradSolver::new(MaxMonDeg(3), rmesh);
 
   let one = Mon2d { exps: [Deg(0), Deg(0)] };
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
@@ -54,7 +54,7 @@ fn test_wgrad_x2y() {
   let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0f64, 0.],
                                               ~[3f64, 3.],
                                               ~[MeshCoord(3), MeshCoord(3)]);
-  let wgrad_solver: WeakGradSolver<Mon2d> = WeakGradSolver::new(MaxMonDeg(3), rmesh);
+  let mut wgrad_solver: WeakGradSolver<Mon2d> = WeakGradSolver::new(MaxMonDeg(3), rmesh);
 
   let one = Mon2d { exps: [Deg(0), Deg(0)] };
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
@@ -112,7 +112,6 @@ fn test_wgrad_dot() {
   assert_eq!(&canon_fast_dot_prod.coefs, &polys_dot_prod.coefs);
   assert_eq!(&canon_fast_dot_prod.mons, &polys_dot_prod.mons);
 }
-
 
 fn lcomb_wgrads(terms: &[(R,&WeakGrad)]) -> WeakGrad {
   if terms.len() == 0 { fail!("lcomb_wgrads: At least one weak gradient is required.") }
