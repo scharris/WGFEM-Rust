@@ -5,6 +5,7 @@ use extra::c_vec;
 use extra::c_vec::CVec;
 use std::routine::Runnable;
 use std::libc::{c_ulong};
+use std::ptr;
 use std::vec;
 
 /// Column major dense matrix type.
@@ -94,13 +95,13 @@ impl DenseMatrix {
   #[inline]
   pub fn get(&self, r: uint, c: uint) -> R {
     if c >= self.num_cols || r >= self.num_rows { fail!("Row or column out of range."); }
-    c_vec::get(self.data, c * self.num_rows + r)
+    unsafe { *ptr::mut_offset(c_vec::ptr(self.data), (c * self.num_rows + r) as int) }
   }
   
   #[inline]
   pub fn set(&mut self, r: uint, c: uint, value: R) {
     if c >= self.num_cols || r >= self.num_rows { fail!("Row or column out of range."); }
-    c_vec::set(self.data, c * self.num_rows + r, value);
+    unsafe { *ptr::mut_offset(c_vec::ptr(self.data), (c * self.num_rows + r) as int) = value; }
   }
 
   #[fixed_stack_segment]
@@ -272,5 +273,56 @@ fn test_set() {
   assert_eq!(m.get(2,1), 2001.5);
 }
 
-// TODO: Test copy*_into functions
+#[test]
+fn test_copy_into() {
+  let m_src = DenseMatrix::from_fn(3,3, |r,c| {
+    1000. * r as R + c as R
+  });
+  let m = &mut DenseMatrix::from_elem(3,3, 10.);
+  m_src.copy_into(m);
+  assert_eq!(m.get(0,0), 0.);
+  assert_eq!(m.get(0,1), 1.);
+  assert_eq!(m.get(0,2), 2.);
+  assert_eq!(m.get(1,0), 1000.);
+  assert_eq!(m.get(1,1), 1001.);
+  assert_eq!(m.get(1,2), 1002.);
+  assert_eq!(m.get(2,0), 2000.);
+  assert_eq!(m.get(2,1), 2001.);
+  assert_eq!(m.get(2,2), 2002.);
+}
+
+#[test]
+#[should_fail]
+fn test_bad_copy_into() {
+  let m_src = DenseMatrix::from_fn(3,3, |r,c| {
+    1000. * r as R + c as R
+  });
+  let m = &mut DenseMatrix::from_elem(3,2, 10.);
+  m_src.copy_into(m);
+}
+
+#[test]
+fn test_copy_upper_triangle_into() {
+  let m_src = DenseMatrix::from_fn(3,3, |r,c| {
+    1000. * r as R + c as R
+  });
+  let m = &mut DenseMatrix::from_elem(3,3, 10.);
+  m_src.copy_upper_triangle_into(m);
+  assert_eq!(m.get(0,0), 0.);
+  assert_eq!(m.get(0,1), 1.);
+  assert_eq!(m.get(1,1), 1001.);
+  assert_eq!(m.get(0,2), 2.);
+  assert_eq!(m.get(1,2), 1002.);
+  assert_eq!(m.get(2,2), 2002.);
+}
+
+#[test]
+#[should_fail]
+fn test_bad_copy_upper_triangle_into() {
+  let m_src = DenseMatrix::from_fn(3,3, |r,c| {
+    1000. * r as R + c as R
+  });
+  let m = &mut DenseMatrix::from_elem(3,2, 10.);
+  m_src.copy_upper_triangle_into(m);
+}
 
