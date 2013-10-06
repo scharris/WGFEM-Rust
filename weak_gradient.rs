@@ -41,13 +41,13 @@ pub struct OShapeWeakGrads {
 }
 
 
-pub struct WeakGradSolver<M> {
+pub struct WeakGradSolver<Mon> {
 
   wgrad_comp_mons_deg_lim: DegLim,
   
-  wgrad_comp_mons: ~[M],
+  wgrad_comp_mons: ~[Mon],
 
-  basis_vmons: ~[VectorMonomial<M>], // ordered ascending by (monomial component dimension, monomial exponents tuple).
+  basis_vmons: ~[VectorMonomial<Mon>], // ordered ascending by (monomial component dimension, monomial exponents tuple).
 
   ips_basis_vmons_by_oshape: ~[DenseMatrix], // Basis inner products are in upper triangular parts of the matrices.
 
@@ -58,11 +58,11 @@ pub struct WeakGradSolver<M> {
   lapack_rhs: ~DenseMatrix,
 }
 
-impl <M:Monomial> WeakGradSolver<M> {
+impl <Mon:Monomial> WeakGradSolver<Mon> {
 
-  pub fn new<MESHT:Mesh<M>>(comp_mons_deg_lim: DegLim, mesh: &MESHT) -> WeakGradSolver<M> {
+  pub fn new<MESHT:Mesh<Mon>>(comp_mons_deg_lim: DegLim, mesh: &MESHT) -> WeakGradSolver<Mon> {
     lapack::init(); // TODO: Move this to main when available.
-    let comp_mons: ~[M] = Monomial::mons_with_deg_lim_asc(comp_mons_deg_lim);
+    let comp_mons: ~[Mon] = Monomial::mons_with_deg_lim_asc(comp_mons_deg_lim);
     let vmons = VectorMonomial::with_comp_mons_ordered_by_comp_and_mon(comp_mons);
     let num_vmons = vmons.len();
     
@@ -95,19 +95,19 @@ impl <M:Monomial> WeakGradSolver<M> {
   *   WGRAD_DEF_RHS:    -(v_0, div q)_T + <v_b, q.n>_bnd(T),
   * on a reference finite element of the mesh for an interior or side supported monomial v.
   */
-  fn wgrad_def_rhs_for_int_mon<M:Monomial,MESHT:Mesh<M>>(&self, v: M, oshape: OShape, q: &VectorMonomial<M>, mesh: &MESHT) -> R {
+  fn wgrad_def_rhs_for_int_mon<MESHT:Mesh<Mon>>(&self, v: Mon, oshape: OShape, q: &VectorMonomial<Mon>, mesh: &MESHT) -> R {
     // Interior supported v: only the -(v_0, div q)_T term can be non-zero in the rhs of (WGRAD_DEF).
     let (div_q_coef, div_q_mon) = q.divergence_coef_and_mon();
     -div_q_coef * mesh.intg_facerel_mon_on_oshape_int(v * div_q_mon, oshape)
   }
-  fn wgrad_def_rhs_for_side_mon<M:Monomial,MESHT:Mesh<M>>(&self, v: M, oshape: OShape, side_face: SideFace, q: &VectorMonomial<M>, mesh: &MESHT) -> R {
+  fn wgrad_def_rhs_for_side_mon<MESHT:Mesh<Mon>>(&self, v: Mon, oshape: OShape, side_face: SideFace, q: &VectorMonomial<Mon>, mesh: &MESHT) -> R {
     // Side supported v: only the <v_b, q.n>_bnd(T) term can be non-zero in the rhs of (WGRAD_DEF).
     mesh.intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(v, q, oshape, side_face)
   }
 
   #[fixed_stack_segment] 
   #[inline(never)]
-  pub fn wgrads_on_oshape<MESHT:Mesh<M>>(&mut self, int_mons: &[M], side_mons_by_side: &[&[M]], oshape: OShape, mesh: &MESHT) -> OShapeWeakGrads {
+  pub fn wgrads_on_oshape<MESHT:Mesh<Mon>>(&mut self, int_mons: &[Mon], side_mons_by_side: &[&[Mon]], oshape: OShape, mesh: &MESHT) -> OShapeWeakGrads {
     let num_vmons = self.basis_vmons.len();
 
     let sols_col_maj = 
@@ -145,7 +145,7 @@ impl <M:Monomial> WeakGradSolver<M> {
   // basis vector monomials which are represented by the rows.  The first columns represent the interior supported monomials
   // on the oshape, ordered by increasing monomial. These are followed by columns representing the monomials supported on
   // the sides in order of increasing side number, and by increasing monomial within a side section.
-  fn wgrad_def_rhss<'a,MESHT:Mesh<M>>(&'a mut self, int_mons: &[M], side_mons_by_side: &[&[M]], oshape: OShape, mesh: &MESHT) -> &'a mut DenseMatrix {
+  fn wgrad_def_rhss<'a,MESHT:Mesh<Mon>>(&'a mut self, int_mons: &[Mon], side_mons_by_side: &[&[Mon]], oshape: OShape, mesh: &MESHT) -> &'a mut DenseMatrix {
     let num_vmons = self.basis_vmons.len();
     let num_rhs_cols = {
       let total_side_mons_all_sides = side_mons_by_side.iter().fold(0u, |sum, side_mons| sum + side_mons.len());
@@ -217,7 +217,7 @@ impl <M:Monomial> WeakGradSolver<M> {
   }
 
 
-  pub fn weak_grad_ops(&self) -> ~WeakGradOps<M> {
+  pub fn weak_grad_ops(&self) -> ~WeakGradOps<Mon> {
     use std::hashmap::HashMap;
 
     let comp_mons = self.wgrad_comp_mons.clone(); // TWEAK: Could try borrowing this instead (adding lifetime param to the type). 
@@ -233,7 +233,7 @@ impl <M:Monomial> WeakGradSolver<M> {
     let (num_comp_mons, num_prod_mons) = (comp_mons.len(), prod_mons.len());
 
     let comp_monns_by_prod_monn = {
-      let mut comp_monns_by_prod_monn: HashMap<M,~[(uint,uint)]> = HashMap::with_capacity(num_prod_mons);
+      let mut comp_monns_by_prod_monn: HashMap<Mon,~[(uint,uint)]> = HashMap::with_capacity(num_prod_mons);
       for fac1_monn in range(0, num_comp_mons) {
         for fac2_monn in range(fac1_monn, num_comp_mons) {
           let prod_mon = comp_mons[fac1_monn] * comp_mons[fac2_monn];
@@ -256,17 +256,17 @@ impl <M:Monomial> WeakGradSolver<M> {
 } // WeakGradSolver impl
 
 /// This class holds context information and work buffers used to perform efficient operations on weak gradients. 
-pub struct WeakGradOps<M> {
-  wgrad_comp_mons: ~[M],
+pub struct WeakGradOps<Mon> {
+  wgrad_comp_mons: ~[Mon],
   // dot product support
   dotprod_coefs_buf: ~[R],
-  dotprod_mons: ~[M],
+  dotprod_mons: ~[Mon],
   wgrad_comp_monns_by_dotprod_monn: ~[~[(uint,uint)]]
 }
 
-impl<M:Monomial> WeakGradOps<M> {
+impl<Mon:Monomial> WeakGradOps<Mon> {
 
-  pub fn dot<'a>(&'a mut self, wgrad1: &WeakGrad, wgrad2: &WeakGrad) -> PolyBorrowing<'a,M> {
+  pub fn dot<'a>(&'a mut self, wgrad1: &WeakGrad, wgrad2: &WeakGrad) -> PolyBorrowing<'a,Mon> {
     let space_dims = wgrad1.comp_mon_coefs.len();
     assert!(space_dims == wgrad2.comp_mon_coefs.len());
 

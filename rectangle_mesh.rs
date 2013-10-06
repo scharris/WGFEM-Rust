@@ -21,7 +21,7 @@ pub struct NBSideGeom {
   mesh_coords: ~[MeshCoord]
 }
 
-pub struct RectMesh<M> {
+pub struct RectMesh<Mon> {
 
   // The number of spatial dimensions of the Euclidiean space containing the mesh. 
   space_dims: uint,
@@ -70,13 +70,13 @@ pub struct RectMesh<M> {
 }
 
 
-fn new_impl<M:Monomial>(min_bounds: ~[R],
-                        max_bounds: ~[R],
-                        mesh_ldims: ~[MeshCoord],
-                        integration_rel_err: R,
-                        integration_abs_err: R) -> ~RectMesh<M> {
+fn new_impl<Mon:Monomial>(min_bounds: ~[R],
+                          max_bounds: ~[R],
+                          mesh_ldims: ~[MeshCoord],
+                          integration_rel_err: R,
+                          integration_abs_err: R) -> ~RectMesh<Mon> {
 
-  let space_dims = Monomial::domain_space_dims(None::<M>);
+  let space_dims = Monomial::domain_space_dims(None::<Mon>); // TODO
   assert!(min_bounds.len() == space_dims);
   assert!(max_bounds.len() == space_dims);
   assert!(mesh_ldims.len() == space_dims);
@@ -142,11 +142,11 @@ fn new_impl<M:Monomial>(min_bounds: ~[R],
 }
 
 
-impl<M:Monomial> RectMesh<M> {
+impl<Mon:Monomial> RectMesh<Mon> {
   
   pub fn new(min_bounds: ~[R],
              max_bounds: ~[R],
-             mesh_ldims: ~[MeshCoord]) -> ~RectMesh<M> {
+             mesh_ldims: ~[MeshCoord]) -> ~RectMesh<Mon> {
     new_impl(min_bounds, max_bounds, mesh_ldims,
              DEFAULT_INTEGRATION_REL_ERR, DEFAULT_INTEGRATION_ABS_ERR)
   }
@@ -155,7 +155,7 @@ impl<M:Monomial> RectMesh<M> {
                            max_bounds: ~[R],
                            mesh_ldims: ~[MeshCoord],
                            integration_rel_err: R,
-                           integration_abs_err: R) -> ~RectMesh<M> {
+                           integration_abs_err: R) -> ~RectMesh<Mon> {
       new_impl(min_bounds, max_bounds, mesh_ldims,
                integration_rel_err, integration_abs_err)
   }
@@ -266,8 +266,8 @@ impl<M:Monomial> RectMesh<M> {
 }
 
 
-impl<M:Monomial+RectIntegrable> Mesh<M>
-                            for RectMesh<M> {
+impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
+                              for RectMesh<Mon> {
 
   #[inline(always)]
   fn num_fes(&self) -> uint {
@@ -397,7 +397,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   }
 
   #[inline]
-  fn intg_global_fn_x_facerel_mon_on_fe_int(&self, f: &fn(&[R]) -> R, mon: M, fe: FENum) -> R {
+  fn intg_global_fn_x_facerel_mon_on_fe_int(&self, f: &fn(&[R]) -> R, mon: Mon, fe: FENum) -> R {
     let d = self.space_dims;
     let fe_min_corner = &self.fe_coord_mins_corner(fe);
     let fe_int_origin = fe_min_corner;
@@ -409,7 +409,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   }
 
   #[inline]
-  fn intg_facerel_poly_on_oshape_int<P:Polynomial<M>>(&self, p: &P, oshape: OShape) -> R {
+  fn intg_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self, p: &P, oshape: OShape) -> R {
     assert!(*oshape == 0);
     p.foldl_terms(0 as R, |sum, (coef, mon)| {
       sum + coef * mon.integral_over_rect_at_origin(self.fe_side_lens)  
@@ -417,7 +417,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   }
 
   #[inline]
-  fn intg_facerel_poly_x_facerel_poly_on_oshape_int<P:Polynomial<M>>(&self, p1: &P, p2: &P, oshape: OShape) -> R {
+  fn intg_facerel_poly_x_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self, p1: &P, p2: &P, oshape: OShape) -> R {
     assert!(*oshape == 0);
     p1.foldl_terms(0 as R, |sum, (coef1, mon1)| {
       p2.foldl_terms(sum, |sum, (coef2, mon2)| {
@@ -427,7 +427,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   }
 
   #[inline]
-  fn intg_facerel_poly_x_facerel_poly_on_oshape_side<P:Polynomial<M>>(&self, p1: &P, p2: &P, oshape: OShape, side_face: SideFace) -> R {
+  fn intg_facerel_poly_x_facerel_poly_on_oshape_side<P:Polynomial<Mon>>(&self, p1: &P, p2: &P, oshape: OShape, side_face: SideFace) -> R {
     assert!(*oshape == 0);
     assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);
@@ -439,13 +439,13 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   }
 
   #[inline]
-  fn intg_facerel_mon_on_oshape_int(&self, mon: M, oshape: OShape) -> R {
+  fn intg_facerel_mon_on_oshape_int(&self, mon: Mon, oshape: OShape) -> R {
     assert!(*oshape == 0);
     mon.integral_over_rect_at_origin(self.fe_side_lens)
   }
 
   #[inline]
-  fn intg_facerel_mon_on_oshape_side(&self, mon: M, oshape: OShape, side_face: SideFace) -> R {
+  fn intg_facerel_mon_on_oshape_side(&self, mon: Mon, oshape: OShape, side_face: SideFace) -> R {
     assert!(*oshape == 0);
     assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);
@@ -453,7 +453,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   }
 
   #[inline]
-  fn intg_facerel_mon_x_facerel_poly_on_oshape_int<P:Polynomial<M>>(&self, mon: M, p: &P, oshape: OShape) -> R {
+  fn intg_facerel_mon_x_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self, mon: Mon, p: &P, oshape: OShape) -> R {
     assert!(*oshape == 0);
     p.foldl_terms(0 as R, |sum, (coef, p_mon)| {
       sum + coef * (mon*p_mon).integral_over_rect_at_origin(self.fe_side_lens)
@@ -461,7 +461,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   }
 
   #[inline]
-  fn intg_facerel_mon_x_facerel_poly_on_oshape_side<P:Polynomial<M>>(&self, mon: M, p: &P, oshape: OShape, side_face: SideFace) -> R {
+  fn intg_facerel_mon_x_facerel_poly_on_oshape_side<P:Polynomial<Mon>>(&self, mon: Mon, p: &P, oshape: OShape, side_face: SideFace) -> R {
     assert!(*oshape == 0);
     assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);
@@ -471,7 +471,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   }
 
   #[inline]
-  fn intg_intrel_mon_x_siderel_mon_on_oshape_side(&self, int_mon: M, side_mon: M, oshape: OShape, side_face: SideFace) -> R {
+  fn intg_intrel_mon_x_siderel_mon_on_oshape_side(&self, int_mon: Mon, side_mon: Mon, oshape: OShape, side_face: SideFace) -> R {
     assert!(*oshape == 0);
     assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);
@@ -488,7 +488,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
   }
 
   #[inline]
-  fn intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(&self, side_mon: M, int_vmon: &VectorMonomial<M>, oshape: OShape, side_face: SideFace) -> R {
+  fn intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(&self, side_mon: Mon, int_vmon: &VectorMonomial<Mon>, oshape: OShape, side_face: SideFace) -> R {
     assert!(*oshape == 0);
     assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);
@@ -514,7 +514,7 @@ impl<M:Monomial+RectIntegrable> Mesh<M>
     }
   }
  
-  fn intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side<P:Polynomial<M>>(&self, p: &P, int_vmon: &VectorMonomial<M>, oshape: OShape, side_face: SideFace) -> R {
+  fn intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side<P:Polynomial<Mon>>(&self, p: &P, int_vmon: &VectorMonomial<Mon>, oshape: OShape, side_face: SideFace) -> R {
     assert!(*oshape == 0);
     assert!((*side_face as uint) < self.num_side_faces_per_fe);
     let a = side_face_perp_axis(side_face);

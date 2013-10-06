@@ -42,7 +42,7 @@ pub struct NBSideInclusions {
   sideface_in_fe2: SideFace
 }
 
-pub trait Mesh<M> {
+pub trait Mesh<Mon> {
 
   fn num_fes(&self) -> uint;
 
@@ -92,59 +92,59 @@ pub trait Mesh<M> {
   
   fn intg_global_fn_x_facerel_mon_on_fe_int(&self,
        g: &fn(&[R]) -> R,
-       mon: M,
+       mon: Mon,
        fe: FENum) -> R;
  
-  fn intg_facerel_poly_on_oshape_int<P:Polynomial<M>>(&self,
+  fn intg_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self,
        p: &P,
        oshape: OShape) -> R;
 
-  fn intg_facerel_poly_x_facerel_poly_on_oshape_int<P:Polynomial<M>>(&self,
+  fn intg_facerel_poly_x_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self,
        p1: &P,
        p2: &P,
        oshape: OShape) -> R;
 
-  fn intg_facerel_poly_x_facerel_poly_on_oshape_side<P:Polynomial<M>>(&self,
+  fn intg_facerel_poly_x_facerel_poly_on_oshape_side<P:Polynomial<Mon>>(&self,
        p1: &P,
        p2: &P,
        oshape: OShape,
        side_face: SideFace) -> R;
 
   fn intg_facerel_mon_on_oshape_int(&self,
-       mon: M,
+       mon: Mon,
        oshape: OShape) -> R;
 
   fn intg_facerel_mon_on_oshape_side(&self,
-       mon: M,
+       mon: Mon,
        oshape: OShape,
        side_face: SideFace) -> R;
 
-  fn intg_facerel_mon_x_facerel_poly_on_oshape_int<P:Polynomial<M>>(&self,
-       mon: M,
+  fn intg_facerel_mon_x_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self,
+       mon: Mon,
        p: &P,
        oshape: OShape) -> R;
 
-  fn intg_facerel_mon_x_facerel_poly_on_oshape_side<P:Polynomial<M>>(&self,
-       mon: M,
+  fn intg_facerel_mon_x_facerel_poly_on_oshape_side<P:Polynomial<Mon>>(&self,
+       mon: Mon,
        p: &P,
        oshape: OShape,
        side_face: SideFace) -> R;
 
   fn intg_intrel_mon_x_siderel_mon_on_oshape_side(&self,
-       int_mon: M,
-       side_mon: M, oshape: OShape,
+       int_mon: Mon,
+       side_mon: Mon, oshape: OShape,
        side_face: SideFace) -> R;
   
   fn intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(&self,
-       mon: M,
-       q: &VectorMonomial<M>,
+       mon: Mon,
+       q: &VectorMonomial<Mon>,
        oshape: OShape,
        side_face: SideFace) -> R;
  
 
-  fn intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side<P:Polynomial<M>>(&self,
+  fn intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side<P:Polynomial<Mon>>(&self,
        p: &P,
-       q: &VectorMonomial<M>,
+       q: &VectorMonomial<Mon>,
        oshape: OShape,
        side_face: SideFace) -> R;
 

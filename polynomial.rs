@@ -7,27 +7,27 @@ use monomial::*;
 
 
 #[deriving(Eq, Clone)]
-pub struct PolyOwning<M> {
+pub struct PolyOwning<Mon> {
   coefs: ~[R],
-  mons:  ~[M]
+  mons:  ~[Mon]
 }
 
 #[deriving(Eq, Clone)]
-pub struct PolyBorrowing<'self,M> {
+pub struct PolyBorrowing<'self,Mon> {
   coefs: &'self [R],
-  mons: &'self [M]
+  mons: &'self [Mon]
 }
 
 #[deriving(Eq, Clone)]
-pub struct PolyBorrowingMons<'self,M> {
+pub struct PolyBorrowingMons<'self,Mon> {
   coefs: ~[R],
-  mons: &'self [M]
+  mons: &'self [Mon]
 }
 
 
-impl<M:Monomial> PolyOwning<M> {
+impl<Mon:Monomial> PolyOwning<Mon> {
   
-  pub fn new(coefs: ~[R], mons: ~[M]) -> PolyOwning<M> {
+  pub fn new(coefs: ~[R], mons: ~[Mon]) -> PolyOwning<Mon> {
     match (coefs.len(), mons.len()) {
       (0,0) => fail!("Empty arrays passed to polynomial constructor."),
       (x,y) if x != y => fail!("Arrays of different lengths passed to polynomial constructor."),
@@ -35,13 +35,13 @@ impl<M:Monomial> PolyOwning<M> {
     }
   }
   
-  pub fn zero() -> PolyOwning<M> {
-    let one_mon: M = Monomial::one();
+  pub fn zero() -> PolyOwning<Mon> {
+    let one_mon: Mon = Monomial::one();
     PolyOwning { coefs: ~[0 as R], mons: ~[one_mon] }
   }
   
-  pub fn zero_with_capacity(n: uint) -> PolyOwning<M> {
-    let one_mon: M = Monomial::one();
+  pub fn zero_with_capacity(n: uint) -> PolyOwning<Mon> {
+    let one_mon: Mon = Monomial::one();
     let mut coefs = vec::with_capacity(n);
     let mut mons = vec::with_capacity(n);
     coefs.push(0 as R);
@@ -49,8 +49,8 @@ impl<M:Monomial> PolyOwning<M> {
     PolyOwning { coefs: coefs, mons: mons }
   }
   
-  pub fn from_polys_lcomb<P:Polynomial<M>>(terms: &[(R,&P)]) -> PolyOwning<M> {
-    let mut coefs_by_mon: TreeMap<M,R> = TreeMap::new();
+  pub fn from_polys_lcomb<P:Polynomial<Mon>>(terms: &[(R,&P)]) -> PolyOwning<Mon> {
+    let mut coefs_by_mon: TreeMap<Mon,R> = TreeMap::new();
     for &(c_p, p) in terms.iter() {
       p.each_term(|(c_m, m)| {
         if c_m != 0 as R {
@@ -63,7 +63,7 @@ impl<M:Monomial> PolyOwning<M> {
         }
       });
     }
-    let mut mons:  ~[M] = vec::with_capacity(coefs_by_mon.len());
+    let mut mons:  ~[Mon] = vec::with_capacity(coefs_by_mon.len());
     let mut coefs: ~[R] = vec::with_capacity(coefs_by_mon.len());
     for (mon, coef) in coefs_by_mon.iter() {
       if *coef != 0 as R {
@@ -76,9 +76,9 @@ impl<M:Monomial> PolyOwning<M> {
 
 }
 
-impl<'self,M:Monomial> PolyBorrowing<'self,M> {
+impl<'self,Mon:Monomial> PolyBorrowing<'self,Mon> {
   
-  pub fn new(coefs: &'self [R], mons: &'self [M]) -> PolyBorrowing<'self,M> {
+  pub fn new(coefs: &'self [R], mons: &'self [Mon]) -> PolyBorrowing<'self,Mon> {
     match (coefs.len(), mons.len()) {
       (0,0) => fail!("Empty arrays passed to polynomial constructor."),
       (x,y) if x != y => fail!("Arrays of different lengths passed to polynomial constructor."),
@@ -87,9 +87,9 @@ impl<'self,M:Monomial> PolyBorrowing<'self,M> {
   }
 }
 
-impl<'self,M:Monomial> PolyBorrowingMons<'self,M> {
+impl<'self,Mon:Monomial> PolyBorrowingMons<'self,Mon> {
   
-  pub fn new(coefs: ~[R], mons: &'self [M]) -> PolyBorrowingMons<'self,M> {
+  pub fn new(coefs: ~[R], mons: &'self [Mon]) -> PolyBorrowingMons<'self,Mon> {
     match (coefs.len(), mons.len()) {
       (0,0) => fail!("Empty arrays passed to polynomial constructor."),
       (x,y) if x != y => fail!("Arrays of different lengths passed to polynomial constructor."),
@@ -98,27 +98,27 @@ impl<'self,M:Monomial> PolyBorrowingMons<'self,M> {
   }
 }
 
-pub trait Polynomial<M>: ToStr {
+pub trait Polynomial<Mon>: ToStr {
 
   fn domain_space_dims(_: Option<Self>) -> uint;
 
   fn num_terms(&self) -> uint;
   
-  fn term(&self, n: uint) -> (R,M);
+  fn term(&self, n: uint) -> (R,Mon);
 
-  fn foldl_terms<A>(&self, z: A, f: &fn(a: A, term: (R,M)) -> A) -> A;
+  fn foldl_terms<A>(&self, z: A, f: &fn(a: A, term: (R,Mon)) -> A) -> A;
   
-  fn each_term(&self, f: &fn(term: (R,M)) -> ()) ->  ();
+  fn each_term(&self, f: &fn(term: (R,Mon)) -> ()) ->  ();
 
-  fn canonical_form(&self) -> PolyOwning<M>;
+  fn canonical_form(&self) -> PolyOwning<Mon>;
   
-  fn equiv<P: Polynomial<M>>(&self, other: &P) -> bool;
+  fn equiv<P: Polynomial<Mon>>(&self, other: &P) -> bool;
 
 }
 
 
-fn canonical_form_impl<M: Monomial>(coefs: &[R], mons: &[M]) -> (~[R],~[M]) {
-  let mut coefs_by_mon: TreeMap<M,R> = TreeMap::new();
+fn canonical_form_impl<Mon: Monomial>(coefs: &[R], mons: &[Mon]) -> (~[R],~[Mon]) {
+  let mut coefs_by_mon: TreeMap<Mon,R> = TreeMap::new();
   for i in range(0, mons.len()) {
     let (mon, mon_coef) = (mons[i].clone(), coefs[i]);
     if mon_coef != 0 as R {
@@ -130,7 +130,7 @@ fn canonical_form_impl<M: Monomial>(coefs: &[R], mons: &[M]) -> (~[R],~[M]) {
       }
     }
   }
-  let mut mons:  ~[M] = vec::with_capacity(coefs_by_mon.len());
+  let mut mons:  ~[Mon] = vec::with_capacity(coefs_by_mon.len());
   let mut coefs: ~[R] = vec::with_capacity(coefs_by_mon.len());
   for (mon, coef) in coefs_by_mon.iter() {
     if *coef != 0 as R {
@@ -142,12 +142,12 @@ fn canonical_form_impl<M: Monomial>(coefs: &[R], mons: &[M]) -> (~[R],~[M]) {
 }
 
 
-impl<M:Monomial> Polynomial<M>
-             for PolyOwning<M> {
+impl<Mon:Monomial> Polynomial<Mon>
+               for PolyOwning<Mon> {
 
   #[inline]
-  fn domain_space_dims(_: Option<PolyOwning<M>>) -> uint {
-    Monomial::domain_space_dims(None::<M>)
+  fn domain_space_dims(_: Option<PolyOwning<Mon>>) -> uint {
+    Monomial::domain_space_dims(None::<Mon>)
   }
   
   #[inline]
@@ -156,13 +156,13 @@ impl<M:Monomial> Polynomial<M>
   }
   
   #[inline]
-  fn term(&self, n: uint) -> (R,M) {
+  fn term(&self, n: uint) -> (R,Mon) {
     let coef = self.coefs[n];
     let mon = unsafe { self.mons.unsafe_get(n) }; // bounds-checked already in coef access
     (coef,mon)
   }
   
-  fn foldl_terms<A>(&self, z: A, f: &fn(a: A, term: (R,M)) -> A) -> A {
+  fn foldl_terms<A>(&self, z: A, f: &fn(a: A, term: (R,Mon)) -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.mons.len()) {
       // let term = (self.coefs[n], self.mons[n].clone());
@@ -173,21 +173,21 @@ impl<M:Monomial> Polynomial<M>
   }
 
   #[inline]
-  fn each_term(&self, f: &fn(term: (R,M)) -> ()) ->  () {
+  fn each_term(&self, f: &fn(term: (R,Mon)) -> ()) ->  () {
     for n in range(0, self.mons.len()) {
       unsafe { f((self.coefs.unsafe_get(n), self.mons.unsafe_get(n))) };
     }
   }
 
-  fn canonical_form(&self) -> PolyOwning<M> {
+  fn canonical_form(&self) -> PolyOwning<Mon> {
     let (can_coefs, can_mons) = canonical_form_impl(self.coefs, self.mons);
     match can_mons.len() {
-      0 => { let m: PolyOwning<M> = PolyOwning::zero(); m}
+      0 => { let m: PolyOwning<Mon> = PolyOwning::zero(); m}
       _ => PolyOwning::new(can_coefs, can_mons)
     }
   }
  
-  fn equiv<P: Polynomial<M>>(&self, other: &P) -> bool {
+  fn equiv<P: Polynomial<Mon>>(&self, other: &P) -> bool {
     let (self_can_coefs, self_can_mons) = canonical_form_impl(self.coefs, self.mons);
     let other_can = other.canonical_form();
     self_can_coefs == other_can.coefs && self_can_mons == other_can.mons 
@@ -195,12 +195,12 @@ impl<M:Monomial> Polynomial<M>
 
 }
 
-impl<'self,M:Monomial> Polynomial<M>
-                   for PolyBorrowing<'self,M> {
+impl<'self,Mon:Monomial> Polynomial<Mon>
+                     for PolyBorrowing<'self,Mon> {
 
   #[inline]
-  fn domain_space_dims(_: Option<PolyBorrowing<M>>) -> uint {
-    Monomial::domain_space_dims(None::<M>)
+  fn domain_space_dims(_: Option<PolyBorrowing<Mon>>) -> uint {
+    Monomial::domain_space_dims(None::<Mon>)
   }
   
   #[inline]
@@ -209,13 +209,13 @@ impl<'self,M:Monomial> Polynomial<M>
   }
 
   #[inline]
-  fn term(&self, n: uint) -> (R,M) {
+  fn term(&self, n: uint) -> (R,Mon) {
     let coef = self.coefs[n];
     let mon = unsafe { self.mons.unsafe_get(n) }; // bounds-checked already in coef access
     (coef,mon)
   }
   
-  fn foldl_terms<A>(&self, z: A, f: &fn(a: A, term: (R,M)) -> A) -> A {
+  fn foldl_terms<A>(&self, z: A, f: &fn(a: A, term: (R,Mon)) -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.mons.len()) {
       let term = unsafe { (self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
@@ -225,21 +225,21 @@ impl<'self,M:Monomial> Polynomial<M>
   }
 
   #[inline]
-  fn each_term(&self, f: &fn(term: (R,M)) -> ()) ->  () {
+  fn each_term(&self, f: &fn(term: (R,Mon)) -> ()) ->  () {
     for n in range(0, self.mons.len()) {
       unsafe { f((self.coefs.unsafe_get(n), self.mons.unsafe_get(n))) };
     }
   }
 
-  fn canonical_form(&self) -> PolyOwning<M> {
+  fn canonical_form(&self) -> PolyOwning<Mon> {
     let (can_coefs, can_mons) = canonical_form_impl(self.coefs, self.mons);
     match can_mons.len() {
-      0 => { let zero: PolyOwning<M> = PolyOwning::zero(); zero}
+      0 => { let zero: PolyOwning<Mon> = PolyOwning::zero(); zero}
       _ => PolyOwning::new(can_coefs, can_mons)
     }
   }
   
-  fn equiv<P: Polynomial<M>>(&self, other: &P) -> bool {
+  fn equiv<P: Polynomial<Mon>>(&self, other: &P) -> bool {
     let (self_can_coefs, self_can_mons) = canonical_form_impl(self.coefs, self.mons);
     let other_can = other.canonical_form();
     self_can_coefs == other_can.coefs && self_can_mons == other_can.mons 
@@ -247,12 +247,12 @@ impl<'self,M:Monomial> Polynomial<M>
  
 }
 
-impl<'self,M:Monomial> Polynomial<M>
-                   for PolyBorrowingMons<'self,M> {
+impl<'self,Mon:Monomial> Polynomial<Mon>
+                     for PolyBorrowingMons<'self,Mon> {
 
   #[inline]
-  fn domain_space_dims(_: Option<PolyBorrowingMons<M>>) -> uint {
-    Monomial::domain_space_dims(None::<M>)
+  fn domain_space_dims(_: Option<PolyBorrowingMons<Mon>>) -> uint {
+    Monomial::domain_space_dims(None::<Mon>)
   }
   
   #[inline]
@@ -261,13 +261,13 @@ impl<'self,M:Monomial> Polynomial<M>
   }
 
   #[inline]
-  fn term(&self, n: uint) -> (R,M) {
+  fn term(&self, n: uint) -> (R,Mon) {
     let coef = self.coefs[n];
     let mon = unsafe { self.mons.unsafe_get(n) }; // bounds-checked already in coef access
     (coef,mon)
   }
   
-  fn foldl_terms<A>(&self, z: A, f: &fn(a: A, term: (R,M)) -> A) -> A {
+  fn foldl_terms<A>(&self, z: A, f: &fn(a: A, term: (R,Mon)) -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.mons.len()) {
       let term = unsafe { (self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
@@ -277,21 +277,21 @@ impl<'self,M:Monomial> Polynomial<M>
   }
 
   #[inline]
-  fn each_term(&self, f: &fn(term: (R,M)) -> ()) ->  () {
+  fn each_term(&self, f: &fn(term: (R,Mon)) -> ()) ->  () {
     for n in range(0, self.mons.len()) {
       unsafe { f((self.coefs.unsafe_get(n), self.mons.unsafe_get(n))) };
     }
   }
 
-  fn canonical_form(&self) -> PolyOwning<M> {
+  fn canonical_form(&self) -> PolyOwning<Mon> {
     let (can_coefs, can_mons) = canonical_form_impl(self.coefs, self.mons);
     match can_mons.len() {
-      0 => { let zero: PolyOwning<M> = PolyOwning::zero(); zero}
+      0 => { let zero: PolyOwning<Mon> = PolyOwning::zero(); zero}
       _ => PolyOwning::new(can_coefs, can_mons)
     }
   }
   
-  fn equiv<P: Polynomial<M>>(&self, other: &P) -> bool {
+  fn equiv<P: Polynomial<Mon>>(&self, other: &P) -> bool {
     let (self_can_coefs, self_can_mons) = canonical_form_impl(self.coefs, self.mons);
     let other_can = other.canonical_form();
     self_can_coefs == other_can.coefs && self_can_mons == other_can.mons 
@@ -301,29 +301,29 @@ impl<'self,M:Monomial> Polynomial<M>
 
 // Implement ToStr trait.
 
-fn to_str_impl<M: Monomial>(coefs: &[R], mons: &[M]) -> ~str {
+fn to_str_impl<Mon: Monomial>(coefs: &[R], mons: &[Mon]) -> ~str {
   let term_strs = vec::from_fn(mons.len(), |i| {
     coefs[i].to_str() + " " + mons[i].to_str()
   });
   term_strs.connect(" + ")
 }
 
-impl<M:Monomial> ToStr
-             for PolyOwning<M> {
+impl<Mon:Monomial> ToStr
+             for PolyOwning<Mon> {
   fn to_str(&self) -> ~str {
     to_str_impl(self.coefs, self.mons)
   }
 }
 
-impl<'self,M:Monomial> ToStr
-                   for PolyBorrowing<'self,M> {
+impl<'self,Mon:Monomial> ToStr
+                   for PolyBorrowing<'self,Mon> {
   fn to_str(&self) -> ~str {
     to_str_impl(self.coefs, self.mons)
   }
 }
 
-impl<'self,M:Monomial> ToStr
-                   for PolyBorrowingMons<'self,M> {
+impl<'self,Mon:Monomial> ToStr
+                   for PolyBorrowingMons<'self,Mon> {
   fn to_str(&self) -> ~str {
     to_str_impl(self.coefs, self.mons)
   }
@@ -337,10 +337,10 @@ pub trait Scalable {
 
 }
 
-impl<'self,M:Monomial> Scalable
-                   for PolyBorrowingMons<'self,M> {
+impl<'self,Mon:Monomial> Scalable
+                   for PolyBorrowingMons<'self,Mon> {
   #[inline]
-  fn scaled(&self, r: R) -> PolyBorrowingMons<'self, M> {
+  fn scaled(&self, r: R) -> PolyBorrowingMons<'self, Mon> {
     let scaled_coefs = vec::from_fn(self.coefs.len(), |i| r * self.coefs[i]);
     PolyBorrowingMons { coefs: scaled_coefs, mons: self.mons }
   }
@@ -353,10 +353,10 @@ impl<'self,M:Monomial> Scalable
   }
 }
 
-impl<M:Monomial> Scalable
-             for PolyOwning<M> {
+impl<Mon:Monomial> Scalable
+             for PolyOwning<Mon> {
   #[inline]
-  fn scaled(&self, r: R) -> PolyOwning<M> {
+  fn scaled(&self, r: R) -> PolyOwning<Mon> {
     let scaled_coefs = vec::from_fn(self.coefs.len(), |i| r * self.coefs[i]);
     PolyOwning { coefs: scaled_coefs, mons: self.mons.clone() }
   }
@@ -370,7 +370,7 @@ impl<M:Monomial> Scalable
 }
 
 
-pub fn mul<M:Monomial,P1:Polynomial<M>,P2:Polynomial<M>>(p1: &P1, p2: &P2) -> PolyOwning<M> {
+pub fn mul<Mon:Monomial,P1:Polynomial<Mon>,P2:Polynomial<Mon>>(p1: &P1, p2: &P2) -> PolyOwning<Mon> {
   let n = p1.num_terms() * p2.num_terms();
   let mut mons = vec::with_capacity(n);
   let mut coefs = vec::with_capacity(n);
@@ -386,7 +386,7 @@ pub fn mul<M:Monomial,P1:Polynomial<M>,P2:Polynomial<M>>(p1: &P1, p2: &P2) -> Po
 
 // Convenience function to create polynomials in testing code. Performance critical code
 // should use the ::new function implementations instead which will be more efficient.
-pub fn poly<M:Monomial>(terms: &[(R,M)]) -> PolyOwning<M> {
+pub fn poly<Mon:Monomial>(terms: &[(R,Mon)]) -> PolyOwning<Mon> {
   let mut coefs = vec::with_capacity(terms.len());
   let mut mons = vec::with_capacity(terms.len());
   for &(c, ref mon) in terms.iter() {
@@ -396,7 +396,7 @@ pub fn poly<M:Monomial>(terms: &[(R,M)]) -> PolyOwning<M> {
   PolyOwning { coefs: coefs, mons: mons } 
 }
 
-pub fn approx_equiv<M:Monomial,P:Polynomial<M>>(p1: &P, p2: &P, tol: R) -> bool {
+pub fn approx_equiv<Mon:Monomial,P:Polynomial<Mon>>(p1: &P, p2: &P, tol: R) -> bool {
   let diff = PolyOwning::from_polys_lcomb([(1.,p1),(-1.,p2)]);
   diff.coefs.iter().all(|&c| abs(c) <= tol)
 }
