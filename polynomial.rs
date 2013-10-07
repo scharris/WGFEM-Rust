@@ -100,8 +100,6 @@ impl<'self,Mon:Monomial> PolyBorrowingMons<'self,Mon> {
 
 pub trait Polynomial<Mon>: ToStr {
 
-  fn domain_space_dims(_: Option<Self>) -> uint;
-
   fn num_terms(&self) -> uint;
   
   fn term(&self, n: uint) -> (R,Mon);
@@ -145,11 +143,6 @@ fn canonical_form_impl<Mon: Monomial>(coefs: &[R], mons: &[Mon]) -> (~[R],~[Mon]
 impl<Mon:Monomial> Polynomial<Mon>
                for PolyOwning<Mon> {
 
-  #[inline]
-  fn domain_space_dims(_: Option<PolyOwning<Mon>>) -> uint {
-    Monomial::domain_space_dims(None::<Mon>)
-  }
-  
   #[inline]
   fn num_terms(&self) -> uint {
     self.mons.len()
@@ -199,11 +192,6 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
                      for PolyBorrowing<'self,Mon> {
 
   #[inline]
-  fn domain_space_dims(_: Option<PolyBorrowing<Mon>>) -> uint {
-    Monomial::domain_space_dims(None::<Mon>)
-  }
-  
-  #[inline]
   fn num_terms(&self) -> uint {
     self.mons.len()
   }
@@ -250,11 +238,6 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
 impl<'self,Mon:Monomial> Polynomial<Mon>
                      for PolyBorrowingMons<'self,Mon> {
 
-  #[inline]
-  fn domain_space_dims(_: Option<PolyBorrowingMons<Mon>>) -> uint {
-    Monomial::domain_space_dims(None::<Mon>)
-  }
-  
   #[inline]
   fn num_terms(&self) -> uint {
     self.mons.len()
