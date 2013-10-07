@@ -4,6 +4,8 @@
 
 #[license = "MIT"];
 #[crate_type = "lib"];
+#[feature(globs)];
+#[feature(macro_rules)];
 
 extern mod extra;
 
