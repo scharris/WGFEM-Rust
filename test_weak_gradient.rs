@@ -28,17 +28,18 @@ fn test_wgrad_xy() {
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
   let y = Mon2d { exps: [Deg(0), Deg(1)] };
  
-  let oshape_wgrads = wgrad_solver.wgrads_on_oshape([x*y],   // interior 
-                                                    [&[one], // left side (ignored because xy is 0 here)
-                                                     &[y],   // right
-                                                     &[one], // bottom    (ignored ")
-                                                     &[x]],  // top
-                                                    OShape(0),
-                                                    rmesh);
+  let (int_mon_wgrads, side_mon_wgrads) =
+    wgrad_solver.wgrads_on_oshape([x*y],   // interior 
+                                  [&[one], // left side (ignored because xy is 0 here)
+                                  &[y],   // right
+                                  &[one], // bottom    (ignored ")
+                                  &[x]],  // top
+                                  OShape(0),
+                                  rmesh);
 
-  let xy_on_int_wgrad = &oshape_wgrads.int_mon_wgrads[0];
-  let y_on_right_side_wgrad = &oshape_wgrads.side_mon_wgrads[1][0]; 
-  let x_on_top_side_wgrad = &oshape_wgrads.side_mon_wgrads[3][0];
+  let xy_on_int_wgrad = &int_mon_wgrads[0];
+  let y_on_right_side_wgrad = &side_mon_wgrads[1][0]; 
+  let x_on_top_side_wgrad = &side_mon_wgrads[3][0];
 
   let wgrad = &lcomb_wgrads([(1., xy_on_int_wgrad), (1., y_on_right_side_wgrad), (1., x_on_top_side_wgrad)]);
 
@@ -60,17 +61,18 @@ fn test_wgrad_x2y() {
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
   let y = Mon2d { exps: [Deg(0), Deg(1)] };
  
-  let oshape_wgrads = wgrad_solver.wgrads_on_oshape([x*x*y],   // interior 
-                                                    [&[one],   // left side (ignored because xy is 0 here)
-                                                     &[y],     // right
-                                                     &[one],   // bottom    (ignored ")
-                                                     &[x*x]],  // top
-                                                    OShape(0),
-                                                    rmesh);
+  let (int_mon_wgrads, side_mon_wgrads) = 
+    wgrad_solver.wgrads_on_oshape([x*x*y],   // interior 
+                                  [&[one],   // left side (ignored because xy is 0 here)
+                                  &[y],     // right
+                                  &[one],   // bottom    (ignored ")
+                                  &[x*x]],  // top
+                                  OShape(0),
+                                  rmesh);
 
-  let x2y_on_int_wgrad = &oshape_wgrads.int_mon_wgrads[0];
-  let y_on_right_side_wgrad = &oshape_wgrads.side_mon_wgrads[1][0]; 
-  let x2_on_top_side_wgrad = &oshape_wgrads.side_mon_wgrads[3][0];
+  let x2y_on_int_wgrad = &int_mon_wgrads[0];
+  let y_on_right_side_wgrad = &side_mon_wgrads[1][0]; 
+  let x2_on_top_side_wgrad = &side_mon_wgrads[3][0];
 
   let wgrad = &lcomb_wgrads([(1., x2y_on_int_wgrad), (1., y_on_right_side_wgrad), (1., x2_on_top_side_wgrad)]);
 

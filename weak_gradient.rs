@@ -35,12 +35,6 @@ pub struct WeakGrad {
   comp_mon_coefs: ~[~[R]]
 }
 
-pub struct OShapeWeakGrads {
-  int_mon_wgrads: ~[WeakGrad],    // interior monomial weak gradients, indexed by interior monomial number
-  side_mon_wgrads: ~[~[WeakGrad]] // side monomial weak gradients, indexed by side number then monomial number on the side
-}
-
-
 pub struct WeakGradSolver<Mon> {
 
   wgrad_comp_mons_deg_lim: DegLim,
@@ -107,7 +101,7 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
 
   #[fixed_stack_segment] 
   #[inline(never)]
-  pub fn wgrads_on_oshape<MESHT:Mesh<Mon>>(&mut self, int_mons: &[Mon], side_mons_by_side: &[&[Mon]], oshape: OShape, mesh: &MESHT) -> OShapeWeakGrads {
+  pub fn wgrads_on_oshape<MESHT:Mesh<Mon>>(&mut self, int_mons: &[Mon], side_mons_by_side: &[&[Mon]], oshape: OShape, mesh: &MESHT) -> (~[WeakGrad], ~[~[WeakGrad]]) {
     let num_vmons = self.basis_vmons.len();
 
     let sols_col_maj = 
@@ -134,10 +128,7 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
     let num_side_mons_by_side = side_mons_by_side.map(|mons| mons.len());
     let side_wgrads_by_side = self.side_wgrads_from_combined_sol_coefs(sols_col_maj.slice_from(num_vmons * int_mons.len()), num_side_mons_by_side);
 
-    OShapeWeakGrads {
-      int_mon_wgrads: int_wgrads,
-      side_mon_wgrads: side_wgrads_by_side
-    }
+    (int_wgrads, side_wgrads_by_side)
   }
  
   // Pack WGRAD_DEF right hand side computations as column vectors in a combined rhs matrix suitable for an LAPACK solver.
