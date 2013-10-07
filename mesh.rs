@@ -13,7 +13,7 @@ pub struct NBSideNum(uint);
 // A SideFace identifies a side within the context of a single oriented shape
 // or finite element.
 #[deriving(Eq,TotalEq,Ord,TotalOrd,Clone)]
-pub struct SideFace(u8);
+pub struct SideFace(uint);
 
 // A Face locally identifies either the interior or a side in the
 // context of a single oriented shape or finite element.
@@ -28,7 +28,7 @@ pub enum Face {
 // on a finite element can be expressed in element-local coordinates and will only
 // depend on the oriented shape of the element.
 #[deriving(Eq,TotalEq,Ord,TotalOrd,Clone)]
-pub struct OShape(u32);
+pub struct OShape(uint);
 
 
 #[deriving(Eq,TotalEq,Ord,TotalOrd,Clone)]

@@ -70,7 +70,7 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
       DenseMatrix::with_upper_triangle_from_fn(num_vmons, num_vmons, |i,j| {
         if vmons[i].mon_dim != vmons[j].mon_dim { 0 as R }
         else {
-          mesh.intg_facerel_mon_on_oshape_int(vmons[i].mon * vmons[j].mon, OShape(os as u32))
+          mesh.intg_facerel_mon_on_oshape_int(vmons[i].mon * vmons[j].mon, OShape(os))
         }
       })
     });
@@ -167,7 +167,7 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
     }
     let mut c = int_mons.len();
     for side_num in range(0, side_mons_by_side.len()) {
-      let side_face = SideFace(side_num as u8);
+      let side_face = SideFace(side_num);
       let side_mons = side_mons_by_side[side_num];
       // Write a column of rhs data for each monomial on this side.
       for mon_num in range(0, side_mons.len()) {

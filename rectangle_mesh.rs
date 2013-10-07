@@ -375,7 +375,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
   
   #[inline]
   fn num_non_boundary_sides_for_fe(&self, fe: FENum) -> uint {
-    range(0u8, self.num_side_faces_for_fe(fe) as u8)
+    range(0, self.num_side_faces_for_fe(fe))
       .count(|sf| self.is_boundary_side(fe, SideFace(sf))) 
   }
   
@@ -713,12 +713,12 @@ fn side_face_is_lesser_on_perp_axis(side_face: SideFace) -> bool {
 // Returns the side face of lesser coordinate value along the indicated axis.
 #[inline]
 pub fn lesser_side_face_perp_to_axis(a: Dim) -> SideFace {
-  SideFace((2 * *a) as u8)
+  SideFace(2 * *a as uint)
 }
 
 // Returns the side face of greater coordinate value along the indicated axis.
 #[inline]
 pub fn greater_side_face_perp_to_axis(a: Dim) -> SideFace {
-  SideFace((2 * *a + 1) as u8)
+  SideFace((2 * *a + 1) as uint)
 }
 
