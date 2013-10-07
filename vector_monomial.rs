@@ -1,6 +1,6 @@
 use std::vec;
 use common::*;
-use monomial::{Monomial};
+use monomial::{Monomial, domain_space_dims};
 
  /*
   * VectorMonomial type, parameterized by monomial type M.
@@ -16,7 +16,7 @@ pub struct VectorMonomial<Mon> {
 impl<Mon:Monomial> VectorMonomial<Mon> {
 
   pub fn new(mon_dim: Dim, mon: Mon) -> VectorMonomial<Mon> {
-    if *mon_dim >= Monomial::domain_space_dims(None::<Mon>) {
+    if *mon_dim >= domain_space_dims::<Mon>() {
       fail!("Coordinate index too large for passed monomial's domain.");
     }
     VectorMonomial { mon_dim: mon_dim, mon: mon }
@@ -43,7 +43,7 @@ impl<Mon:Monomial> VectorMonomial<Mon> {
   /// All vector monomials with the indicated component monomials, ordered by component dimension in ascending order,
   /// and then by monomial in increasing lexicographical order of exponents.
   pub fn with_comp_mons_ordered_by_comp_and_mon(comp_mons: &[Mon]) -> ~[VectorMonomial<Mon>] {
-    let dom_dim = Monomial::domain_space_dims(None::<Mon>);
+    let dom_dim = domain_space_dims::<Mon>();
     let mut vmons: ~[VectorMonomial<Mon>] = vec::with_capacity(comp_mons.len() * dom_dim);
     for r in range(0, dom_dim) {
       for mon in comp_mons.iter() {

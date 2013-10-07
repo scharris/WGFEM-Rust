@@ -3,7 +3,7 @@ use std::num::sqrt;
 use std::iter::range_inclusive;
 
 use common::*;
-use monomial::{Monomial, Mon1d, Mon2d, Mon3d, Mon4d};
+use monomial::{Monomial, Mon1d, Mon2d, Mon3d, Mon4d, domain_space_dims};
 use polynomial::Polynomial;
 use vector_monomial::VectorMonomial;
 use mesh::*;
@@ -76,7 +76,7 @@ fn new_impl<Mon:Monomial>(min_bounds: ~[R],
                           integration_rel_err: R,
                           integration_abs_err: R) -> ~RectMesh<Mon> {
 
-  let space_dims = Monomial::domain_space_dims(None::<Mon>); // TODO
+  let space_dims = domain_space_dims::<Mon>();
   assert!(min_bounds.len() == space_dims);
   assert!(max_bounds.len() == space_dims);
   assert!(mesh_ldims.len() == space_dims);

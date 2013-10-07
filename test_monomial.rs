@@ -7,6 +7,11 @@ fn test_domain_dims() {
   assert_eq!(Monomial::domain_space_dims(None::<Mon2d>), 2u);
   assert_eq!(Monomial::domain_space_dims(None::<Mon3d>), 3u);
   assert_eq!(Monomial::domain_space_dims(None::<Mon4d>), 4u);
+  
+  assert_eq!(monomial::domain_space_dims::<Mon1d>(), 1u);
+  assert_eq!(monomial::domain_space_dims::<Mon2d>(), 2u);
+  assert_eq!(monomial::domain_space_dims::<Mon3d>(), 3u);
+  assert_eq!(monomial::domain_space_dims::<Mon4d>(), 4u);
 }
 
 #[test]

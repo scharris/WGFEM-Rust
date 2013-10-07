@@ -501,6 +501,11 @@ pub fn num_mons_with_deg_lim(deg_lim: DegLim, dom_space_dims: uint) -> uint {
 }
 
 #[inline]
+pub fn domain_space_dims<Mon:Monomial>() -> uint {
+  Monomial::domain_space_dims(None::<Mon>)
+}
+
+#[inline]
 fn multiset_choose(n: uint, k: uint) -> uint {
   binomial(n + k - 1, k)
 }
