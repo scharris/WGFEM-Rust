@@ -21,7 +21,8 @@ fn test_top_x_wgrad() {
    * {q_i}_i = { (1,0), (y,0), (x,0), (0,1), (0,y), (0,x) }
    * v = x on top side, 0 elsewhere
    *
-   * Integrals of interior relative vector monomial dot products over the interior of the finite element, which in our case is the unit square.
+   * The system matrix contains integrals of the dot products of interior relative vector monomials over the interior
+   * of the finite element, which in our case will be the unit square.
    * IP = inner products ({q_i}_i) = 
    *   int{(1,0).(1,0)}    int{(1,0).(y,0)}  int{(1,0).(x,0)} int{(1,0).(0,1)}, int{(1,0).(0,y)}  int{(1,0).(0,x)}
    *   int{(y,0).(1,0)}    int{(y,0).(y,0)}  int{(y,0).(x,0)} int{(y,0).(0,1)}, int{(y,0).(0,y)}  int{(y,0).(0,x)}
@@ -260,7 +261,8 @@ fn test_wgrad_dot() {
   
   let fast_dot_prod = wgrad_ops.dot(&wgrad1, &wgrad2);
  
-  // Compiler prevents second call of dot() which would have silently overwritten the existing wgrad's shared coefficients buffer. Beautiful!
+  // Compiler prevents second call of dot() which would have silently overwritten the existing wgrad's shared coefficients
+  // buffer (beautiful!).
   // let wgrad_x_top_dot_wgrad_y_right = wgrad_ops.dot(&wgrad1, &wgrad1);
   //   =>  error: cannot borrow `*wgrad_ops` as mutable more than once at a time
  

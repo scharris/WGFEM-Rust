@@ -45,7 +45,7 @@ pub struct WeakGradSolver<Mon> {
 
   ips_basis_vmons_by_oshape: ~[DenseMatrix], // Basis inner products are in upper triangular parts of the matrices.
 
-  // Work matrix to hold the basis ips for input to the lapack solver, which writes over the contents with factorization information.
+  // Work matrix to hold the basis ips for the lapack solver, which overwrites it with factorization information.
   lapack_ips_basis_vmons: ~DenseMatrix,
   lapack_pivots: ~[lapack_int],
   lapack_pivots_buf: *mut lapack_int,
@@ -80,7 +80,8 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
       lapack_ips_basis_vmons: ~DenseMatrix::from_elem(num_vmons, num_vmons, 0 as R),
       lapack_pivots: lapack_pivots,
       lapack_pivots_buf: lapack_pivots_buf,
-      lapack_rhs: ~DenseMatrix::from_elem(num_vmons, 200, 0 as R) // initially allocate for up to 200 shape funs per oshape, will reallocate if necessary 
+      lapack_rhs: ~DenseMatrix::from_elem(num_vmons, 200, 0 as R) // Initially allocate for up to 200 shape funs per oshape -
+                                                                  // will reallocate if necessary.
     }
   }
 
@@ -94,27 +95,34 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
     let (div_q_coef, div_q_mon) = q.divergence_coef_and_mon();
     -div_q_coef * mesh.intg_facerel_mon_on_oshape_int(v * div_q_mon, oshape)
   }
-  fn wgrad_def_rhs_for_side_mon<MESHT:Mesh<Mon>>(&self, v: Mon, oshape: OShape, side_face: SideFace, q: &VectorMonomial<Mon>, mesh: &MESHT) -> R {
+  
+  fn wgrad_def_rhs_for_side_mon<MESHT:Mesh<Mon>>(&self, v: Mon, oshape: OShape, side_face: SideFace,
+                                                        q: &VectorMonomial<Mon>, mesh: &MESHT) -> R {
     // Side supported v: only the <v_b, q.n>_bnd(T) term can be non-zero in the rhs of (WGRAD_DEF).
     mesh.intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(v, q, oshape, side_face)
   }
 
   #[fixed_stack_segment] 
   #[inline(never)]
-  pub fn wgrads_on_oshape<MESHT:Mesh<Mon>>(&mut self, int_mons: &[Mon], side_mons_by_side: &[&[Mon]], oshape: OShape, mesh: &MESHT) -> (~[WeakGrad], ~[~[WeakGrad]]) {
+  pub fn wgrads_on_oshape<MESHT:Mesh<Mon>>(&mut self, int_mons: &[Mon], side_mons_by_side: &[&[Mon]],
+                                                      oshape: OShape, mesh: &MESHT) -> (~[WeakGrad], ~[~[WeakGrad]]) {
     let num_vmons = self.basis_vmons.len();
 
     let sols_col_maj = 
       unsafe {
-        // a - The system matrix of vmon inner products [in], factorization information [out], both linearized in column-major order.
+        // a - The system matrix of vmon inner products [in], factorization information [out], both linearized
+        //     in column-major order.
         self.ips_basis_vmons_by_oshape[*oshape].copy_upper_triangle_into(self.lapack_ips_basis_vmons); 
         let a = self.lapack_ips_basis_vmons.mut_col_maj_data_ptr();
         
-        // b - The WGRAD_DEF system right hand side column vectors matrix [in], solution columns [out], both linearized in column-major order.
+        // b - The WGRAD_DEF system right hand side column vectors matrix [in], solution columns [out], both
+        //     linearized in column-major order.
         let rhss = self.wgrad_def_rhss(int_mons, side_mons_by_side, oshape, mesh);
         let b = rhss.mut_col_maj_data_ptr();
 
-        lapack::solve_symmetric_as_col_maj_with_ut_sys(a, num_vmons as lapack_int, b, rhss.num_cols as lapack_int, self.lapack_pivots_buf);
+        lapack::solve_symmetric_as_col_maj_with_ut_sys(a, num_vmons as lapack_int,
+                                                       b, rhss.num_cols as lapack_int,
+                                                       self.lapack_pivots_buf);
         
         vec::from_buf(b as *R, num_vmons * rhss.num_cols)
       };
@@ -126,17 +134,19 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
     // Side weak gradients are represented as a vector, indexed by side number, of vectors, indexed by side shape function
     // (monomial) number, of polynomial vectors representing the weak gradient of the shape function.
     let num_side_mons_by_side = side_mons_by_side.map(|mons| mons.len());
-    let side_wgrads_by_side = self.side_wgrads_from_combined_sol_coefs(sols_col_maj.slice_from(num_vmons * int_mons.len()), num_side_mons_by_side);
+    let side_wgrads_by_side = self.side_wgrads_from_combined_sol_coefs(sols_col_maj.slice_from(num_vmons*int_mons.len()),
+                                                                       num_side_mons_by_side);
 
     (int_wgrads, side_wgrads_by_side)
   }
  
   // Pack WGRAD_DEF right hand side computations as column vectors in a combined rhs matrix suitable for an LAPACK solver.
   // Returns a matrix consisting of right hand side column vectors of the WGRAD_DEF system evaluated over the sequence of
-  // basis vector monomials which are represented by the rows.  The first columns represent the interior supported monomials
-  // on the oshape, ordered by increasing monomial. These are followed by columns representing the monomials supported on
-  // the sides in order of increasing side number, and by increasing monomial within a side section.
-  fn wgrad_def_rhss<'a,MESHT:Mesh<Mon>>(&'a mut self, int_mons: &[Mon], side_mons_by_side: &[&[Mon]], oshape: OShape, mesh: &MESHT) -> &'a mut DenseMatrix {
+  // basis vector monomials which are represented by the rows.  The first columns represent the interior supported
+  // monomials on the oshape, ordered by increasing monomial. These are followed by columns representing the monomials
+  // supported on the sides in order of increasing side number, and by increasing monomial within a side section.
+  fn wgrad_def_rhss<'a,MESHT:Mesh<Mon>>(&'a mut self, int_mons: &[Mon], side_mons_by_side: &[&[Mon]],
+                                                      oshape: OShape, mesh: &MESHT) -> &'a mut DenseMatrix {
     let num_vmons = self.basis_vmons.len();
     let num_rhs_cols = {
       let total_side_mons_all_sides = side_mons_by_side.iter().fold(0u, |sum, side_mons| sum + side_mons.len());
@@ -177,10 +187,10 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
   // Unpack slice of solution coefficients for interior monomials from LAPACK solver as weak gradients.
   fn int_wgrads_from_combined_sol_coefs(&self, int_wgrad_coefs: &[R]) -> ~[WeakGrad] {
     int_wgrad_coefs
-      .chunk_iter(self.basis_vmons.len()) // Chunk into sections corresponding to wgrad coefs of individual interior monomials.
+      .chunk_iter(self.basis_vmons.len()) // Chunk into sections corresponding to wgrad coefs of individual int mons.
       .map(|wgrad_vmon_coefs| 
            WeakGrad {
-             comp_mon_coefs: wgrad_vmon_coefs.chunk_iter(self.wgrad_comp_mons.len()) // Divide coefs into sections by component dimension.
+             comp_mon_coefs: wgrad_vmon_coefs.chunk_iter(self.wgrad_comp_mons.len()) // comp dim sections
                                              .map(|comp_coefs| comp_coefs.to_owned())
                                              .collect()
            })
@@ -199,9 +209,9 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
         .chunk_iter(num_vmons)   // Chunk into sections corresponding to wgrads of individual side monomials.
         .map(|wgrad_vmon_coefs|
              WeakGrad {
-               comp_mon_coefs: wgrad_vmon_coefs.chunk_iter(self.wgrad_comp_mons.len()) // Divide coefs into sections of common component dimension.
+               comp_mon_coefs: wgrad_vmon_coefs.chunk_iter(self.wgrad_comp_mons.len()) // comp dim sections
                                                .map(|comp_coefs| comp_coefs.to_owned())
-                                               .collect() // Collect vector of component coefficients for a single weak gradient.
+                                               .collect() // Collect component coefficients for a single weak grad.
              })
         .collect() // Collect vector of weak gradients by monomial number.
     }).collect()   // Collect weak gradient collections by side number.
@@ -211,7 +221,7 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
   pub fn weak_grad_ops(&self) -> ~WeakGradOps<Mon> {
     use std::hashmap::HashMap;
 
-    let comp_mons = self.wgrad_comp_mons.clone(); // TWEAK: Could try borrowing this instead (adding lifetime param to the type). 
+    let comp_mons = self.wgrad_comp_mons.clone(); // TWEAK: Could try borrowing this instead (add lifetime param to the type). 
 
     let prod_mons = { 
       let prod_mons_deg_lim = match self.wgrad_comp_mons_deg_lim {
@@ -263,15 +273,16 @@ impl<Mon:Monomial> WeakGradOps<Mon> {
 
     // Set the coefficients for the product monomials in the dot product coefficients buffer.
     for prod_monn in range(0, self.dotprod_mons.len()) {
-      // Get the monomial numbers of the the component monomials which produce this product monomial (only non-descending pairs included).
+      // Get the mon nums of the the component mons which produce this product monomial - only non-descending pairs included.
       let ref fac_monn_pairs = self.wgrad_comp_monns_by_dotprod_monn[prod_monn];
       // Sum the products of all coefficient pairs where the corresponding monomials multiply to give the product monomial.
       let sum_coef_prods = fac_monn_pairs.iter().fold(0 as R, |sum_coef_prods, &(fac1_monn, fac2_monn)|
         sum_coef_prods
-          + range(0, space_dims).fold(0 as R, |dim_contrs, d| { // sum the contributions for this factor pair over the space dimensions
+          + range(0, space_dims).fold(0 as R, |dim_contrs, d| { // sum contributions for this factor pair over space dimensions
               dim_contrs
                 + wgrad1.comp_mon_coefs[d][fac1_monn] * wgrad2.comp_mon_coefs[d][fac2_monn]
-                + if fac1_monn != fac2_monn { wgrad1.comp_mon_coefs[d][fac2_monn] * wgrad2.comp_mon_coefs[d][fac1_monn] } else { 0 as R }
+                + if fac1_monn != fac2_monn { wgrad1.comp_mon_coefs[d][fac2_monn] * wgrad2.comp_mon_coefs[d][fac1_monn] }
+                  else { 0 as R }
             })
       );
       

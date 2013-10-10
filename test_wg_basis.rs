@@ -525,7 +525,7 @@ fn test_wgrads_3x2_deg2() {
   let basis = WgBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
 
   let xy_on_int_wgrad = basis.wgrad_int_mon(FaceMonNum(4), OShape(0));
-  assert_eq!(xy_on_int_wgrad.comp_mon_coefs[0].as_slice(), &[3./2., 0., -3.]); // This example was worked in test_weak_gradient.rs.
+  assert_eq!(xy_on_int_wgrad.comp_mon_coefs[0].as_slice(), &[3./2., 0., -3.]); // See test_weak_gradient.rs.
   assert_eq!(xy_on_int_wgrad.comp_mon_coefs[1].as_slice(), &[3./2., -3., 0.]); // 
 
   let y_on_right_side_wgrad = basis.wgrad_side_mon(FaceMonNum(1), OShape(0), SideFace(1));
