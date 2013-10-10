@@ -30,6 +30,8 @@ pub mod rectangle_mesh;
 mod test_rectangle_mesh;
 
 pub mod dense_matrix;
+#[cfg(test)]
+mod test_dense_matrix;
 
 pub mod weak_gradient;
 #[cfg(test)]
