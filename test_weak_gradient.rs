@@ -62,8 +62,8 @@ fn test_wgrad_x2y() {
   let y = Mon2d { exps: [Deg(0), Deg(1)] };
  
   let (int_mon_wgrads, side_mon_wgrads) = 
-    wgrad_solver.wgrads_on_oshape([x*x*y],   // interior 
-                                  [&[one],   // left side (ignored because xy is 0 here)
+    wgrad_solver.wgrads_on_oshape([x*x*y],  // interior 
+                                  [&[one],  // left side (ignored because xy is 0 here)
                                   &[y],     // right
                                   &[one],   // bottom    (ignored ")
                                   &[x*x]],  // top
