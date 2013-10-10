@@ -65,7 +65,7 @@ fn test_top_x_wgrad() {
    *     xi = [0 0 0 -3/2 3 1]'
    */
   
-  let (int_mon_wgrads, side_mon_wgrads) =
+  let (_, side_mon_wgrads) =
     wgrad_solver.wgrads_on_oshape([x],    // interior 
                                   [&[x],  // left side
                                    &[x],  // right
@@ -110,7 +110,7 @@ fn test_right_y_wgrad() {
    *     xi = [-3/2 1 3 0 0 0]'
    */
   
-  let (int_mon_wgrads, side_mon_wgrads) =
+  let (_, side_mon_wgrads) =
     wgrad_solver.wgrads_on_oshape([y],    // interior 
                                   [&[y],  // left side
                                    &[y],  // right
@@ -155,7 +155,7 @@ fn test_int_xy_wgrad() {
    *     xi = [3/2 0 -3 3/2 -3 0]'
    */
   
-  let (int_mon_wgrads, side_mon_wgrads) =
+  let (int_mon_wgrads, _) =
     wgrad_solver.wgrads_on_oshape([xy],    // interior 
                                   [&[xy],  // left side
                                    &[xy],  // right
