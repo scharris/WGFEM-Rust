@@ -10,24 +10,35 @@
 extern mod extra;
 
 pub mod common;
+
 pub mod monomial;
-pub mod polynomial;
-pub mod vector_monomial;
-pub mod mesh;
-pub mod rectangle_mesh;
-pub mod dense_matrix;
-pub mod weak_gradient;
-pub mod wg_basis;
-pub mod lapack;
-mod quadrature;
 #[cfg(test)]
 mod test_monomial;
-#[cfg(test)]
-mod test_vector_monomial;
+
+pub mod polynomial;
 #[cfg(test)]
 mod test_polynomial;
+
+pub mod vector_monomial;
+#[cfg(test)]
+mod test_vector_monomial;
+
+pub mod mesh;
+
+pub mod rectangle_mesh;
 #[cfg(test)]
 mod test_rectangle_mesh;
+
+pub mod dense_matrix;
+
+pub mod weak_gradient;
 #[cfg(test)]
 mod test_weak_gradient;
+
+pub mod wg_basis;
+#[cfg(test)]
+mod test_wg_basis;
+
+pub mod lapack;
+mod quadrature;
 
