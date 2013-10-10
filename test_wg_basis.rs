@@ -24,9 +24,11 @@ fn test_int_mons_3x2_deg2() {
   let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WgBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
 
-  assert_eq!(basis.int_mons(),
-             [Mon2d{exps:[Deg(0), Deg(0)]}, Mon2d{exps:[Deg(0), Deg(1)]}, Mon2d{exps:[Deg(0), Deg(2)]},
-              Mon2d{exps:[Deg(1), Deg(0)]}, Mon2d{exps:[Deg(1), Deg(1)]}, Mon2d{exps:[Deg(2), Deg(0)]}]);
+  let one = Mon2d { exps: [Deg(0), Deg(0)] };
+  let x = Mon2d { exps: [Deg(1), Deg(0)] };
+  let y = Mon2d { exps: [Deg(0), Deg(1)] };
+
+  assert_eq!(basis.int_mons(), [one, y, y*y, x, x*y, x*x]);
 
   assert_eq!(basis.mons_per_fe_int(), 6);
 }
@@ -517,51 +519,53 @@ fn test_side_rel_mon_nums_by_beln_between_fe0_and_fe3_3x2_deg2() {
   assert_eq!(basis.side_rel_mon_num(BasisElNum(45)), FaceMonNum(1));
 }
 
+#[test]
+fn test_wgrads_3x2_deg2() {
+  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let basis = WgBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
 
-/*
-# test weak gradients of basis elements
+  let xy_on_int_wgrad = basis.wgrad_int_mon(FaceMonNum(4), OShape(0));
+  assert_eq!(xy_on_int_wgrad.comp_mon_coefs[0].as_slice(), &[3./2., 0., -3.]); // This example was worked in test_weak_gradient.rs.
+  assert_eq!(xy_on_int_wgrad.comp_mon_coefs[1].as_slice(), &[3./2., -3., 0.]); // 
 
-wgrad_solver = WGradSolver(deg(1), basis.mesh)
+  let y_on_right_side_wgrad = basis.wgrad_side_mon(FaceMonNum(1), OShape(0), SideFace(1));
+  assert_eq!(y_on_right_side_wgrad.comp_mon_coefs[0].as_slice(), &[-3./2., 1., 3.]);
+  assert_eq!(y_on_right_side_wgrad.comp_mon_coefs[1].as_slice(), &[0., 0., 0.]);
 
-# weak gradients of interior supported elements
-@test wgrad_interior_mon(monnum(1), rshape, basis) == WGrad.wgrad(one, rshape, Mesh.interior_face, wgrad_solver)
-@test wgrad_interior_mon(monnum(2), rshape, basis) == WGrad.wgrad(y, rshape, Mesh.interior_face, wgrad_solver)
-@test wgrad_interior_mon(monnum(3), rshape, basis) == WGrad.wgrad(y^2, rshape, Mesh.interior_face, wgrad_solver)
-@test wgrad_interior_mon(monnum(4), rshape, basis) == WGrad.wgrad(x, rshape, Mesh.interior_face, wgrad_solver)
-@test wgrad_interior_mon(monnum(5), rshape, basis) == WGrad.wgrad(x*y, rshape, Mesh.interior_face, wgrad_solver)
-@test wgrad_interior_mon(monnum(6), rshape, basis) == WGrad.wgrad(x^2, rshape, Mesh.interior_face, wgrad_solver)
+  let x_on_top_side_wgrad = basis.wgrad_side_mon(FaceMonNum(1), OShape(0), SideFace(3));
+  assert_eq!(x_on_top_side_wgrad.comp_mon_coefs[0].as_slice(), &[0., 0., 0.]);
+  assert_eq!(x_on_top_side_wgrad.comp_mon_coefs[1].as_slice(), &[-3./2., 3., 1.]);
+}
 
-@test wgrad_side_mon(monnum(1), rshape, right_face, basis) == WGrad.wgrad(one, rshape, right_face, wgrad_solver)
-@test wgrad_side_mon(monnum(2), rshape, right_face, basis) == WGrad.wgrad(y, rshape, right_face, wgrad_solver)
-@test_throws wgrad_side_mon(monnum(3), rshape, right_face, basis)
+#[test]
+fn test_int_L2_inner_products_3x2_deg2() {
+  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let basis = WgBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
+  
+  let int_ips = basis.ips_int_mons(FENum(0));
+  assert_eq!(int_ips.get(0,0), 1.);    // one vs one
+  assert_eq!(int_ips.get(0,1), 1./2.); // one vs y
+  assert_eq!(int_ips.get(0,2), 1./3.); // one vs y^2
+  assert_eq!(int_ips.get(0,3), 1./2.); // one vs x
+  assert_eq!(int_ips.get(0,4), 1./4.); // one vs xy
+  assert_eq!(int_ips.get(0,5), 1./3.); // one vs x^2
+}
 
+#[test]
+fn test_side_L2_inner_products_3x2_deg2() {
+  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let basis = WgBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
+  
+  let right_ips = basis.ips_side_mons(FENum(0), SideFace(3));
+  assert_eq!(right_ips.get(0,0), 1.);    // one vs one
+  assert_eq!(right_ips.get(0,1), 1./2.); // one vs y
+  assert_eq!(right_ips.get(1,1), 1./3.); // y vs y
 
-# test L2 inner products of basis elements
-
-# interior supported element inner products
-int_ips = ips_interior_mons(fenum(1), basis)
-@test int_ips[1,1] == Mesh.integral_face_rel_x_face_rel_on_oshape_face(one, one, rshape, Mesh.interior_face, basis.mesh) == 1
-@test int_ips[1,2] == Mesh.integral_face_rel_x_face_rel_on_oshape_face(one, y, rshape, Mesh.interior_face, basis.mesh) == 1/2
-@test int_ips[1,3] == Mesh.integral_face_rel_x_face_rel_on_oshape_face(one, y^2, rshape, Mesh.interior_face, basis.mesh) == 1/3
-@test int_ips[1,4] == Mesh.integral_face_rel_x_face_rel_on_oshape_face(one, x, rshape, Mesh.interior_face, basis.mesh) == 1/2
-@test int_ips[1,5] == Mesh.integral_face_rel_x_face_rel_on_oshape_face(one, x*y, rshape, Mesh.interior_face, basis.mesh) == 1/4
-@test int_ips[1,6] == Mesh.integral_face_rel_x_face_rel_on_oshape_face(one, x^2, rshape, Mesh.interior_face, basis.mesh) == 1/3
-
-@test int_ips[2,1] == Mesh.integral_face_rel_x_face_rel_on_oshape_face(y, one, rshape, Mesh.interior_face, basis.mesh) == 1/2
-@test int_ips[2,2] == Mesh.integral_face_rel_x_face_rel_on_oshape_face(y, y, rshape, Mesh.interior_face, basis.mesh) == 1/3
-@test int_ips[2,3] == Mesh.integral_face_rel_x_face_rel_on_oshape_face(y, y^2, rshape, Mesh.interior_face, basis.mesh) == 1/4
-@test int_ips[2,4] == Mesh.integral_face_rel_x_face_rel_on_oshape_face(y, x, rshape, Mesh.interior_face, basis.mesh) == 1/4
-@test int_ips[2,5] == Mesh.integral_face_rel_x_face_rel_on_oshape_face(y, x*y, rshape, Mesh.interior_face, basis.mesh) == 1/6
-@test int_ips[2,6] == Mesh.integral_face_rel_x_face_rel_on_oshape_face(y, x^2, rshape, Mesh.interior_face, basis.mesh) == 1/6
-
-# side supported element inner products
-top_face_ips = ips_fe_side_mons(fenum(1), top_face, basis)
-
-@test top_face_ips[1,1] == Mesh.integral_face_rel_x_face_rel_on_oshape_face(one, one, rshape, top_face, basis.mesh) == 1
-@test top_face_ips[1,2] == Mesh.integral_face_rel_x_face_rel_on_oshape_face(one, x, rshape, top_face, basis.mesh) == 1/2
-@test top_face_ips[2,1] == top_face_ips[1,2]
-@test top_face_ips[2,2] == Mesh.integral_face_rel_x_face_rel_on_oshape_face(x, x, rshape, top_face, basis.mesh) == 1/3
- */
+  let top_ips = basis.ips_side_mons(FENum(0), SideFace(1));
+  assert_eq!(top_ips.get(0,0), 1.);    // one vs one
+  assert_eq!(top_ips.get(0,1), 1./2.); // one vs x
+  assert_eq!(top_ips.get(1,1), 1./3.); // x vs x
+}
 
 
 #[test]
