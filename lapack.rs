@@ -1,7 +1,8 @@
-use common::*;
 
-use std::libc::{c_double, c_ulong, c_void, malloc, calloc, realloc, free};
+use std::libc::{c_double, c_ulong, c_int, c_void, malloc, calloc, realloc, free};
 use std::cast;
+
+pub type lapack_int = c_int; // Adjust according to whether LP64 or ILP64 libraries are being linked
 
 #[fixed_stack_segment]
 #[inline(never)]

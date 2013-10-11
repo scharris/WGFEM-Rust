@@ -5,6 +5,7 @@ use polynomial::{PolyBorrowing};
 use mesh::{Mesh, OShape, SideFace};
 use dense_matrix::DenseMatrix;
 use lapack;
+use lapack::lapack_int;
 
 use std::vec;
 

@@ -1,4 +1,3 @@
-use std::libc::{c_int};
 use std::num::{Num,Zero};
 use std::vec;
 
@@ -11,9 +10,6 @@ pub struct Deg(u8);
 
 #[deriving(Eq, IterBytes, TotalOrd, TotalEq, Clone, Ord)]
 pub struct Dim(uint);
-
-pub type lapack_int = c_int; // Adjust according to whether LP64 or ILP64 libraries are being linked
-
 
 // constants
 
