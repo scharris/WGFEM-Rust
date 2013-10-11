@@ -127,13 +127,11 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
 
   pub fn new(mesh: ~MeshT, int_polys_deg_lim: DegLim, side_polys_deg_lim: DegLim) -> ~WgBasis<Mon,MeshT> {
     
-    let space_dims = domain_space_dims::<Mon>();
-    
     let int_mons = Monomial::mons_with_deg_lim_asc(int_polys_deg_lim);
     
     let side_mons_by_dep_dim: ~[~[Mon]] = { 
       let mons_for_deg_lim: ~[Mon] = Monomial::mons_with_deg_lim_asc(side_polys_deg_lim);
-      vec::from_fn(space_dims, |r|
+      vec::from_fn(domain_space_dims::<Mon>(), |r|
         mons_for_deg_lim.iter().filter(|mon| mon.exp(Dim(r)) == Deg(0)).map(|m|m.clone()).collect()
       )
     };
@@ -189,6 +187,12 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
       let side_side_interactions = sq(side_sidemon_choices);
       tot_interactions + int_side_and_side_int_interactions + side_side_interactions
     })
+  }
+  
+  /// Get the mesh for this basis.
+  #[inline]
+  pub fn mesh<'a>(&'a self) -> &'a MeshT {
+    &*self.mesh
   }
 
   /// Determine whether a basis element is interior-supported.
