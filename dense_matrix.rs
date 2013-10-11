@@ -124,6 +124,27 @@ impl DenseMatrix {
       lapack::copy_upper_triangle(c_vec::ptr(self.data) as *R, self.num_rows as c_ulong, self.num_cols as c_ulong, c_vec::ptr(m.data));
     }
   }
+  
+  #[fixed_stack_segment]
+  #[inline(never)]
+  pub fn fill_upper_triangle_from(&mut self, m: &DenseMatrix) {
+    if self.num_rows != m.num_rows || m.num_cols > self.num_cols {
+      fail!("Matrix layouts not compatible for dense matrix copy-into operation.");
+    }
+    unsafe {
+      lapack::copy_upper_triangle(c_vec::ptr(m.data) as *R, m.num_rows as c_ulong, m.num_cols as c_ulong, c_vec::ptr(self.data));
+    }
+  }
+
+  #[fixed_stack_segment]
+  #[inline(never)]
+  pub fn fill_from_fn(&mut self, f: &fn(row:uint, col:uint) -> R) {
+    for r in range(0, self.num_rows) {
+      for c in range(0, self.num_cols) {
+        unsafe { *ptr::mut_offset(c_vec::ptr(self.data), (c * self.num_rows + r) as int) = f(r,c); }
+      }
+    }
+  }
 
   #[inline]
   pub unsafe fn col_maj_data_ptr(&self) -> *R {

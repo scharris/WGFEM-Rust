@@ -151,6 +151,36 @@ fn test_copy_upper_triangle_into() {
 }
 
 #[test]
+fn test_fill_upper_triangle_from() {
+  let m_src = DenseMatrix::from_fn(3,3, |r,c| {
+    1000. * r as R + c as R
+  });
+  let m = &mut DenseMatrix::from_elem(3,3, 10.);
+  m.fill_upper_triangle_from(&m_src);
+  assert_eq!(m.get(0,0), 0.);
+  assert_eq!(m.get(0,1), 1.);
+  assert_eq!(m.get(1,1), 1001.);
+  assert_eq!(m.get(0,2), 2.);
+  assert_eq!(m.get(1,2), 1002.);
+  assert_eq!(m.get(2,2), 2002.);
+}
+
+#[test]
+fn test_fill_from_fn() {
+  let mut m = DenseMatrix::from_elem(3,3, 0 as R);
+  m.fill_from_fn(|r,c| 1000. * r as R + c as R);
+  assert_eq!(m.get(0,0), 0.);
+  assert_eq!(m.get(0,1), 1.);
+  assert_eq!(m.get(0,2), 2.);
+  assert_eq!(m.get(1,0), 1000.);
+  assert_eq!(m.get(1,1), 1001.);
+  assert_eq!(m.get(1,2), 1002.);
+  assert_eq!(m.get(2,0), 2000.);
+  assert_eq!(m.get(2,1), 2001.);
+  assert_eq!(m.get(2,2), 2002.);
+}
+
+#[test]
 #[should_fail]
 fn test_bad_copy_upper_triangle_into() {
   let m_src = DenseMatrix::from_fn(3,3, |r,c| {
