@@ -111,21 +111,24 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
 
     let sols_col_maj = 
       unsafe {
-        // a - The system matrix of vmon inner products [in], factorization information [out], both linearized
-        //     in column-major order.
-        self.ips_basis_vmons_by_oshape[*oshape].copy_upper_triangle_into(self.lapack_ips_basis_vmons); 
-        let a = self.lapack_ips_basis_vmons.mut_col_maj_data_ptr();
+        // a - The system matrix of vmon inner products [in] linearized in column-major order.
+        let a = {
+          self.ips_basis_vmons_by_oshape[*oshape].copy_upper_triangle_into(self.lapack_ips_basis_vmons); 
+          self.lapack_ips_basis_vmons.mut_col_maj_data_ptr()
+        };
         
         // b - The WGRAD_DEF system right hand side column vectors matrix [in], solution columns [out], both
         //     linearized in column-major order.
-        let rhss = self.wgrad_def_rhss(int_mons, side_mons_by_side, oshape, mesh);
-        let b = rhss.mut_col_maj_data_ptr();
+        let (b, num_rhs_cols) = {
+          let rhss = self.wgrad_def_rhss(int_mons, side_mons_by_side, oshape, mesh);
+          (rhss.mut_col_maj_data_ptr(), rhss.num_cols)
+        };
 
         lapack::solve_symmetric_as_col_maj_with_ut_sys(a, num_vmons as lapack_int,
-                                                       b, rhss.num_cols as lapack_int,
+                                                       b, num_rhs_cols as lapack_int,
                                                        self.lapack_pivots_buf);
         
-        vec::from_buf(b as *R, num_vmons * rhss.num_cols)
+        vec::from_buf(b as *R, num_vmons * num_rhs_cols)
       };
 
     // Interior weak gradients are represented as a vector, indexed by interior shape function (monomial) number,
