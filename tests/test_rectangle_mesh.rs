@@ -1,17 +1,31 @@
-use std::num::{sqrt, abs};
-use common::*;
-use monomial::{Mon1d, Mon2d, Mon3d, Mon4d};
+use common::{R, pow, Dim, Deg, DEFAULT_INTEGRATION_REL_ERR, DEFAULT_INTEGRATION_ABS_ERR};
+use monomial::{Monomial, Mon1d, Mon2d, Mon3d, Mon4d};
 use polynomial::{poly};
 use vector_monomial::VectorMonomial;
-use mesh::*;
+use mesh::{Mesh, FENum, OShape, NBSideNum, NBSideInclusions};
 use rectangle_mesh::*;
 
+use std::num::{sqrt, abs};
+
+
+pub struct NBSideGeom {
+  perp_axis: Dim,
+  mesh_coords: ~[MeshCoord]
+}
+
+pub fn nb_side_geom<Mon:Monomial>(rmesh: &mut RectMesh<Mon>, n: NBSideNum) -> NBSideGeom {
+  NBSideGeom {
+    perp_axis: rmesh.perp_axis_for_nb_side(n),
+    mesh_coords: rmesh.side_mesh_coords_for_nb_side_num(n).to_owned()
+  }
+}
+  
 #[test]
 fn test_3x4_constr() -> () {
   let mesh_min_coords = ~[1f64, 2.];
   let mesh_max_coords = ~[2f64, 3.];
   let mesh_ldims = ~[MeshCoord(3), MeshCoord(4)];
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new_with_err_tols(mesh_min_coords.clone(), mesh_max_coords.clone(), mesh_ldims.clone(), 1e-4, 1e-5);
+  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new_with_intg_tols(mesh_min_coords.clone(), mesh_max_coords.clone(), mesh_ldims.clone(), 1e-4, 1e-5);
 
   assert_eq!(rmesh3x4.space_dims, 2);
   assert_eq!(&rmesh3x4.min_bounds, &mesh_min_coords);
@@ -573,16 +587,16 @@ fn test_3x4x5x6_bad_is_boundary_side_fenum() -> () {
 // Test the non-boundary sides perpendicular to axis 0 for 2d mesh.
 #[test]
 fn test_3x4_nonboundary_side_coords_axis0() -> () {
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
-                                                 ~[2f64, 3.],
-                                                 ~[MeshCoord(3), MeshCoord(4)]);
+  let mut rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
+                                                     ~[2f64, 3.],
+                                                     ~[MeshCoord(3), MeshCoord(4)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
   let right_side = greater_side_face_perp_to_axis(Dim(0));
 
   // The mesh for non-boundary sides perpendicular to axis 0 has dimensions 2 x 4.
 
   // first side in first row (axis 0)
-  let sgeom_0 = rmesh3x4.nb_side_geom(NBSideNum(0));
+  let sgeom_0 = nb_side_geom(rmesh3x4, NBSideNum(0));
   assert_eq!(sgeom_0.perp_axis, Dim(0));
   assert_eq!(&sgeom_0.mesh_coords, &~[MeshCoord(0), MeshCoord(0)]);
   assert_eq!(rmesh3x4.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0)], Dim(0)), NBSideNum(0));
@@ -594,7 +608,7 @@ fn test_3x4_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4.nb_side_num_for_fe_side(FENum(1), left_side),  NBSideNum(0));
 
   // second side in first row
-  let sgeom_1 = rmesh3x4.nb_side_geom(NBSideNum(1));
+  let sgeom_1 = nb_side_geom(rmesh3x4,NBSideNum(1));
   assert_eq!(sgeom_1.perp_axis, Dim(0));
   assert_eq!(&sgeom_1.mesh_coords, &~[MeshCoord(1), MeshCoord(0)]);
   assert_eq!(rmesh3x4.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(0)], Dim(0)), NBSideNum(1));
@@ -606,7 +620,7 @@ fn test_3x4_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4.nb_side_num_for_fe_side(FENum(2), left_side),  NBSideNum(1));
 
   // first side in second row
-  let sgeom_2 = rmesh3x4.nb_side_geom(NBSideNum(2));
+  let sgeom_2 = nb_side_geom(rmesh3x4,NBSideNum(2));
   assert_eq!(sgeom_2.perp_axis, Dim(0));
   assert_eq!(&sgeom_2.mesh_coords, &~[MeshCoord(0), MeshCoord(1)]);
   assert_eq!(rmesh3x4.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(1)], Dim(0)), NBSideNum(2));
@@ -618,7 +632,7 @@ fn test_3x4_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4.nb_side_num_for_fe_side(FENum(4), left_side),  NBSideNum(2));
 
   // last side
-  let sgeom_7 = rmesh3x4.nb_side_geom(NBSideNum(7));
+  let sgeom_7 = nb_side_geom(rmesh3x4,NBSideNum(7));
   assert_eq!(sgeom_7.perp_axis, Dim(0));
   assert_eq!(&sgeom_7.mesh_coords, &~[MeshCoord(1), MeshCoord(3)]);
   assert_eq!(rmesh3x4.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(3)], Dim(0)), NBSideNum(7));
@@ -634,16 +648,16 @@ fn test_3x4_nonboundary_side_coords_axis0() -> () {
 // Test the non-boundary sides perpendicular to axis 0 for 3d mesh.
 #[test]
 fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
-                                                   ~[2f64, 3., 4.],
-                                                   ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
+  let mut rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+                                                       ~[2f64, 3., 4.],
+                                                       ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
   let right_side = greater_side_face_perp_to_axis(Dim(0));
 
   // The mesh for non-boundary sides perpendicular to axis 0 has dimensions 2 x 4 x 5.
 
   // first side in first row (axis 0)
-  let sgeom_0 = rmesh3x4x5.nb_side_geom(NBSideNum(0));
+  let sgeom_0 = nb_side_geom(rmesh3x4x5,NBSideNum(0));
   assert_eq!(sgeom_0.perp_axis, Dim(0));
   assert_eq!(&sgeom_0.mesh_coords, &~[MeshCoord(0), MeshCoord(0), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(0)], Dim(0)), NBSideNum(0));
@@ -655,7 +669,7 @@ fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(1), left_side),  NBSideNum(0));
 
   // second side in first row
-  let sgeom_1 = rmesh3x4x5.nb_side_geom(NBSideNum(1));
+  let sgeom_1 = nb_side_geom(rmesh3x4x5,NBSideNum(1));
   assert_eq!(sgeom_1.perp_axis, Dim(0));
   assert_eq!(&sgeom_1.mesh_coords, &~[MeshCoord(1), MeshCoord(0), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(0), MeshCoord(0)], Dim(0)), NBSideNum(1));
@@ -667,7 +681,7 @@ fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(2), left_side),  NBSideNum(1));
 
   // first side in second row
-  let sgeom_2 = rmesh3x4x5.nb_side_geom(NBSideNum(2));
+  let sgeom_2 = nb_side_geom(rmesh3x4x5,NBSideNum(2));
   assert_eq!(sgeom_2.perp_axis, Dim(0));
   assert_eq!(&sgeom_2.mesh_coords, &~[MeshCoord(0), MeshCoord(1), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(1), MeshCoord(0)], Dim(0)), NBSideNum(2));
@@ -679,7 +693,7 @@ fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(4), left_side),  NBSideNum(2));
 
   // last side in first 2-stack
-  let sgeom_7 = rmesh3x4x5.nb_side_geom(NBSideNum(7));
+  let sgeom_7 = nb_side_geom(rmesh3x4x5,NBSideNum(7));
   assert_eq!(sgeom_7.perp_axis, Dim(0));
   assert_eq!(&sgeom_7.mesh_coords, &~[MeshCoord(1), MeshCoord(3), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(3), MeshCoord(0)], Dim(0)), NBSideNum(7));
@@ -691,7 +705,7 @@ fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(11), left_side),  NBSideNum(7));
 
   // first side of second 2-stack
-  let sgeom_8 = rmesh3x4x5.nb_side_geom(NBSideNum(8));
+  let sgeom_8 = nb_side_geom(rmesh3x4x5,NBSideNum(8));
   assert_eq!(sgeom_8.perp_axis, Dim(0));
   assert_eq!(&sgeom_8.mesh_coords, &~[MeshCoord(0), MeshCoord(0), MeshCoord(1)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(1)], Dim(0)), NBSideNum(8));
@@ -703,7 +717,7 @@ fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(13), left_side),  NBSideNum(8));
 
   // first side of last 2-stack
-  let sgeom_32 = rmesh3x4x5.nb_side_geom(NBSideNum(32));
+  let sgeom_32 = nb_side_geom(rmesh3x4x5,NBSideNum(32));
   assert_eq!(sgeom_32.perp_axis, Dim(0));
   assert_eq!(&sgeom_32.mesh_coords, &~[MeshCoord(0), MeshCoord(0), MeshCoord(4)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(4)], Dim(0)), NBSideNum(32));
@@ -715,7 +729,7 @@ fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(49), left_side),  NBSideNum(32));
 
   // last side of last 2-stack
-  let sgeom_39 = rmesh3x4x5.nb_side_geom(NBSideNum(39));
+  let sgeom_39 = nb_side_geom(rmesh3x4x5,NBSideNum(39));
   assert_eq!(sgeom_39.perp_axis, Dim(0));
   assert_eq!(&sgeom_39.mesh_coords, &~[MeshCoord(1), MeshCoord(3), MeshCoord(4)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(3), MeshCoord(4)], Dim(0)), NBSideNum(39));
@@ -730,16 +744,16 @@ fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
 // Test the non-boundary sides perpendicular to axis 0 for 4d mesh.
 #[test]
 fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
-                                                     ~[2f64, 3., 4., 5.],
-                                                     ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
+  let mut rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
+                                                         ~[2f64, 3., 4., 5.],
+                                                         ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
   let right_side = greater_side_face_perp_to_axis(Dim(0));
 
   // The mesh for non-boundary sides perpendicular to axis 0 has dimensions 2 x 4 x 5 x 6.
 
   // first side in first row (axis 0)
-  let sgeom_0 = rmesh3x4x5x6.nb_side_geom(NBSideNum(0));
+  let sgeom_0 = nb_side_geom(rmesh3x4x5x6,NBSideNum(0));
   assert_eq!(sgeom_0.perp_axis, Dim(0));
   assert_eq!(&sgeom_0.mesh_coords, &~[MeshCoord(0), MeshCoord(0), MeshCoord(0), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(0), MeshCoord(0)], Dim(0)), NBSideNum(0));
@@ -751,7 +765,7 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(1), left_side),  NBSideNum(0));
 
   // second side in first row
-  let sgeom_1 = rmesh3x4x5x6.nb_side_geom(NBSideNum(1));
+  let sgeom_1 = nb_side_geom(rmesh3x4x5x6,NBSideNum(1));
   assert_eq!(sgeom_1.perp_axis, Dim(0));
   assert_eq!(&sgeom_1.mesh_coords, &~[MeshCoord(1), MeshCoord(0), MeshCoord(0), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(0), MeshCoord(0), MeshCoord(0)], Dim(0)), NBSideNum(1));
@@ -763,7 +777,7 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(2), left_side),  NBSideNum(1));
 
   // first side in second row
-  let sgeom_2 = rmesh3x4x5x6.nb_side_geom(NBSideNum(2));
+  let sgeom_2 = nb_side_geom(rmesh3x4x5x6,NBSideNum(2));
   assert_eq!(sgeom_2.perp_axis, Dim(0));
   assert_eq!(&sgeom_2.mesh_coords, &~[MeshCoord(0), MeshCoord(1), MeshCoord(0), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(1), MeshCoord(0), MeshCoord(0)], Dim(0)), NBSideNum(2));
@@ -775,7 +789,7 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(4), left_side),  NBSideNum(2));
 
   // last side in first 2-stack
-  let sgeom_7 = rmesh3x4x5x6.nb_side_geom(NBSideNum(7));
+  let sgeom_7 = nb_side_geom(rmesh3x4x5x6,NBSideNum(7));
   assert_eq!(sgeom_7.perp_axis, Dim(0));
   assert_eq!(&sgeom_7.mesh_coords, &~[MeshCoord(1), MeshCoord(3), MeshCoord(0), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(3), MeshCoord(0), MeshCoord(0)], Dim(0)), NBSideNum(7));
@@ -787,7 +801,7 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(11), left_side),  NBSideNum(7));
 
   // first side of second 2-stack
-  let sgeom_8 = rmesh3x4x5x6.nb_side_geom(NBSideNum(8));
+  let sgeom_8 = nb_side_geom(rmesh3x4x5x6,NBSideNum(8));
   assert_eq!(sgeom_8.perp_axis, Dim(0));
   assert_eq!(&sgeom_8.mesh_coords, &~[MeshCoord(0), MeshCoord(0), MeshCoord(1), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(1), MeshCoord(0)], Dim(0)), NBSideNum(8));
@@ -799,7 +813,7 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(13), left_side),  NBSideNum(8));
 
   // first side of last 2-stack
-  let sgeom_32 = rmesh3x4x5x6.nb_side_geom(NBSideNum(32));
+  let sgeom_32 = nb_side_geom(rmesh3x4x5x6,NBSideNum(32));
   assert_eq!(sgeom_32.perp_axis, Dim(0));
   assert_eq!(&sgeom_32.mesh_coords, &~[MeshCoord(0), MeshCoord(0), MeshCoord(4), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(4), MeshCoord(0)], Dim(0)), NBSideNum(32));
@@ -811,7 +825,7 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(49), left_side),  NBSideNum(32));
 
   // last side of last 2-stack
-  let sgeom_39 = rmesh3x4x5x6.nb_side_geom(NBSideNum(39));
+  let sgeom_39 = nb_side_geom(rmesh3x4x5x6,NBSideNum(39));
   assert_eq!(sgeom_39.perp_axis, Dim(0));
   assert_eq!(&sgeom_39.mesh_coords, &~[MeshCoord(1), MeshCoord(3), MeshCoord(4), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(3), MeshCoord(4), MeshCoord(0)], Dim(0)), NBSideNum(39));
@@ -823,7 +837,7 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(59), left_side),  NBSideNum(39));
 
   // first side of second 3-stack
-  let sgeom_40 = rmesh3x4x5x6.nb_side_geom(NBSideNum(40));
+  let sgeom_40 = nb_side_geom(rmesh3x4x5x6,NBSideNum(40));
   assert_eq!(sgeom_40.perp_axis, Dim(0));
   assert_eq!(&sgeom_40.mesh_coords, &~[MeshCoord(0), MeshCoord(0), MeshCoord(0), MeshCoord(1)]);
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(0), MeshCoord(1)], Dim(0)), NBSideNum(40));
@@ -835,7 +849,7 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(61), left_side),  NBSideNum(40));
   
   // second side of second 3-stack
-  let sgeom_41 = rmesh3x4x5x6.nb_side_geom(NBSideNum(41));
+  let sgeom_41 = nb_side_geom(rmesh3x4x5x6,NBSideNum(41));
   assert_eq!(sgeom_41.perp_axis, Dim(0));
   assert_eq!(&sgeom_41.mesh_coords, &~[MeshCoord(1), MeshCoord(0), MeshCoord(0), MeshCoord(1)]);
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(0), MeshCoord(0), MeshCoord(1)], Dim(0)), NBSideNum(41));
@@ -847,7 +861,7 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(62), left_side),  NBSideNum(41));
   
   // last side
-  let sgeom_last = rmesh3x4x5x6.nb_side_geom(NBSideNum(2*4*5*6-1));
+  let sgeom_last = nb_side_geom(rmesh3x4x5x6,NBSideNum(2*4*5*6-1));
   assert_eq!(sgeom_last.perp_axis, Dim(0));
   assert_eq!(&sgeom_last.mesh_coords, &~[MeshCoord(1), MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(3), MeshCoord(4), MeshCoord(5)], Dim(0)), NBSideNum(2*4*5*6-1));
@@ -862,9 +876,9 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
 // Test the non-boundary sides perpendicular to axis 1 (3d mesh).
 #[test]
 fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
-                                                   ~[2f64, 3., 4.],
-                                                   ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
+  let mut rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+                                                       ~[2f64, 3., 4.],
+                                                       ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
   let top_side = greater_side_face_perp_to_axis(Dim(1));
 
@@ -874,7 +888,7 @@ fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
   // The mesh for non-boundary sides perpendicular to axis 1 has dimensions 3 x 3 x 5.
 
   // first side in first row (axis 1)
-  let sgeom_0 = rmesh3x4x5.nb_side_geom(NBSideNum(first_axis1+0));
+  let sgeom_0 = nb_side_geom(rmesh3x4x5,NBSideNum(first_axis1+0));
   assert_eq!(sgeom_0.perp_axis, Dim(1));
   assert_eq!(&sgeom_0.mesh_coords, &~[MeshCoord(0), MeshCoord(0), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(0)], Dim(1)), NBSideNum(first_axis1+0));
@@ -886,7 +900,7 @@ fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(3), bottom_side),  NBSideNum(first_axis1+0));
 
   // last side in first row
-  let sgeom_2 = rmesh3x4x5.nb_side_geom(NBSideNum(first_axis1+2));
+  let sgeom_2 = nb_side_geom(rmesh3x4x5,NBSideNum(first_axis1+2));
   assert_eq!(sgeom_2.perp_axis, Dim(1));
   assert_eq!(&sgeom_2.mesh_coords, &~[MeshCoord(2), MeshCoord(0), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(2), MeshCoord(0), MeshCoord(0)], Dim(1)), NBSideNum(first_axis1+2));
@@ -898,7 +912,7 @@ fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(5), bottom_side),  NBSideNum(first_axis1+2));
 
   // first side in second row
-  let sgeom_3 = rmesh3x4x5.nb_side_geom(NBSideNum(first_axis1+3));
+  let sgeom_3 = nb_side_geom(rmesh3x4x5,NBSideNum(first_axis1+3));
   assert_eq!(sgeom_3.perp_axis, Dim(1));
   assert_eq!(&sgeom_3.mesh_coords, &~[MeshCoord(0), MeshCoord(1), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(1), MeshCoord(0)], Dim(1)), NBSideNum(first_axis1+3));
@@ -910,7 +924,7 @@ fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(6), bottom_side),  NBSideNum(first_axis1+3));
 
   // last side in first stack
-  let sgeom_8 = rmesh3x4x5.nb_side_geom(NBSideNum(first_axis1+8));
+  let sgeom_8 = nb_side_geom(rmesh3x4x5,NBSideNum(first_axis1+8));
   assert_eq!(sgeom_8.perp_axis, Dim(1));
   assert_eq!(&sgeom_8.mesh_coords, &~[MeshCoord(2), MeshCoord(2), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(2), MeshCoord(2), MeshCoord(0)], Dim(1)), NBSideNum(first_axis1+8));
@@ -922,7 +936,7 @@ fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(11), bottom_side),  NBSideNum(first_axis1+8));
 
   // first side of second stack
-  let sgeom_9 = rmesh3x4x5.nb_side_geom(NBSideNum(first_axis1+9));
+  let sgeom_9 = nb_side_geom(rmesh3x4x5,NBSideNum(first_axis1+9));
   assert_eq!(sgeom_9.perp_axis, Dim(1));
   assert_eq!(&sgeom_9.mesh_coords, &~[MeshCoord(0), MeshCoord(0), MeshCoord(1)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(1)], Dim(1)), NBSideNum(first_axis1+9));
@@ -934,7 +948,7 @@ fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(15), bottom_side),  NBSideNum(first_axis1+9));
 
   // first side of last stack
-  let sgeom_36 = rmesh3x4x5.nb_side_geom(NBSideNum(first_axis1+36));
+  let sgeom_36 = nb_side_geom(rmesh3x4x5,NBSideNum(first_axis1+36));
   assert_eq!(sgeom_36.perp_axis, Dim(1));
   assert_eq!(&sgeom_36.mesh_coords, &~[MeshCoord(0), MeshCoord(0), MeshCoord(4)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(4)], Dim(1)), NBSideNum(first_axis1+36));
@@ -946,7 +960,7 @@ fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(51), bottom_side),  NBSideNum(first_axis1+36));
 
   // last side of last stack
-  let sgeom_36 = rmesh3x4x5.nb_side_geom(NBSideNum(first_axis1+36));
+  let sgeom_36 = nb_side_geom(rmesh3x4x5,NBSideNum(first_axis1+36));
   assert_eq!(sgeom_36.perp_axis, Dim(1));
   assert_eq!(&sgeom_36.mesh_coords, &~[MeshCoord(0), MeshCoord(0), MeshCoord(4)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(4)], Dim(1)), NBSideNum(first_axis1+36));
@@ -962,9 +976,9 @@ fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
 // Test the non-boundary sides perpendicular to axis 2 (3d mesh).
 #[test]
 fn test_3x4x5_nonboundary_side_coords_axis2() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
-                                                   ~[2f64, 3., 4.],
-                                                   ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
+  let mut rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+                                                       ~[2f64, 3., 4.],
+                                                       ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let front_side = lesser_side_face_perp_to_axis(Dim(2));
   let back_side = greater_side_face_perp_to_axis(Dim(2));
 
@@ -974,7 +988,7 @@ fn test_3x4x5_nonboundary_side_coords_axis2() -> () {
   // The mesh for non-boundary sides perpendicular to axis 2 has dimensions 3 x 4 x 4.
 
   // first side in first row (axis 2)
-  let sgeom_0 = rmesh3x4x5.nb_side_geom(NBSideNum(first_axis2+0));
+  let sgeom_0 = nb_side_geom(rmesh3x4x5,NBSideNum(first_axis2+0));
   assert_eq!(sgeom_0.perp_axis, Dim(2));
   assert_eq!(&sgeom_0.mesh_coords, &~[MeshCoord(0), MeshCoord(0), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(0)], Dim(2)), NBSideNum(first_axis2+0));
@@ -986,7 +1000,7 @@ fn test_3x4x5_nonboundary_side_coords_axis2() -> () {
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(12), front_side),  NBSideNum(first_axis2+0));
 
   // third side in first row
-  let sgeom_2 = rmesh3x4x5.nb_side_geom(NBSideNum(first_axis2+2));
+  let sgeom_2 = nb_side_geom(rmesh3x4x5,NBSideNum(first_axis2+2));
   assert_eq!(sgeom_2.perp_axis, Dim(2));
   assert_eq!(&sgeom_2.mesh_coords, &~[MeshCoord(2), MeshCoord(0), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(2), MeshCoord(0), MeshCoord(0)], Dim(2)), NBSideNum(first_axis2+2));
@@ -999,7 +1013,7 @@ fn test_3x4x5_nonboundary_side_coords_axis2() -> () {
 
 
   // second row
-  let sgeom_3 = rmesh3x4x5.nb_side_geom(NBSideNum(first_axis2+3));
+  let sgeom_3 = nb_side_geom(rmesh3x4x5,NBSideNum(first_axis2+3));
   assert_eq!(sgeom_3.perp_axis, Dim(2));
   assert_eq!(&sgeom_3.mesh_coords, &~[MeshCoord(0), MeshCoord(1), MeshCoord(0)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(1), MeshCoord(0)], Dim(2)), NBSideNum(first_axis2+3));
@@ -1011,7 +1025,7 @@ fn test_3x4x5_nonboundary_side_coords_axis2() -> () {
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(15), front_side),  NBSideNum(first_axis2+3));
   
   // first side of second stack
-  let sgeom_12 = rmesh3x4x5.nb_side_geom(NBSideNum(first_axis2+12));
+  let sgeom_12 = nb_side_geom(rmesh3x4x5,NBSideNum(first_axis2+12));
   assert_eq!(sgeom_12.perp_axis, Dim(2));
   assert_eq!(&sgeom_12.mesh_coords, &~[MeshCoord(0), MeshCoord(0), MeshCoord(1)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(1)], Dim(2)), NBSideNum(first_axis2+12));
@@ -1023,7 +1037,7 @@ fn test_3x4x5_nonboundary_side_coords_axis2() -> () {
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(24), front_side),  NBSideNum(first_axis2+12));
 
   // first side of last stack
-  let sgeom_36 = rmesh3x4x5.nb_side_geom(NBSideNum(first_axis2+36));
+  let sgeom_36 = nb_side_geom(rmesh3x4x5,NBSideNum(first_axis2+36));
   assert_eq!(sgeom_36.perp_axis, Dim(2));
   assert_eq!(&sgeom_36.mesh_coords, &~[MeshCoord(0), MeshCoord(0), MeshCoord(3)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(3)], Dim(2)), NBSideNum(first_axis2+36));
@@ -1035,7 +1049,7 @@ fn test_3x4x5_nonboundary_side_coords_axis2() -> () {
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(48), front_side),  NBSideNum(first_axis2+36));
 
   // last side of last stack
-  let sgeom_47 = rmesh3x4x5.nb_side_geom(NBSideNum(first_axis2+47));
+  let sgeom_47 = nb_side_geom(rmesh3x4x5,NBSideNum(first_axis2+47));
   assert_eq!(sgeom_47.perp_axis, Dim(2));
   assert_eq!(&sgeom_47.mesh_coords, &~[MeshCoord(2), MeshCoord(3), MeshCoord(3)]);
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(2), MeshCoord(3), MeshCoord(3)], Dim(2)), NBSideNum(first_axis2+47));
@@ -1054,11 +1068,11 @@ fn test_3x4x5_nonboundary_side_coords_axis2() -> () {
 #[test]
 #[should_fail]
 fn test_3x4x5_nonboundary_bad_side_coords_axis2() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
-                                                   ~[2f64, 3., 4.],
-                                                   ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
+  let mut rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+                                                       ~[2f64, 3., 4.],
+                                                       ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let first_axis2 = 2*4*5 + 3*3*5;
-  rmesh3x4x5.nb_side_geom(NBSideNum(first_axis2+48));
+  nb_side_geom(rmesh3x4x5,NBSideNum(first_axis2+48));
 }
 
 
@@ -1337,9 +1351,10 @@ fn test_intg_global_fn_x_facerel_mon_on_fe4_int_2d() -> () {
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
   let y = Mon2d { exps: [Deg(0), Deg(1)] };
 
-  let fe4 = rmesh3x4.fe_interior_origin(FENum(4));
+  let int_origin_0 = rmesh3x4.fe_interior_origin_comp(FENum(4), Dim(0));
+  let int_origin_1 = rmesh3x4.fe_interior_origin_comp(FENum(4), Dim(1));
   let x2_y3 = |x: &[R]| -> R {
-    pow(x[0]-fe4[0], 2) * pow(x[1]-fe4[1], 3)
+    pow(x[0]-int_origin_0, 2) * pow(x[1]-int_origin_1, 3)
   };
 
   assert_approx(rmesh3x4.intg_global_fn_x_facerel_mon_on_fe_int(x2_y3, x*y, FENum(4)),
@@ -1355,9 +1370,10 @@ fn test_intg_global_fn_x_facerel_mon_on_fe16_int_3d() -> () {
   let y = Mon3d { exps: [Deg(0), Deg(1), Deg(0)] };
   let z = Mon3d { exps: [Deg(0), Deg(0), Deg(1)] };
 
-  let fe16 = rmesh3x4x5.fe_interior_origin(FENum(16));
+  let int_origin_0 = rmesh3x4x5.fe_interior_origin_comp(FENum(16), Dim(0));
+  let int_origin_1 = rmesh3x4x5.fe_interior_origin_comp(FENum(16), Dim(1));
   let x2_y3 = |x: &[R]| -> R {
-    pow(x[0]-fe16[0], 2) * pow(x[1]-fe16[1], 3)
+    pow(x[0]-int_origin_0, 2) * pow(x[1]-int_origin_1, 3)
   };
 
   assert_approx(rmesh3x4x5.intg_global_fn_x_facerel_mon_on_fe_int(x2_y3, x*y*z, FENum(16)),
@@ -1373,9 +1389,10 @@ fn test_intg_global_fn_x_facerel_mon_on_fe16_int_4d() -> () {
   let z = Mon4d { exps: [Deg(0), Deg(0), Deg(1), Deg(0)] };
   let t = Mon4d { exps: [Deg(0), Deg(0), Deg(0), Deg(1)] };
 
-  let fe16 = rmesh3x4x5x6.fe_interior_origin(FENum(16));
+  let int_origin_0 = rmesh3x4x5x6.fe_interior_origin_comp(FENum(16), Dim(0));
+  let int_origin_1 = rmesh3x4x5x6.fe_interior_origin_comp(FENum(16), Dim(1));
   let x2_y3 = |x: &[R]| -> R {
-    pow(x[0]-fe16[0], 2) * pow(x[1]-fe16[1], 3)
+    pow(x[0]-int_origin_0, 2) * pow(x[1]-int_origin_1, 3)
   };
 
   assert_approx(rmesh3x4x5x6.intg_global_fn_x_facerel_mon_on_fe_int(x2_y3, y*z*t, FENum(16)),
@@ -1491,8 +1508,8 @@ fn test_intg_facerel_poly_x_facerel_poly_on_oshape_int_4d() -> () {
 
 fn test_intg_facerel_poly_x_facerel_poly_on_oshape_side_2d() -> () {
   let rmesh3x4: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2.],
-                                                   ~[2f64, 3.],
-                                                   ~[MeshCoord(3), MeshCoord(4)]);
+                                                 ~[2f64, 3.],
+                                                 ~[MeshCoord(3), MeshCoord(4)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
   let right_side = greater_side_face_perp_to_axis(Dim(0));
   let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
@@ -1714,6 +1731,136 @@ fn test_intg_facerel_mon_on_oshape_int_4d() -> () {
   assert_approx(rmesh3x4x5x6.intg_facerel_mon_on_oshape_int(x*y*z*z*t, OShape(0)),
                 pow(1./3.,2)/2. * pow(1./4.,2)/2. * pow(1./5.,3)/3. * pow(1./6.,2)/2.);
 }
+
+// TODO >>>
+
+#[test]
+fn test_intg_global_x_facerel_mon_on_fe4_sides_2d() -> () {
+  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
+                                                 ~[2f64, 3.],
+                                                 ~[MeshCoord(3), MeshCoord(4)]);
+  let left_side = lesser_side_face_perp_to_axis(Dim(0));
+  let right_side = greater_side_face_perp_to_axis(Dim(0));
+  let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
+  let top_side = greater_side_face_perp_to_axis(Dim(1));
+
+  let x = Mon2d { exps: [Deg(1), Deg(0)] };
+  let y = Mon2d { exps: [Deg(0), Deg(1)] };
+ 
+  let fe4 = FENum(4);
+  let int_origin_0 = rmesh3x4.fe_interior_origin_comp(fe4, Dim(0));
+  let int_origin_1 = rmesh3x4.fe_interior_origin_comp(fe4, Dim(1));
+
+  let x2_y3_int = |x:&[R]| -> R {
+    pow(x[0]-int_origin_0, 2) * pow(x[1]-int_origin_1, 3)
+  };
+
+  assert_approx(rmesh3x4.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_int(v), y, fe4, left_side),
+                0.);
+  assert_approx(rmesh3x4.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_int(v), y, fe4, right_side),
+                pow(1./3.,2) * pow(1./4.,5)/5.);
+
+  assert_approx(rmesh3x4.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_int(v), x, fe4, bottom_side),
+                0.);
+  assert_approx(rmesh3x4.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_int(v), x, fe4, top_side),
+                pow(1./4.,3) * pow(1./3.,4)/4.);
+}
+
+#[test]
+fn test_intg_global_x_facerel_mon_on_fe4_sides_3d() -> () {
+  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+                                                   ~[2f64, 3., 4.],
+                                                   ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
+  let left_side = lesser_side_face_perp_to_axis(Dim(0));
+  let right_side = greater_side_face_perp_to_axis(Dim(0));
+  let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
+  let top_side = greater_side_face_perp_to_axis(Dim(1));
+  let back_side = lesser_side_face_perp_to_axis(Dim(2));
+  let front_side = greater_side_face_perp_to_axis(Dim(2));
+
+  let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
+  let y = Mon3d { exps: [Deg(0), Deg(1), Deg(0)] };
+  let z = Mon3d { exps: [Deg(0), Deg(0), Deg(1)] };
+ 
+  let fe4 = FENum(4);
+  let int_origin_0 = rmesh3x4x5.fe_interior_origin_comp(fe4, Dim(0));
+  let int_origin_1 = rmesh3x4x5.fe_interior_origin_comp(fe4, Dim(1));
+  let int_origin_2 = rmesh3x4x5.fe_interior_origin_comp(fe4, Dim(2));
+
+  let x2_y3_z_int = |x:&[R]| -> R {
+    pow(x[0]-int_origin_0, 2) * pow(x[1]-int_origin_1, 3) * pow(x[2]-int_origin_2, 1)
+  };
+
+  assert_approx(rmesh3x4x5.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_int(v), y, fe4, left_side),
+                0.);
+  assert_approx(rmesh3x4x5.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_int(v), y*z, fe4, right_side),
+                pow(1./3.,2) * pow(1./4.,5)/5. * pow(1./5.,3)/3.);
+  assert_approx(rmesh3x4x5.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_int(v), x, fe4, bottom_side),
+                0.);
+  assert_approx(rmesh3x4x5.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_int(v), x*z, fe4, top_side),
+                pow(1./3.,4)/4. * pow(1./4.,3) * pow(1./5.,3)/3.);
+  
+  assert_approx(rmesh3x4x5.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_int(v), x, fe4, back_side),
+                0.);
+  assert_approx(rmesh3x4x5.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_int(v), x*z, fe4, front_side),
+                0.);
+  assert_approx(rmesh3x4x5.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_int(v), x*y, fe4, front_side),
+                pow(1./3.,4)/4. * pow(1./4.,5)/5. * pow(1./5.,1));
+}
+
+#[test]
+fn test_intg_global_x_facerel_mon_on_fe4_sides_4d() -> () {
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
+                                                     ~[2f64, 3., 4., 5.],
+                                                     ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
+  let left_side = lesser_side_face_perp_to_axis(Dim(0));
+  let right_side = greater_side_face_perp_to_axis(Dim(0));
+  let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
+  let top_side = greater_side_face_perp_to_axis(Dim(1));
+  let back_side = lesser_side_face_perp_to_axis(Dim(2));
+  let front_side = greater_side_face_perp_to_axis(Dim(2));
+  let early_side = lesser_side_face_perp_to_axis(Dim(3));
+  let late_side = greater_side_face_perp_to_axis(Dim(3));
+  
+  let x = Mon4d { exps: [Deg(1), Deg(0), Deg(0), Deg(0)] };
+  let y = Mon4d { exps: [Deg(0), Deg(1), Deg(0), Deg(0)] };
+  let z = Mon4d { exps: [Deg(0), Deg(0), Deg(1), Deg(0)] };
+  let t = Mon4d { exps: [Deg(0), Deg(0), Deg(0), Deg(1)] };
+  
+  let fe4 = FENum(4);
+  let int_origin_0 = rmesh3x4x5x6.fe_interior_origin_comp(fe4, Dim(0));
+  let int_origin_1 = rmesh3x4x5x6.fe_interior_origin_comp(fe4, Dim(1));
+  let int_origin_2 = rmesh3x4x5x6.fe_interior_origin_comp(fe4, Dim(2));
+  let int_origin_3 = rmesh3x4x5x6.fe_interior_origin_comp(fe4, Dim(3));
+
+  let x2_y3_z_t_int = |x:&[R]| -> R {
+    pow(x[0]-int_origin_0, 2) * pow(x[1]-int_origin_1, 3) * pow(x[2]-int_origin_2, 1) * pow(x[3]-int_origin_3, 1)
+  };
+
+  assert_approx(rmesh3x4x5x6.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_t_int(v), y, fe4, left_side),
+                0.);
+  assert_approx(rmesh3x4x5x6.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_t_int(v), y*z, fe4, right_side),
+                pow(1./3.,2) * pow(1./4.,5)/5. * pow(1./5.,3)/3. * pow(1./6.,1));
+  assert_approx(rmesh3x4x5x6.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_t_int(v), x, fe4, bottom_side),
+                0.);
+  assert_approx(rmesh3x4x5x6.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_t_int(v), x*z*t, fe4, top_side),
+                pow(1./3.,4)/4. * pow(1./4.,3) * pow(1./5.,3)/3. * pow(1./6.,2)/2.);
+  
+  assert_approx(rmesh3x4x5x6.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_t_int(v), x*t, fe4, back_side),
+                0.);
+  assert_approx(rmesh3x4x5x6.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_t_int(v), x*z*t, fe4, front_side),
+                0.);
+  assert_approx(rmesh3x4x5x6.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_t_int(v), x*y*t*t, fe4, front_side),
+                pow(1./3.,4)/4. * pow(1./4.,5)/5. * pow(1./5.,1) * pow(1./6.,4)/4.);
+  
+  assert_approx(rmesh3x4x5x6.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_t_int(v), x*y*t*t, fe4, early_side),
+                0.);
+  assert_approx(rmesh3x4x5x6.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_t_int(v), x*y*t, fe4, late_side),
+                0.);
+  assert_approx(rmesh3x4x5x6.intg_global_fn_x_facerel_mon_on_fe_side(|v|x2_y3_z_t_int(v), x*y*z, fe4, late_side),
+                pow(1./3.,4)/4. * pow(1./4.,5)/5. * pow(1./5.,3)/3. * pow(1./6.,1));
+}
+
 
 #[test]
 fn test_intg_facerel_mon_on_oshape_side_2d() -> () {

@@ -77,8 +77,6 @@ pub trait Mesh<Mon> {
 
   fn max_fe_diameter(&self) -> R;
 
-  fn fe_interior_origin(&self, fe: FENum) -> ~[R];
-
   fn num_non_boundary_sides_for_fe(&self, fe: FENum) -> uint;
 
   fn max_num_shape_sides(&self) -> uint;
@@ -94,7 +92,13 @@ pub trait Mesh<Mon> {
        g: &fn(&[R]) -> R,
        mon: Mon,
        fe: FENum) -> R;
- 
+
+  fn intg_global_fn_x_facerel_mon_on_fe_side(&self,
+       g: &fn(&[R]) -> R,
+       mon: Mon,
+       fe: FENum,
+       side_face: SideFace) -> R;
+
   fn intg_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self,
        p: &P,
        oshape: OShape) -> R;
