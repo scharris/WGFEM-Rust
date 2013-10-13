@@ -46,7 +46,7 @@ pub struct WeakGradSolver<Mon> {
 
   ips_basis_vmons_by_oshape: ~[DenseMatrix], // Basis inner products are in upper triangular parts of the matrices.
 
-  // Work matrix to hold the basis ips for the lapack solver, which overwrites it with factorization information.
+  // Work matrices for lapack to avoid allocations and because lapack enjoys writing over its inputs.
   lapack_ips_basis_vmons: ~DenseMatrix,
   lapack_pivots: ~[lapack_int],
   lapack_pivots_buf: *mut lapack_int,
