@@ -19,6 +19,8 @@ pub trait Monomial: Eq +
   fn value_at(&self, x: &[R]) -> R;
   
   fn value_at_for_origin(&self, x: &[R], origin: &[R]) -> R;
+
+  fn value_at_reduced_dim_by_fixing(&self, reduced_dim_pt: &[R], fixed_dim: Dim, fixed_dim_val: R) -> R;
   
   fn exp(&self, coord: Dim) -> Deg;
 
@@ -66,6 +68,12 @@ impl Monomial for Mon1d {
   fn value_at_for_origin(&self, x: &[R], origin: &[R]) -> R {
     pow(x[0] - origin[0], *self.exps[0] as uint)
   }
+  
+  #[inline(always)]
+  fn value_at_reduced_dim_by_fixing(&self, _reduced_dim_pt: &[R], fixed_dim: Dim, fixed_dim_val: R) -> R {
+    if fixed_dim != Dim(0) { fail!("Dimension number out of range in map_exp."); }
+    pow(fixed_dim_val, *self.exps[0] as uint)
+  }
 
   #[inline(always)]
   fn exp(&self, coord: Dim) -> Deg {
@@ -73,7 +81,7 @@ impl Monomial for Mon1d {
   }
   
   fn map_exp(&self, coord: Dim, f: &fn(Deg) -> Deg) -> Mon1d {
-    if *coord > 1 { fail!("Dimension number out of range in map_exp."); }
+    if *coord > 0 { fail!("Dimension number out of range in map_exp."); }
     else {
       Mon1d { exps: [ f(self.exps[0]) ] }
     }
@@ -109,6 +117,19 @@ impl Monomial for Mon2d {
   fn value_at_for_origin(&self, x: &[R], origin: &[R]) -> R {
     pow(x[0] - origin[0], *self.exps[0] as uint) *
     pow(x[1] - origin[1], *self.exps[1] as uint)
+  }
+  
+  #[inline(always)]
+  fn value_at_reduced_dim_by_fixing(&self, reduced_dim_pt: &[R], fixed_dim: Dim, fixed_dim_val: R) -> R {
+    match fixed_dim {
+      Dim(0) => 
+        pow(fixed_dim_val,     *self.exps[0] as uint) *
+        pow(reduced_dim_pt[0], *self.exps[1] as uint),
+      Dim(1) => 
+        pow(reduced_dim_pt[0], *self.exps[0] as uint) *
+        pow(fixed_dim_val,     *self.exps[1] as uint),
+      _ => fail!("Dimension number out of range in map_exp.")
+    }
   }
 
   #[inline(always)]
@@ -173,6 +194,25 @@ impl Monomial for Mon3d {
     pow(x[0] - origin[0], *self.exps[0] as uint) *
     pow(x[1] - origin[1], *self.exps[1] as uint) *
     pow(x[2] - origin[2], *self.exps[2] as uint)
+  }
+  
+  #[inline(always)]
+  fn value_at_reduced_dim_by_fixing(&self, reduced_dim_pt: &[R], fixed_dim: Dim, fixed_dim_val: R) -> R {
+    match fixed_dim {
+      Dim(0) => 
+        pow(fixed_dim_val,     *self.exps[0] as uint) *
+        pow(reduced_dim_pt[0], *self.exps[1] as uint) *
+        pow(reduced_dim_pt[1], *self.exps[2] as uint),
+      Dim(1) => 
+        pow(reduced_dim_pt[0], *self.exps[0] as uint) *
+        pow(fixed_dim_val,     *self.exps[1] as uint) *
+        pow(reduced_dim_pt[1], *self.exps[2] as uint),
+      Dim(2) => 
+        pow(reduced_dim_pt[0], *self.exps[0] as uint) *
+        pow(reduced_dim_pt[1], *self.exps[1] as uint) *
+        pow(fixed_dim_val,     *self.exps[2] as uint),
+      _ => fail!("Dimension number out of range in map_exp.")
+    }
   }
 
   #[inline(always)]
@@ -244,6 +284,34 @@ impl Monomial for Mon4d {
     pow(x[2] - origin[2], *self.exps[2] as uint) *
     pow(x[3] - origin[3], *self.exps[3] as uint)
   }
+  
+  #[inline(always)]
+  fn value_at_reduced_dim_by_fixing(&self, reduced_dim_pt: &[R], fixed_dim: Dim, fixed_dim_val: R) -> R {
+    match fixed_dim {
+      Dim(0) => 
+        pow(fixed_dim_val,     *self.exps[0] as uint) *
+        pow(reduced_dim_pt[0], *self.exps[1] as uint) *
+        pow(reduced_dim_pt[1], *self.exps[2] as uint) *
+        pow(reduced_dim_pt[2], *self.exps[3] as uint),
+      Dim(1) => 
+        pow(reduced_dim_pt[0], *self.exps[0] as uint) *
+        pow(fixed_dim_val,     *self.exps[1] as uint) *
+        pow(reduced_dim_pt[1], *self.exps[2] as uint) *
+        pow(reduced_dim_pt[2], *self.exps[3] as uint),
+      Dim(2) => 
+        pow(reduced_dim_pt[0], *self.exps[0] as uint) *
+        pow(reduced_dim_pt[1], *self.exps[1] as uint) *
+        pow(fixed_dim_val,     *self.exps[2] as uint) *
+        pow(reduced_dim_pt[2], *self.exps[3] as uint),
+      Dim(3) => 
+        pow(reduced_dim_pt[0], *self.exps[0] as uint) *
+        pow(reduced_dim_pt[1], *self.exps[1] as uint) *
+        pow(reduced_dim_pt[2], *self.exps[2] as uint) *
+        pow(fixed_dim_val,     *self.exps[3] as uint),
+      _ => fail!("Dimension number out of range in map_exp.")
+    }
+  }
+
 
   #[inline(always)]
   fn exp(&self, coord: Dim) -> Deg {
