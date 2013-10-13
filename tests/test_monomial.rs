@@ -105,6 +105,58 @@ fn test_value_at_for_origin_4d() {
   assert_eq!(x3y1z2t4.value_at_for_origin(&[2.,3.,4.,5.],&[0.,5.,1.,2.]), 8. * (-2.) * 9. * 3.*3.*3.*3.);
 }
 
+#[test]
+fn test_value_at_red_dim_1d() {
+  let one = Mon1d { exps: [Deg(0)] };
+  let x = Mon1d { exps: [Deg(1)] };
+  assert_eq!(one.value_at_reduced_dim_by_fixing(&[], Dim(0), 99.), 1.);
+  assert_eq!(x.value_at_reduced_dim_by_fixing(&[], Dim(0), 99.), 99.);
+  assert_eq!((x*x).value_at_reduced_dim_by_fixing(&[], Dim(0), 99.), 99.*99.);
+}
+
+#[test]
+fn test_value_at_red_dim_2d() {
+  let one = Mon2d { exps: [Deg(0), Deg(0)] };
+  let x = Mon2d { exps: [Deg(1), Deg(0)] };
+  let y = Mon2d { exps: [Deg(0), Deg(1)] };
+
+  assert_eq!(one.value_at_reduced_dim_by_fixing(&[1.], Dim(0), 99.), 1.);
+  assert_eq!((x*y*y).value_at_reduced_dim_by_fixing(&[2.], Dim(0), 99.), 99. * sq(2.));
+  assert_eq!((x*y*y).value_at_reduced_dim_by_fixing(&[2.], Dim(1), 99.), 2. * sq(99.));
+}
+
+#[test]
+fn test_value_at_red_dim_3d() {
+  let one = Mon3d { exps: [Deg(0), Deg(0), Deg(0)] };
+  let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
+  let y = Mon3d { exps: [Deg(0), Deg(1), Deg(0)] };
+  let z = Mon3d { exps: [Deg(0), Deg(0), Deg(1)] };
+
+  assert_eq!(one.value_at_reduced_dim_by_fixing(&[1.,2.], Dim(0), 99.), 1.);
+  assert_eq!(one.value_at_reduced_dim_by_fixing(&[1.,2.], Dim(1), 99.), 1.);
+  assert_eq!(one.value_at_reduced_dim_by_fixing(&[1.,2.], Dim(2), 99.), 1.);
+  assert_eq!((x*y*y*z*z*z).value_at_reduced_dim_by_fixing(&[2.,3.], Dim(0), 99.), 99. * pow(2.,2) * pow(3.,3));
+  assert_eq!((x*y*y*z*z*z).value_at_reduced_dim_by_fixing(&[2.,3.], Dim(1), 99.), pow(2.,1) * pow(99.,2) * pow(3.,3));
+  assert_eq!((x*y*y*z*z*z).value_at_reduced_dim_by_fixing(&[2.,3.], Dim(2), 99.), pow(2.,1) * pow(3.,2) * pow(99.,3));
+}
+
+#[test]
+fn test_value_at_red_dim_4d() {
+  let one = Mon4d { exps: [Deg(0), Deg(0), Deg(0), Deg(0)] };
+  let x = Mon4d { exps: [Deg(1), Deg(0), Deg(0), Deg(0)] };
+  let y = Mon4d { exps: [Deg(0), Deg(1), Deg(0), Deg(0)] };
+  let z = Mon4d { exps: [Deg(0), Deg(0), Deg(1), Deg(0)] };
+  let t = Mon4d { exps: [Deg(0), Deg(0), Deg(0), Deg(1)] };
+
+  assert_eq!(one.value_at_reduced_dim_by_fixing(&[1.,2.,3.], Dim(0), 99.), 1.);
+  assert_eq!(one.value_at_reduced_dim_by_fixing(&[1.,2.,3.], Dim(1), 99.), 1.);
+  assert_eq!(one.value_at_reduced_dim_by_fixing(&[1.,2.,3.], Dim(2), 99.), 1.);
+  assert_eq!(one.value_at_reduced_dim_by_fixing(&[1.,2.,3.], Dim(3), 99.), 1.);
+  assert_eq!((x*y*y*z*z*z*t*t*t*t).value_at_reduced_dim_by_fixing(&[2.,3.,4.], Dim(0), 99.), 99. * pow(2.,2) * pow(3.,3) * pow(4.,4));
+  assert_eq!((x*y*y*z*z*z*t*t*t*t).value_at_reduced_dim_by_fixing(&[2.,3.,4.], Dim(1), 99.), pow(2.,1) * pow(99.,2) * pow(3.,3) * pow(4.,4));
+  assert_eq!((x*y*y*z*z*z*t*t*t*t).value_at_reduced_dim_by_fixing(&[2.,3.,4.], Dim(2), 99.), pow(2.,1) * pow(3.,2) * pow(99.,3) * pow(4.,4));
+  assert_eq!((x*y*y*z*z*z*t*t*t*t).value_at_reduced_dim_by_fixing(&[2.,3.,4.], Dim(3), 99.), pow(2.,1) * pow(3.,2) * pow(4.,3) * pow(99.,4));
+}
 
 #[test]
 fn test_exp_1d() {
