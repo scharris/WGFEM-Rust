@@ -39,6 +39,10 @@ pub struct Projector<'self,Mon,MeshT> {
 impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
 
   pub fn new(basis: &'self WgBasis<Mon,MeshT>) -> ~Projector<'self,Mon,MeshT> {
+    Projector::with_rhs_cols_capacity(basis, 1000u)
+  }
+  
+  pub fn with_rhs_cols_capacity(basis: &'self WgBasis<Mon,MeshT>, init_rhs_cols_capacity: uint) -> ~Projector<'self,Mon,MeshT> {
     lapack::init(); // TODO: Move this to main when available.
 
     let mesh = basis.mesh();
@@ -66,7 +70,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
     let lapack_ips_side_mons = ~DenseMatrix::from_elem(num_side_mons, num_side_mons, 0 as R);  
     let mut lapack_pivots = vec::from_elem(num::max(num_int_mons, num_side_mons), 0 as lapack_int);
     let lapack_pivots_buf = vec::raw::to_mut_ptr(lapack_pivots);
-    let init_num_rhs_cols = 1000u; // Initial num cols for RHS matrices, matrices will be reallocated if more cols needed.
+    let init_num_rhs_cols = init_rhs_cols_capacity;
     let lapack_int_proj_rhs = ~DenseMatrix::from_elem(num_int_mons, init_num_rhs_cols, 0 as R);
     let lapack_side_proj_rhs = ~DenseMatrix::from_elem(num_side_mons, init_num_rhs_cols, 0 as R);
 
@@ -182,7 +186,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
 } // impl Projector
 
 
-/*
+/* TODO
 function make_interior_mon_side_projs(basis::WeakFunsPolyBasis)
   const mesh = basis.mesh
   const int_mons = WGBasis.interior_mons(basis)
