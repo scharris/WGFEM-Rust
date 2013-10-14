@@ -18,6 +18,7 @@ pub mod rectangle_mesh;
 pub mod dense_matrix;
 pub mod weak_gradient;
 pub mod wg_basis;
+pub mod projection;
 pub mod lapack;
 mod quadrature;
 
@@ -31,5 +32,6 @@ mod tests {
   mod test_dense_matrix;
   mod test_weak_gradient;
   mod test_wg_basis;
+  mod test_projection;
 }
 
