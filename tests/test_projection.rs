@@ -47,7 +47,7 @@ fn test_identity_proj_fe0() {
   let mut projector: ~Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
 
   // 0 x^0y^0 + -2 x^0y^1 + 0 x^0y^2 + -0 x^0y^3 + 1 x^1y^0 + -3 x^1y^1 + -2 x^1y^2 + 0 x^2y^0 + 1 x^2y^1 + -0 x^3y^0
-  let p = PolyBorrowingMons::new(~[0., -2., 0., 0., 1., -3., -2., 0., 1., 0.], basis.int_mons());
+  let p = PolyBorrowingMons::new(~[0., -2., 0., 0., 1., -3., -2., 0., 1., 0.], basis.ref_int_mons());
 
   let g = |x: &[R]| p.value_at(x);
   
@@ -76,10 +76,10 @@ fn test_int_projs() {
   // interior mons: x^0y^0, x^0y^1, x^0y^2, x^0y^3, x^1y^0, x^1y^1, x^1y^2, x^2y^0, x^2y^1, x^3y^0
   
   // g is x^2 y - 2 x y^2 expressed locally on fe4's interior.
-  let fe4_proj = PolyBorrowingMons::new(~[0., 0., 0., 0., 0., 0., -2., 0., 1., 0.], basis.int_mons());
+  let fe4_proj = PolyBorrowingMons::new(~[0., 0., 0., 0., 0., 0., -2., 0., 1., 0.], basis.ref_int_mons());
   
   //  g is (x-1)^2 (y-1) - 2 (x-1)(y-1)^2 = x^2*y - 2*x*y^2 - x^2 + 2*x*y + 2*y^2 - 3*y + 1 expressed locally on fe0's interior.
-  let fe0_proj = PolyBorrowingMons::new(~[1., -3., 2., 0., 0., 2., -2., -1., 1., 0.], basis.int_mons());
+  let fe0_proj = PolyBorrowingMons::new(~[1., -3., 2., 0., 0., 2., -2., -1., 1., 0.], basis.ref_int_mons());
 
   assert!(approx_equiv(&projs[0], &fe0_proj, 1e-10));
   assert!(approx_equiv(&projs[1], &fe4_proj, 1e-10));

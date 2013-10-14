@@ -28,7 +28,7 @@ fn test_int_mons_3x2_deg2() {
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
   let y = Mon2d { exps: [Deg(0), Deg(1)] };
 
-  assert_eq!(basis.int_mons(), [one, y, y*y, x, x*y, x*x]);
+  assert_eq!(basis.ref_int_mons(), [one, y, y*y, x, x*y, x*x]);
 
   assert_eq!(basis.mons_per_fe_int(), 6);
 }
@@ -547,7 +547,7 @@ fn test_int_mons_3x2_deg3() {
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
   let y = Mon2d { exps: [Deg(0), Deg(1)] };
   
-  assert_eq!(basis.int_mons(), [one, y, y*y, y*y*y, x, x*y, x*y*y, x*x, x*x*y, x*x*x]);
+  assert_eq!(basis.ref_int_mons(), [one, y, y*y, y*y*y, x, x*y, x*y*y, x*x, x*x*y, x*x*x]);
   
   assert_eq!(basis.mons_per_fe_int(), 10);
 }

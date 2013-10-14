@@ -219,7 +219,7 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
 
   /// Get the reference monomial sequence defining the basis elements supported on any individual interior.
   #[inline]
-  pub fn int_mons<'a>(&'a self) -> &'a [Mon] {
+  pub fn ref_int_mons<'a>(&'a self) -> &'a [Mon] {
     self.int_mons.as_slice()
   }
 

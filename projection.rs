@@ -48,7 +48,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
     let mesh = basis.mesh();
     
     let ips_int_mons_by_oshape = {
-      let int_mons = basis.int_mons();
+      let int_mons = basis.ref_int_mons();
       vec::from_fn(mesh.num_oriented_element_shapes(), |os| {
         DenseMatrix::with_upper_triangle_from_fn(int_mons.len(), int_mons.len(), |i,j| {
           mesh.intg_facerel_mon_on_oshape_int(int_mons[i] * int_mons[j], OShape(os))
@@ -96,7 +96,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
   pub fn projs_to_span_fes_int_supp_basis_els(&mut self,
          g: &fn(&[R]) -> R, fes: &[FENum], fes_oshape: OShape) -> ~[PolyBorrowingMons<'self,Mon>] {
 
-    let int_mons = self.basis.int_mons();
+    let int_mons = self.basis.ref_int_mons();
 
     let sol_as_col_maj_vec = unsafe {
 
