@@ -1,12 +1,10 @@
 use projection::{Projector};
-use common::{R, Deg, Dim, pow};
+use common::{R, pow};
 use polynomial::{Polynomial, PolyBorrowingMons, approx_equiv};
 use monomial::{Monomial, Mon2d, MaxMonDeg}; 
-use mesh::{FENum, OShape};
+use mesh::{FENum, OShape, SideFace};
 use rectangle_mesh::{RectMesh, MeshCoord};
 use wg_basis::{WgBasis};
-
-use std::vec;
 
 #[test]
 fn test_int_L2_inner_products_3x2_deg2() {
@@ -46,7 +44,7 @@ fn test_side_L2_inner_products_3x2_deg2() {
 #[test]
 fn test_identity_proj_fe0() {
   let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
-  let basis = WgBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(4));
+  let basis = WgBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
   let mut projector: ~Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
 
   // 0 x^0y^0 + -2 x^0y^1 + 0 x^0y^2 + -0 x^0y^3 + 1 x^1y^0 + -3 x^1y^1 + -2 x^1y^2 + 0 x^2y^0 + 1 x^2y^1 + -0 x^3y^0
@@ -60,29 +58,76 @@ fn test_identity_proj_fe0() {
 }
 
 #[test]
-fn test_identity_proj_fe4() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(4)]);
+fn test_int_projs() {
+  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,4.], ~[MeshCoord(3),MeshCoord(4)]);
  
-  let fe = FENum(4);
-  let int_orig_0 = rmesh.fe_interior_origin_comp(fe, Dim(0));
-  let int_orig_1 = rmesh.fe_interior_origin_comp(fe, Dim(1));
+  let fe4_int_orig_0 = 1.;
+  let fe4_int_orig_1 = 1.;
   
-  let basis = WgBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(4));
-  let mut projector: ~Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
+  let basis = WgBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
+  let mut projector: ~Projector<Mon2d,RectMesh<Mon2d>>  = Projector::with_rhs_cols_capacity(basis, 2); // force a reallocation of rhs buffer
 
   let g = |x: &[R]| {
-    // x^2 y - 2 x y^2
-    pow(x[0] - int_orig_0, 2) * (x[1] - int_orig_1) - 2. *  pow(x[0] - int_orig_0, 1) * pow(x[1] - int_orig_1, 2)
+    // polynomial x^2 y - 2 x y^2 relative to fe 4 interior origin
+    pow(x[0] - fe4_int_orig_0, 2) * (x[1] - fe4_int_orig_1) - 2. *  pow(x[0] - fe4_int_orig_0, 1) * pow(x[1] - fe4_int_orig_1, 2)
   };
+    
+  let projs = projector.projs_to_span_int_supp_basis_els(g, &[FENum(0),FENum(4),FENum(0),FENum(4),FENum(0)], OShape(0));
   
-  let proj = projector.projs_to_span_int_supp_basis_els(g, &[fe], OShape(0));
+  // interior mons: x^0y^0, x^0y^1, x^0y^2, x^0y^3, x^1y^0, x^1y^1, x^1y^2, x^2y^0, x^2y^1, x^3y^0
   
-  let p = PolyBorrowingMons::new(~[0., 0., 0., 0., 0., 0., -2., 0., 1., 0.], basis.int_mons()); // x^2 y - 2 x y^2
+  // g is x^2 y - 2 x y^2 expressed locally on fe4's interior.
+  let fe4_proj = PolyBorrowingMons::new(~[0., 0., 0., 0., 0., 0., -2., 0., 1., 0.], basis.int_mons());
+  
+  //  g is (x-1)^2 (y-1) - 2 (x-1)(y-1)^2 = x^2*y - 2*x*y^2 - x^2 + 2*x*y + 2*y^2 - 3*y + 1 expressed locally on fe0's interior.
+  let fe0_proj = PolyBorrowingMons::new(~[1., -3., 2., 0., 0., 2., -2., -1., 1., 0.], basis.int_mons());
 
-  assert!(approx_equiv(&proj[0], &p, 1e-10));
+  assert!(approx_equiv(&projs[0], &fe0_proj, 1e-10));
+  assert!(approx_equiv(&projs[1], &fe4_proj, 1e-10));
+  assert!(approx_equiv(&projs[2], &fe0_proj, 1e-10));
+  assert!(approx_equiv(&projs[3], &fe4_proj, 1e-10));
+  assert!(approx_equiv(&projs[4], &fe0_proj, 1e-10));
 }
 
+#[test]
+fn test_right_side_projs() {
+  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,4.], ~[MeshCoord(3),MeshCoord(4)]);
+ 
+  let fe5_int_orig_0 = 2.;
+  let fe5_int_orig_1 = 1.;
+  
+  let basis = WgBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
+  let mut projector: ~Projector<Mon2d,RectMesh<Mon2d>>  = Projector::with_rhs_cols_capacity(basis, 2); // force a reallocation of rhs buffer
 
+  // The function to be projected is the polynomial whose representation relative to fe 5's interior is
+  //   p_fe5(x,y) = 2x^2 - 3y^2 - 5x - 4y (relative to fe 5 origin at (2,1)).
+  // which expressed relative to the global origin (or also fe 0's interior) is polynomial
+  //   p(x,y) = 2(x-2)^2 - 3(y-1)^2 - 5(x-2) - 4(y-1)
+  let g = |x: &[R]| {
+    let (x,y) = (x[0] - fe5_int_orig_0,
+                 x[1] - fe5_int_orig_1);
+    2.*pow(x, 2) - 3.*pow(y, 2) - 5.*x - 4.*y
+  };
 
-// TODO: Side projection tests.
+  let projs = projector.projs_to_span_side_supp_basis_els(g, &[FENum(0),FENum(5),FENum(0),FENum(5),FENum(0)], OShape(0), SideFace(1));
 
+  let right_side_mons = basis.side_mons_for_fe_side(FENum(5), SideFace(1)); // vertical side monomials: x^0y^0, x^0y^1, x^0y^2
+
+  // At a point (x,y) on fe5's right side, the polynomial to be projected has value
+  //   p(x,y) = 2(1^2) - 3y^2 - 5(1) - 4y
+  //          = -3 - 4y - 3y^2
+  let fe5_proj = PolyBorrowingMons::new(~[-3., -4., -3.], right_side_mons);
+  
+  // At a point (x,y) on fe0's right side, the polynomial to be projected has value
+  //   p(x,y) = 2(1-2)^2 - 3(y-1)^2 - 5(1-2) - 4(y-1)
+  //          = 8 + 2y - 3y^2
+  let fe0_proj = PolyBorrowingMons::new(~[8., 2., -3.], right_side_mons);
+
+  assert!(approx_equiv(&projs[0], &fe0_proj, 1e-10));
+  assert!(approx_equiv(&projs[1], &fe5_proj, 1e-10));
+  assert!(approx_equiv(&projs[2], &fe0_proj, 1e-10));
+  assert!(approx_equiv(&projs[3], &fe5_proj, 1e-10));
+  assert!(approx_equiv(&projs[4], &fe0_proj, 1e-10));
+}
+
+  
