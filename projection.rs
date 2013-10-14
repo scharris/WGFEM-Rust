@@ -93,7 +93,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
   /// which the monomials appear in the basis.
   #[fixed_stack_segment]
   #[inline(never)]
-  pub fn projs_to_span_int_supp_basis_els(&mut self,
+  pub fn projs_to_span_fes_int_supp_basis_els(&mut self,
          g: &fn(&[R]) -> R, fes: &[FENum], fes_oshape: OShape) -> ~[PolyBorrowingMons<'self,Mon>] {
 
     let int_mons = self.basis.int_mons();
@@ -141,7 +141,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
   /// which the monomials appear in the basis.
   #[fixed_stack_segment]
   #[inline(never)]
-  pub fn projs_to_span_side_supp_basis_els(&mut self,
+  pub fn projs_to_span_fes_side_supp_basis_els(&mut self,
          g: &fn(&[R]) -> R, fes: &[FENum], fes_oshape: OShape, side_face: SideFace) -> ~[PolyBorrowingMons<'self,Mon>] {
 
     let side_mons = self.basis.side_mons_for_oshape_side(fes_oshape, side_face);
@@ -183,43 +183,40 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
       .collect()
   }
 
+  #[fixed_stack_segment]
+  #[inline(never)]
+  pub fn proj_int_mon_to_span_oshape_side_supp_basis_els(&mut self,
+     int_mon: Mon, oshape: OShape, side_face: SideFace) -> PolyBorrowingMons<'self,Mon> {
+
+    let side_basis_mons = self.basis.side_mons_for_oshape_side(oshape, side_face);
+    
+    let sol_vec = unsafe {
+
+      // Prepare system matrix a, consisting of inner products between basis elements supported on the side.
+      let a = {
+        self.lapack_ips_side_mons.fill_upper_triangle_from(&self.ips_side_mons_by_oshape_side[*oshape][*side_face]);
+        self.lapack_ips_side_mons.mut_col_maj_data_ptr()
+      };
+
+      // Fill the rhs column b, with inner products between the monomial to be projected and our side supported basis monomials.
+      let b = {
+        self.lapack_side_proj_rhs.set_num_cols(1);
+        self.lapack_side_proj_rhs.fill_from_fn(|r,_c| {
+          let (int_mon, side_basis_mon) = (int_mon.clone(), side_basis_mons[r].clone());
+          self.basis.mesh.intg_intrel_mon_x_siderel_mon_on_oshape_side(int_mon, side_basis_mon, oshape, side_face)
+        });
+        self.lapack_side_proj_rhs.mut_col_maj_data_ptr()
+      };
+
+      lapack::solve_symmetric_as_col_maj_with_ut_sys(a, side_basis_mons.len() as lapack_int,
+                                                     b, 1 as lapack_int,
+                                                     self.lapack_pivots_buf);
+      vec::from_buf(b as *R, side_basis_mons.len())
+    };
+
+    PolyBorrowingMons { coefs: sol_vec, mons: side_basis_mons }
+  }
+
+
 } // impl Projector
-
-
-/* TODO
-function make_interior_mon_side_projs(basis::WeakFunsPolyBasis)
-  const mesh = basis.mesh
-  const int_mons = WGBasis.interior_mons(basis)
-  const num_int_mons = monnum(length(int_mons))
-  const projs_by_int_monn = Array(Array{Array{Polynomial,1},1}, num_int_mons)
-  const num_oshapes = Mesh.num_oriented_element_shapes(mesh)
-  for int_monn=monnum(1):num_int_mons
-    projs_by_oshape = Array(Array{Polynomial,1}, num_oshapes)
-    for os=oshape_one:num_oshapes
-      const sides_per_fe = Mesh.num_side_faces_for_shape(os, mesh)
-      const projs_by_side = Array(Polynomial, sides_per_fe)
-      for sf=feface_one:sides_per_fe
-        const side_mons = WGBasis.side_mons_for_oshape_side(os, sf, basis)
-        const proj_coefs = project_interior_mon_onto_oshape_side_supported_approx_subspace(int_mons[int_monn], os, sf, basis)
-        projs_by_side[sf] = Polynomial(side_mons, proj_coefs)
-      end
-      projs_by_oshape[os] = projs_by_side
-    end
-    projs_by_int_monn[int_monn] = projs_by_oshape
-  end
-  projs_by_int_monn
-end
-
-function project_interior_mon_onto_oshape_side_supported_approx_subspace(int_mon::Monomial,
-                                                                         fe_oshape::OShapeNum, side_face::FEFaceNum,
-                                                                         basis::WeakFunsPolyBasis)
-  const side_mons = WGBasis.side_mons_for_oshape_side(fe_oshape, side_face, basis)
-  const ips_side_bels = WGBasis.ips_oshape_side_mons(fe_oshape, side_face, basis)
-  const ips_int_mon_vs_bels =
-    [Mesh.integral_fe_rel_x_side_rel_on_oshape_side(int_mon, side_bel_mon, fe_oshape, side_face, basis.mesh)::R
-     for side_bel_mon in side_mons]
-
-  ips_side_bels \ ips_int_mon_vs_bels
-end
-*/
 
