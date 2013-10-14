@@ -2,7 +2,6 @@ use common::*;
 use monomial::{Monomial, DegLim, MaxMonDeg, MaxMonFactorDeg, domain_space_dims};
 use polynomial::{PolyBorrowing};
 use mesh::{Mesh, FENum, NBSideNum, NBSideInclusions, OShape, SideFace};
-use dense_matrix::DenseMatrix;
 use weak_gradient::{WeakGradSolver, WeakGrad};
 
 use std::vec;
