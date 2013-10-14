@@ -105,6 +105,8 @@ pub trait Polynomial<Mon>: ToStr {
   fn term(&self, n: uint) -> (R,Mon);
 
   fn foldl_terms<A>(&self, z: A, f: &fn(a: A, term: (R,Mon)) -> A) -> A;
+
+  fn value_at(&self, x: &[R]) -> R;
   
   fn each_term(&self, f: &fn(term: (R,Mon)) -> ()) ->  ();
 
@@ -164,6 +166,11 @@ impl<Mon:Monomial> Polynomial<Mon>
     }
     acc_val
   }
+ 
+  #[inline]
+  fn value_at(&self, x: &[R]) -> R {
+    self.foldl_terms(0 as R, |sum, (c,m)| sum + c * m.value_at(x))
+  }
 
   #[inline]
   fn each_term(&self, f: &fn(term: (R,Mon)) -> ()) ->  () {
@@ -211,6 +218,11 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
     }
     acc_val
   }
+  
+  #[inline]
+  fn value_at(&self, x: &[R]) -> R {
+    self.foldl_terms(0 as R, |sum, (c,m)| sum + c * m.value_at(x))
+  }
 
   #[inline]
   fn each_term(&self, f: &fn(term: (R,Mon)) -> ()) ->  () {
@@ -257,6 +269,11 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
       acc_val = f(acc_val, term);
     }
     acc_val
+  }
+  
+  #[inline]
+  fn value_at(&self, x: &[R]) -> R {
+    self.foldl_terms(0 as R, |sum, (c,m)| sum + c * m.value_at(x))
   }
 
   #[inline]
