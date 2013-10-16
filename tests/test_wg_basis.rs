@@ -392,11 +392,11 @@ fn test_side_mon_beln_between_fe0_and_fe1_3x2_deg2() {
   let left_face = SideFace(0);
   let right_face = SideFace(1);
   
-  assert_eq!(basis.side_mon_el_num(FENum(0), right_face, FaceMonNum(0)), BasisElNum(36));
-  assert_eq!(basis.side_mon_el_num(FENum(1), left_face,  FaceMonNum(0)), BasisElNum(36));
+  assert_eq!(basis.fe_side_mon_el_num(FENum(0), right_face, FaceMonNum(0)), BasisElNum(36));
+  assert_eq!(basis.fe_side_mon_el_num(FENum(1), left_face,  FaceMonNum(0)), BasisElNum(36));
 
-  assert_eq!(basis.side_mon_el_num(FENum(0), right_face, FaceMonNum(1)), BasisElNum(37));
-  assert_eq!(basis.side_mon_el_num(FENum(1), left_face,  FaceMonNum(1)), BasisElNum(37));
+  assert_eq!(basis.fe_side_mon_el_num(FENum(0), right_face, FaceMonNum(1)), BasisElNum(37));
+  assert_eq!(basis.fe_side_mon_el_num(FENum(1), left_face,  FaceMonNum(1)), BasisElNum(37));
 }
 
 #[test]
@@ -434,11 +434,11 @@ fn test_side_mon_beln_between_fe1_and_fe2_3x2_deg2() {
   let left_face = SideFace(0);
   let right_face = SideFace(1);
   
-  assert_eq!(basis.side_mon_el_num(FENum(1), right_face, FaceMonNum(0)), BasisElNum(38));
-  assert_eq!(basis.side_mon_el_num(FENum(2), left_face,  FaceMonNum(0)), BasisElNum(38));
+  assert_eq!(basis.fe_side_mon_el_num(FENum(1), right_face, FaceMonNum(0)), BasisElNum(38));
+  assert_eq!(basis.fe_side_mon_el_num(FENum(2), left_face,  FaceMonNum(0)), BasisElNum(38));
 
-  assert_eq!(basis.side_mon_el_num(FENum(1), right_face, FaceMonNum(1)), BasisElNum(39));
-  assert_eq!(basis.side_mon_el_num(FENum(2), left_face,  FaceMonNum(1)), BasisElNum(39));
+  assert_eq!(basis.fe_side_mon_el_num(FENum(1), right_face, FaceMonNum(1)), BasisElNum(39));
+  assert_eq!(basis.fe_side_mon_el_num(FENum(2), left_face,  FaceMonNum(1)), BasisElNum(39));
 }
 
 #[test]
@@ -458,11 +458,11 @@ fn test_side_mon_beln_between_fe4_and_fe5_3x2_deg2() {
   let left_face = SideFace(0);
   let right_face = SideFace(1);
 
-  assert_eq!(basis.side_mon_el_num(FENum(4), right_face, FaceMonNum(0)), BasisElNum(42));
-  assert_eq!(basis.side_mon_el_num(FENum(5), left_face,  FaceMonNum(0)), BasisElNum(42));
+  assert_eq!(basis.fe_side_mon_el_num(FENum(4), right_face, FaceMonNum(0)), BasisElNum(42));
+  assert_eq!(basis.fe_side_mon_el_num(FENum(5), left_face,  FaceMonNum(0)), BasisElNum(42));
 
-  assert_eq!(basis.side_mon_el_num(FENum(4), right_face, FaceMonNum(1)), BasisElNum(43));
-  assert_eq!(basis.side_mon_el_num(FENum(5), left_face,  FaceMonNum(1)), BasisElNum(43));
+  assert_eq!(basis.fe_side_mon_el_num(FENum(4), right_face, FaceMonNum(1)), BasisElNum(43));
+  assert_eq!(basis.fe_side_mon_el_num(FENum(5), left_face,  FaceMonNum(1)), BasisElNum(43));
 }
 
 #[test]
@@ -503,11 +503,11 @@ fn test_side_mon_beln_between_fe0_and_fe3_3x2_deg2() {
   let bottom_face = SideFace(2);
   let top_face = SideFace(3);
   
-  assert_eq!(basis.side_mon_el_num(FENum(0), top_face,    FaceMonNum(0)), BasisElNum(44));
-  assert_eq!(basis.side_mon_el_num(FENum(3), bottom_face, FaceMonNum(0)), BasisElNum(44));
+  assert_eq!(basis.fe_side_mon_el_num(FENum(0), top_face,    FaceMonNum(0)), BasisElNum(44));
+  assert_eq!(basis.fe_side_mon_el_num(FENum(3), bottom_face, FaceMonNum(0)), BasisElNum(44));
 
-  assert_eq!(basis.side_mon_el_num(FENum(0), top_face,    FaceMonNum(1)), BasisElNum(45));
-  assert_eq!(basis.side_mon_el_num(FENum(3), bottom_face, FaceMonNum(1)), BasisElNum(45));
+  assert_eq!(basis.fe_side_mon_el_num(FENum(0), top_face,    FaceMonNum(1)), BasisElNum(45));
+  assert_eq!(basis.fe_side_mon_el_num(FENum(3), bottom_face, FaceMonNum(1)), BasisElNum(45));
 }
 
 #[test]

@@ -277,11 +277,17 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
     BasisElNum(*fe * self.mons_per_fe_int + *monn)
   }
 
-  /// Get the basis element number for the given monomial number and finite element side face.
+  /// Get the basis element number for the given finite element side face and face monomial number.
   #[inline]
-  pub fn side_mon_el_num(&self, fe: FENum, side_face: SideFace, monn: FaceMonNum) -> BasisElNum {
-    let nb_side_num = self.mesh.nb_side_num_for_fe_side(fe, side_face);
-    BasisElNum(*self.first_nb_side_beln + (*nb_side_num * self.mons_per_fe_side) + *monn)
+  pub fn fe_side_mon_el_num(&self, fe: FENum, side_face: SideFace, monn: FaceMonNum) -> BasisElNum {
+    let nbsn = self.mesh.nb_side_num_for_fe_side(fe, side_face);
+    self.nb_side_mon_el_num(nbsn, monn)
+  }
+
+  /// Get the basis element number for the given finite element side face and face monomial number.
+  #[inline(always)]
+  pub fn nb_side_mon_el_num(&self, nbsn: NBSideNum, monn: FaceMonNum) -> BasisElNum {
+    BasisElNum(*self.first_nb_side_beln + (*nbsn * self.mons_per_fe_side) + *monn)
   }
 
 
@@ -295,7 +301,7 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
   /// Get the polynomial representing the passed full WG solution restricted to a particular finite element interior.
   pub fn fe_side_poly<'a>(&'a self, fe: FENum, side_face: SideFace, sol_basis_coefs: &'a [R]) -> PolyBorrowing<'a,Mon> {
     let fe_side_mons = self.side_mons_for_fe_side(fe, side_face);
-    let fe_side_first_beln = self.side_mon_el_num(fe, side_face, FaceMonNum(0));
+    let fe_side_first_beln = self.fe_side_mon_el_num(fe, side_face, FaceMonNum(0));
     let fe_side_coefs = sol_basis_coefs.slice(*fe_side_first_beln, *fe_side_first_beln + fe_side_mons.len());
     PolyBorrowing::new(fe_side_coefs, fe_side_mons)
   }
