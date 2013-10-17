@@ -160,21 +160,44 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
     }
   }
 
-  /*
-   Estimate an upper bound of the number of ordered triplets (bel1, bel2, fe) where bel1 and bel2 are basis elements
-   supported on finite element fe. This function is intended to help callers allocate storage for data structures
-   involving interacting basis element pairs, such as are used in the construction of sparse matrices.
+  pub fn num_els(&self) -> uint {
+    self.total_els
+  }
+
+  /** Estimate the number of interacting basis element pairs. Provides an upper bound of the number of
+   ordered pairs (el1, el2) where el1 and el2 are basis elements for which there exists a common supporting
+   finite element. This function is intended to help callers allocate storage for data structures involving
+   interacting basis element pairs, such as are used in the construction of sparse matrices.
+   The estimate should be exact in the case that there is at most one side in the intersection of any two
+   finite elements. Otherwise side-side interactions will be overcounted to a degree depending on the number
+   of the multiple-side element intersections.
   */
-  pub fn ub_estimate_num_bel_bel_common_support_fe_triplets(&self) -> uint {
+  pub fn est_num_el_el_pairs_with_common_supp_fes(&self) -> uint {
     let num_fes = self.mesh.num_fes();
-    let int_int_interactions = num_fes * sq(self.mons_per_fe_int);
-    range(0, num_fes).fold(int_int_interactions, |tot_interactions, fe| {
-      let nb_sides = self.mesh.num_non_boundary_sides_for_fe(FENum(fe));
-      let int_side_and_side_int_interactions = 2 * self.mons_per_fe_int * nb_sides * self.mons_per_fe_side;
-      let side_sidemon_choices = nb_sides * self.mons_per_fe_side;
-      let side_side_interactions = sq(side_sidemon_choices);
-      tot_interactions + int_side_and_side_int_interactions + side_side_interactions
-    })
+    let (nbsides, intmons, sidemons) = (self.mesh.num_nb_sides(), self.mons_per_fe_int, self.mons_per_fe_side);
+    let int_int_interactions = num_fes * sq(intmons);
+    let side_int_and_int_side_interactions = {
+      let side_int_interactions = nbsides * sidemons * 2 * intmons; // the 2 factor because 2 interiors meet at the side
+      2 * side_int_interactions // 2 factor to include the reverse pairings
+    };
+    let side_side_interactions =
+      nbsides * sidemons * sidemons +            // same side interactions for all non-boundary sides
+      range(0, nbsides).fold(0u, |sum, nbsn| {   // sum of nbsn to other nb side interactions over all nb sides nbsn
+        let incls = self.mesh.fe_inclusions_of_nb_side(NBSideNum(nbsn));
+        let interactions_nbsn_mons_to_mons_on_other_nb_sides = 
+          sidemons * ( // mon choices on nbsn
+            sidemons * (self.mesh.num_nb_sides_for_fe(incls.fe1)-1) + // mon choices on other nb sides of first including fe
+            sidemons * (self.mesh.num_nb_sides_for_fe(incls.fe2)-1)   // mon choices on other nb sides of second including fe
+            // NOTE: The above may overcount interactions if multiple sides exist between incls.fe1 and incls.fe2, because the same "other"
+            // side may be counted under both fe1 and fe2's non-boundary sides count.  This could be fixed by asking the mesh for the
+            // specific nb side numbers for fe1 and fe2, and then counting the combined set of other non-boundary sides.
+          );
+        // We only count for this side the interactions *starting* with a monomial on our side, and not the reverse pairings,
+        // because the reverse pairings are counted as the other sides are visited.
+        sum + interactions_nbsn_mons_to_mons_on_other_nb_sides
+      });
+
+    int_int_interactions + side_int_and_int_side_interactions + side_side_interactions
   }
   
   /// Get the mesh for this basis.
