@@ -77,7 +77,7 @@ pub trait Mesh<Mon> {
 
   fn max_fe_diameter(&self) -> R;
 
-  fn num_non_boundary_sides_for_fe(&self, fe: FENum) -> uint;
+  fn num_nb_sides_for_fe(&self, fe: FENum) -> uint;
 
   fn max_num_shape_sides(&self) -> uint;
 
