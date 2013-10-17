@@ -622,8 +622,70 @@ fn test_interacting_els_est_3x2_deg3() {
       else { fail!("Support for basis elements did not match exhaustive alternatives."); }
     }
   }
-
+  
   assert_eq!(int_int_inters + int_side_and_vv_inters + side_side_inters,
-             basis.est_num_el_el_pairs_with_common_supp_fes());
+             basis.est_num_el_el_pairs_with_common_supp_fes(false));
+}
+
+#[test]
+fn test_interacting_els_est_5x6_deg4() {
+  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(5),MeshCoord(6)]);
+  let basis = WgBasis::new(rmesh, MaxMonDeg(4), MaxMonDeg(3));
+
+  let mut int_int_inters = 0u;
+  let mut int_side_and_vv_inters = 0u;
+  let mut side_side_inters = 0u;
+  let mut upper_triangle_inters = 0u;
+
+  for el_1 in range(0, basis.num_els()) {
+    for el_2 in range(0, basis.num_els()) {
+      let (el_1, el_2) = (BasisElNum(el_1), BasisElNum(el_2));
+
+      // both elements interior supported
+      if basis.is_int_supported(el_1) && basis.is_int_supported(el_2) {
+        let (fe_1, fe_2) = (basis.support_int_fe_num(el_1), basis.support_int_fe_num(el_2));
+        if fe_1 == fe_2 {
+          int_int_inters += 1;
+          if *el_1 <= *el_2 { upper_triangle_inters += 1; }
+        }
+      }
+
+      // interior - side
+      else if basis.is_int_supported(el_1) && basis.is_side_supported(el_2) {
+        let (fe_1, incls_2) = (basis.support_int_fe_num(el_1), basis.fe_inclusions_of_side_support(el_2));
+        if fe_1 == incls_2.fe1 || fe_1 == incls_2.fe2 {
+          int_side_and_vv_inters += 1;
+          if *el_1 <= *el_2 { upper_triangle_inters += 1; }
+        }
+      }
+      
+      // side - interior
+      else if basis.is_side_supported(el_1) && basis.is_int_supported(el_2) {
+        let (incls_1, fe_2) = (basis.fe_inclusions_of_side_support(el_1), basis.support_int_fe_num(el_2));
+        if fe_2 == incls_1.fe1 || fe_2 == incls_1.fe2 {
+          int_side_and_vv_inters += 1;
+          if *el_1 <= *el_2 { upper_triangle_inters += 1; }
+        }
+      }
+      
+      // side - side 
+      else if basis.is_side_supported(el_1) && basis.is_side_supported(el_2) {
+        let (incls_1, incls_2) = (basis.fe_inclusions_of_side_support(el_1), basis.fe_inclusions_of_side_support(el_2));
+
+        if incls_1.fe1 == incls_2.fe1 || incls_1.fe2 == incls_2.fe2 || incls_1.fe1 == incls_2.fe2 || incls_1.fe2 == incls_2.fe1 {
+          side_side_inters += 1;
+          if *el_1 <= *el_2 { upper_triangle_inters += 1; }
+        }
+      }
+      else { fail!("Support for basis elements did not match exhaustive alternatives."); }
+    }
+  }
+ 
+  let tot_inters = int_int_inters + int_side_and_vv_inters + side_side_inters;
+
+  assert_eq!(tot_inters,
+             basis.est_num_el_el_pairs_with_common_supp_fes(false));
+
+  assert_eq!(basis.est_num_el_el_pairs_with_common_supp_fes(true), upper_triangle_inters);
 }
 

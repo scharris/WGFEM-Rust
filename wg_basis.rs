@@ -159,20 +159,30 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
       side_mon_wgrads: side_mon_wgrads,
     }
   }
+  
+  /// Get the mesh for this basis.
+  #[inline]
+  pub fn mesh<'a>(&'a self) -> &'a MeshT {
+    &*self.mesh
+  }
 
+  /// Get the number of elements in this basis.
+  #[inline]
   pub fn num_els(&self) -> uint {
     self.total_els
   }
 
   /** Estimate the number of interacting basis element pairs. Provides an upper bound of the number of
    ordered pairs (el1, el2) where el1 and el2 are basis elements for which there exists a common supporting
-   finite element. This function is intended to help callers allocate storage for data structures involving
+   finite element. If non_decreasing_pairs_only is true, then exclude from the count the pairs where the
+   first element number exceeds the second (only count the upper triangular part of a matrix filled via
+   these pairs). This function is intended to help callers allocate storage for data structures involving
    interacting basis element pairs, such as are used in the construction of sparse matrices.
    The estimate should be exact in the case that there is at most one side in the intersection of any two
    finite elements. Otherwise side-side interactions will be overcounted to a degree depending on the number
    of the multiple-side element intersections.
   */
-  pub fn est_num_el_el_pairs_with_common_supp_fes(&self) -> uint {
+  pub fn est_num_el_el_pairs_with_common_supp_fes(&self, non_decreasing_pairs_only: bool) -> uint {
     let num_fes = self.mesh.num_fes();
     let (nbsides, intmons, sidemons) = (self.mesh.num_nb_sides(), self.mons_per_fe_int, self.mons_per_fe_side);
     let int_int_interactions = num_fes * sq(intmons);
@@ -197,15 +207,16 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
         sum + interactions_nbsn_mons_to_mons_on_other_nb_sides
       });
 
-    int_int_interactions + side_int_and_int_side_interactions + side_side_interactions
+    let total_interactions = int_int_interactions + side_int_and_int_side_interactions + side_side_interactions;
+    
+    if non_decreasing_pairs_only {
+      (total_interactions + self.num_els())/2
+    }
+    else {
+      total_interactions
+    }
   }
   
-  /// Get the mesh for this basis.
-  #[inline]
-  pub fn mesh<'a>(&'a self) -> &'a MeshT {
-    &*self.mesh
-  }
-
   /// Determine whether a basis element is interior-supported.
   #[inline]
   pub fn is_int_supported(&self, i: BasisElNum) -> bool {
@@ -333,11 +344,13 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
   // weak gradient accessors
 
   /// Get the weak gradient of the interior supported shape function defined by the given monomial on the interior of the given oriented shape. 
+  #[inline]
   pub fn wgrad_int_mon<'a>(&'a self, monn: FaceMonNum, oshape: OShape) -> &'a WeakGrad {
     &self.int_mon_wgrads[*oshape][*monn]
   }
 
   /// Get the weak gradient of the side supported shape function defined by the given monomial on the given side of the given oriented shape. 
+  #[inline]
   pub fn wgrad_side_mon<'a>(&'a self, monn: FaceMonNum, oshape: OShape, side_face: SideFace) -> &'a WeakGrad {
     &self.side_mon_wgrads[*oshape][*side_face][*monn]
   }
