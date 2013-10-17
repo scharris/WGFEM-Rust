@@ -8,12 +8,12 @@ use rectangle_mesh::*;
 use std::num::{sqrt, abs};
 
 
-pub struct NBSideGeom {
+struct NBSideGeom {
   perp_axis: Dim,
   mesh_coords: ~[MeshCoord]
 }
 
-pub fn nb_side_geom<Mon:Monomial>(rmesh: &mut RectMesh<Mon>, n: NBSideNum) -> NBSideGeom {
+fn nb_side_geom<Mon:Monomial>(rmesh: &mut RectMesh<Mon>, n: NBSideNum) -> NBSideGeom {
   NBSideGeom {
     perp_axis: rmesh.perp_axis_for_nb_side(n),
     mesh_coords: rmesh.side_mesh_coords_for_nb_side_num(n).to_owned()
@@ -352,8 +352,9 @@ fn test_3x4x5x6_bad_mesh_coords() -> () {
   rmesh3x4x5x6.fe_mesh_coord(Dim(0), FENum(3*4*5*6));
 }
 
+#[test]
 fn test_3x4_boundary_side_determ() -> () {
-  let rmesh3x4: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2.],
+  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
                                                  ~[2f64, 3.],
                                                  ~[MeshCoord(3), MeshCoord(4)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -361,43 +362,37 @@ fn test_3x4_boundary_side_determ() -> () {
   let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
   let top_side = greater_side_face_perp_to_axis(Dim(1));
 
+  assert_eq!(rmesh3x4.num_nb_sides_for_fe(FENum(0)), 2);
+
   assert!( rmesh3x4.is_boundary_side(FENum(0), left_side));
   assert!(!rmesh3x4.is_boundary_side(FENum(0), right_side));
   assert!( rmesh3x4.is_boundary_side(FENum(0), bottom_side));
   assert!(!rmesh3x4.is_boundary_side(FENum(0), top_side));
+
+  assert_eq!(rmesh3x4.num_nb_sides_for_fe(FENum(2)), 2);
 
   assert!(!rmesh3x4.is_boundary_side(FENum(2), left_side));
   assert!( rmesh3x4.is_boundary_side(FENum(2), right_side));
   assert!( rmesh3x4.is_boundary_side(FENum(2), bottom_side));
   assert!(!rmesh3x4.is_boundary_side(FENum(2), top_side));
 
+  assert_eq!(rmesh3x4.num_nb_sides_for_fe(FENum(3)), 3);
+
   assert!( rmesh3x4.is_boundary_side(FENum(3), left_side));
   assert!(!rmesh3x4.is_boundary_side(FENum(3), right_side));
   assert!(!rmesh3x4.is_boundary_side(FENum(3), bottom_side));
   assert!(!rmesh3x4.is_boundary_side(FENum(3), top_side));
 
+  assert_eq!(rmesh3x4.num_nb_sides_for_fe(FENum(11)), 2);
+
   assert!(!rmesh3x4.is_boundary_side(FENum(11), left_side));
   assert!( rmesh3x4.is_boundary_side(FENum(11), right_side));
   assert!(!rmesh3x4.is_boundary_side(FENum(11), bottom_side));
   assert!( rmesh3x4.is_boundary_side(FENum(11), top_side));
-
-  assert!( rmesh3x4.is_boundary_side(FENum(12), left_side));
-  assert!(!rmesh3x4.is_boundary_side(FENum(12), right_side));
-  assert!( rmesh3x4.is_boundary_side(FENum(12), bottom_side));
-  assert!(!rmesh3x4.is_boundary_side(FENum(12), top_side));
-
-  assert!( rmesh3x4.is_boundary_side(FENum(4*12), left_side));
-  assert!(!rmesh3x4.is_boundary_side(FENum(4*12), right_side));
-  assert!( rmesh3x4.is_boundary_side(FENum(4*12), bottom_side));
-  assert!(!rmesh3x4.is_boundary_side(FENum(4*12), top_side));
-
-  assert!(!rmesh3x4.is_boundary_side(FENum(5*12-1), left_side));
-  assert!( rmesh3x4.is_boundary_side(FENum(5*12-1), right_side));
-  assert!(!rmesh3x4.is_boundary_side(FENum(5*12-1), bottom_side));
-  assert!( rmesh3x4.is_boundary_side(FENum(5*12-1), top_side));
 }
 
 
+#[test]
 fn test_3x4x5_boundary_side_determ() -> () {
   let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
@@ -459,10 +454,11 @@ fn test_3x4x5_boundary_side_determ() -> () {
   assert!( rmesh3x4x5.is_boundary_side(FENum(5*12-1), front_side));
 }
 
+#[test]
 fn test_3x4x5x6_boundary_side_determ() -> () {
-  let rmesh3x4x5x6: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3., 4.],
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
                                                      ~[2f64, 3., 4., 5.],
-                                                     ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
+                                                     ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
   let right_side = greater_side_face_perp_to_axis(Dim(0));
   let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
@@ -1506,8 +1502,9 @@ fn test_intg_facerel_poly_x_facerel_poly_on_oshape_int_4d() -> () {
               - 6. * pow(1./3.,2)/2. * pow(1./4.,3)/3. * pow(1./5.,2)/2. * 1./6.);
 }
 
+#[test]
 fn test_intg_facerel_poly_x_facerel_poly_on_oshape_side_2d() -> () {
-  let rmesh3x4: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2.],
+  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
                                                  ~[2f64, 3.],
                                                  ~[MeshCoord(3), MeshCoord(4)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -1515,44 +1512,45 @@ fn test_intg_facerel_poly_x_facerel_poly_on_oshape_side_2d() -> () {
   let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
   let top_side = greater_side_face_perp_to_axis(Dim(1));
 
-  let one = Mon3d { exps: [Deg(0), Deg(0), Deg(0)] };
-  let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
-  let y = Mon3d { exps: [Deg(0), Deg(1), Deg(0)] };
+  let one = Mon2d { exps: [Deg(0), Deg(0)] };
+  let x = Mon2d { exps: [Deg(1), Deg(0)] };
+  let y = Mon2d { exps: [Deg(0), Deg(1)] };
   let one_poly = ~poly([(1.,one)]);
 
-  assert_approx(rmesh3x4.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(1.2,y), (3.4,x*x*x*y*y*y*y)]), one_poly, OShape(0), left_side),
-                1.2 * pow(1./4.,2)/2. * pow(1./5.,3)/3.);
-  assert_approx(rmesh3x4.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(1.2,y), (3.4,x*x*x*y*y*y*y)]), one_poly, OShape(0), right_side),
-                1.2 * pow(1./4.,2)/2. * pow(1./5.,3)/3.);
- 
-  assert_approx(rmesh3x4.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(1.5,y), (0.123,y*y*y*y)]), one_poly, OShape(0), right_side),
-                1.5 * pow(1./4.,2)/2. * pow(1./5.,3)/3. + 0.123 * pow(1./4.,5)/5. * pow(1./5.,2)/2.);
+  assert_approx(rmesh3x4.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(1.2,x*y), (3.4,x*y*y*y*y)]), one_poly, OShape(0), left_side),
+                0.);
+  assert_approx(rmesh3x4.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(1.2,y), (3.4,y*y*y*y)]), one_poly, OShape(0), left_side),
+                1.2 * pow(1./4.,2)/2. + 3.4 * pow(1./4.,5)/5.);
+  assert_approx(rmesh3x4.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(1.2,y), (3.4,y*y*y*y)]), one_poly, OShape(0), right_side),
+                1.2 * pow(1./4.,2)/2. + 3.4 * pow(1./4.,5)/5.);
 
   // (2y - 3)(2 - y^2) = 4y - 2y^3 - 6 + 3y^2
   assert_approx(rmesh3x4.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,y), (-3.,one)]), &poly([(2.,one), (-1.,y*y)]), OShape(0), right_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3.
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4.
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1.
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3.);
+                4. * pow(1./4.,2)/2.
+              - 2. * pow(1./4.,4)/4.
+              - 6. * pow(1./4.,1)/1.
+              + 3. * pow(1./4.,3)/3.);
+  // same as above but on left side (should make no difference)
   assert_approx(rmesh3x4.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,y), (-3.,one)]), &poly([(2.,one), (-1.,y*y)]), OShape(0), left_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3.
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4.
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1.
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3.);
-  
+                4. * pow(1./4.,2)/2.
+              - 2. * pow(1./4.,4)/4.
+              - 6. * pow(1./4.,1)/1.
+              + 3. * pow(1./4.,3)/3.);
   // (2x - 3)(2 - x^2) = 4x - 2x^3 - 6 + 3x^2
   assert_approx(rmesh3x4.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,x), (-3.,one)]), &poly([(2.,one), (-1.,x*x)]), OShape(0), top_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3.
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4.
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1.
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3.);
+                4. * pow(1./3.,2)/2.
+              - 2. * pow(1./3.,4)/4.
+              - 6. * pow(1./3.,1)/1.
+              + 3. * pow(1./3.,3)/3.);
+  // same as above but on bottom side (should make no difference)
   assert_approx(rmesh3x4.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,x), (-3.,one)]), &poly([(2.,one), (-1.,x*x)]), OShape(0), bottom_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3.
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4.
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1.
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3.);
+                4. * pow(1./3.,2)/2.
+              - 2. * pow(1./3.,4)/4.
+              - 6. * pow(1./3.,1)/1.
+              + 3. * pow(1./3.,3)/3.);
 }
 
+#[test]
 fn test_intg_facerel_poly_x_facerel_poly_on_oshape_side_3d() -> () {
   let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
@@ -1572,49 +1570,52 @@ fn test_intg_facerel_poly_x_facerel_poly_on_oshape_side_3d() -> () {
 
   assert_approx(rmesh3x4x5.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(1.2,y*z*z), (3.4,x*x*x*y*y*y*y)]), one_poly, OShape(0), left_side),
                 1.2 * pow(1./4.,2)/2. * pow(1./5.,3)/3.);
-  assert_approx(rmesh3x4x5.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(1.2,y*z*z), (3.4,x*x*x*y*y*y*y)]), one_poly, OShape(0), right_side),
-                1.2 * pow(1./4.,2)/2. * pow(1./5.,3)/3.);
- 
+  assert_approx(rmesh3x4x5.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(1.2,y*z*z), (3.4,y*y*y*y)]), one_poly, OShape(0), left_side),
+                1.2 * pow(1./4.,2)/2. * pow(1./5.,3)/3. + 3.4 * pow(1./4.,5)/5. * pow(1./5.,1));
+  assert_approx(rmesh3x4x5.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(1.2,y*z*z), (3.4,y*y*y*y)]), one_poly, OShape(0), right_side),
+                1.2 * pow(1./4.,2)/2. * pow(1./5.,3)/3. + 3.4 * pow(1./4.,5)/5. * pow(1./5.,1));
+  assert_approx(rmesh3x4x5.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(1.5,y*z*z), (0.123,y*y*y*y*z)]), one_poly, OShape(0), left_side),
+                1.5 * pow(1./4.,2)/2. * pow(1./5.,3)/3. + 0.123 * pow(1./4.,5)/5. * pow(1./5.,2)/2.);
   assert_approx(rmesh3x4x5.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(1.5,y*z*z), (0.123,y*y*y*y*z)]), one_poly, OShape(0), right_side),
                 1.5 * pow(1./4.,2)/2. * pow(1./5.,3)/3. + 0.123 * pow(1./4.,5)/5. * pow(1./5.,2)/2.);
 
   // (2y - 3)(2z - y^2) = 4yz - 2y^3 - 6z + 3y^2
   assert_approx(rmesh3x4x5.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,y), (-3.,one)]), &poly([(2.,z), (-1.,y*y)]), OShape(0), right_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. 
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4. * pow(1./5.,1)/1.
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1. * pow(1./5.,2)/2. 
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1.);
+                4. * pow(1./4.,2)/2. * pow(1./5.,2)/2. 
+              - 2. * pow(1./4.,4)/4. * pow(1./5.,1)/1.
+              - 6. * pow(1./4.,1)/1. * pow(1./5.,2)/2. 
+              + 3. * pow(1./4.,3)/3. * pow(1./5.,1)/1.);
   assert_approx(rmesh3x4x5.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,y), (-3.,one)]), &poly([(2.,z), (-1.,y*y)]), OShape(0), left_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. 
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4. * pow(1./5.,1)/1.
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1. * pow(1./5.,2)/2. 
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1.);
-  
+                4. * pow(1./4.,2)/2. * pow(1./5.,2)/2. 
+              - 2. * pow(1./4.,4)/4. * pow(1./5.,1)/1.
+              - 6. * pow(1./4.,1)/1. * pow(1./5.,2)/2. 
+              + 3. * pow(1./4.,3)/3. * pow(1./5.,1)/1.);
   // (2x - 3)(2z - x^2) = 4xz - 2x^3 - 6z + 3x^2
   assert_approx(rmesh3x4x5.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,x), (-3.,one)]), &poly([(2.,z), (-1.,x*x)]), OShape(0), top_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. 
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4. * pow(1./5.,1)/1.
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1. * pow(1./5.,2)/2. 
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1.);
+                4. * pow(1./3.,2)/2. * pow(1./5.,2)/2. 
+              - 2. * pow(1./3.,4)/4. * pow(1./5.,1)/1.
+              - 6. * pow(1./3.,1)/1. * pow(1./5.,2)/2. 
+              + 3. * pow(1./3.,3)/3. * pow(1./5.,1)/1.);
   assert_approx(rmesh3x4x5.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,x), (-3.,one)]), &poly([(2.,z), (-1.,x*x)]), OShape(0), bottom_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. 
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4. * pow(1./5.,1)/1.
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1. * pow(1./5.,2)/2. 
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1.);
+                4. * pow(1./3.,2)/2. * pow(1./5.,2)/2. 
+              - 2. * pow(1./3.,4)/4. * pow(1./5.,1)/1.
+              - 6. * pow(1./3.,1)/1. * pow(1./5.,2)/2. 
+              + 3. * pow(1./3.,3)/3. * pow(1./5.,1)/1.);
 
   // (2x - 3)(2y - x^2) = 4xy - 2x^3 - 6y + 3x^2
   assert_approx(rmesh3x4x5.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,x), (-3.,one)]), &poly([(2.,y), (-1.,x*x)]), OShape(0), front_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. 
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4. * pow(1./5.,1)/1.
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1. * pow(1./5.,1)/1. 
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1.);
+                4. * pow(1./3.,2)/2. * pow(1./4.,2)/2. 
+              - 2. * pow(1./3.,4)/4. * pow(1./4.,1)/1.
+              - 6. * pow(1./3.,1)/1. * pow(1./4.,2)/2. 
+              + 3. * pow(1./3.,3)/3. * pow(1./4.,1)/1.);
   assert_approx(rmesh3x4x5.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,x), (-3.,one)]), &poly([(2.,y), (-1.,x*x)]), OShape(0), back_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. 
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4. * pow(1./5.,1)/1.
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1. * pow(1./5.,1)/1. 
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1.);
+                4. * pow(1./3.,2)/2. * pow(1./4.,2)/2. 
+              - 2. * pow(1./3.,4)/4. * pow(1./4.,1)/1.
+              - 6. * pow(1./3.,1)/1. * pow(1./4.,2)/2. 
+              + 3. * pow(1./3.,3)/3. * pow(1./4.,1)/1.);
 }
 
+#[test]
 fn test_intg_facerel_poly_x_facerel_poly_on_oshape_side_4d() -> () {
   let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
                                                      ~[2f64, 3., 4., 5.],
@@ -1640,56 +1641,69 @@ fn test_intg_facerel_poly_x_facerel_poly_on_oshape_side_4d() -> () {
   assert_approx(rmesh3x4x5x6.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(1.2,y*z*z*t), (3.4,x*x*x*y*y*y*y)]), one_poly, OShape(0), right_side),
                 1.2 * pow(1./4.,2)/2. * pow(1./5.,3)/3. * pow(1./6.,2)/2.);
  
+  assert_approx(rmesh3x4x5x6.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(1.5,y*z*z*t), (0.123,y*y*y*y*z)]), one_poly, OShape(0), left_side),
+                1.5 * pow(1./4.,2)/2. * pow(1./5.,3)/3. * pow(1./6.,2)/2. + 0.123 * pow(1./4.,5)/5. * pow(1./5.,2)/2. * 1./6.);
   assert_approx(rmesh3x4x5x6.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(1.5,y*z*z*t), (0.123,y*y*y*y*z)]), one_poly, OShape(0), right_side),
                 1.5 * pow(1./4.,2)/2. * pow(1./5.,3)/3. * pow(1./6.,2)/2. + 0.123 * pow(1./4.,5)/5. * pow(1./5.,2)/2. * 1./6.);
-
   // (2y - 3)(2z - y^2) = 4yz - 2y^3 - 6z + 3y^2
   assert_approx(rmesh3x4x5x6.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,y), (-3.,one)]), &poly([(2.,z), (-1.,y*y)]), OShape(0), right_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1. 
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4. * pow(1./5.,1)/1. * pow(1./6.,1)/1. 
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1. * pow(1./5.,2)/2. * pow(1./6.,1)/1. 
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.);
+                4. * pow(1./4.,2)/2. * pow(1./5.,2)/2. * pow(1./6.,1)/1. 
+              - 2. * pow(1./4.,4)/4. * pow(1./5.,1)/1. * pow(1./6.,1)/1. 
+              - 6. * pow(1./4.,1)/1. * pow(1./5.,2)/2. * pow(1./6.,1)/1. 
+              + 3. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.);
   assert_approx(rmesh3x4x5x6.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,y), (-3.,one)]), &poly([(2.,z), (-1.,y*y)]), OShape(0), left_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.  
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4. * pow(1./5.,1)/1. * pow(1./6.,1)/1.  
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1. * pow(1./5.,2)/2. * pow(1./6.,1)/1.  
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.);
+                4. * pow(1./4.,2)/2. * pow(1./5.,2)/2. * pow(1./6.,1)/1. 
+              - 2. * pow(1./4.,4)/4. * pow(1./5.,1)/1. * pow(1./6.,1)/1. 
+              - 6. * pow(1./4.,1)/1. * pow(1./5.,2)/2. * pow(1./6.,1)/1. 
+              + 3. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.);
   
   // (2x - 3)(2z - x^2) = 4xz - 2x^3 - 6z + 3x^2
   assert_approx(rmesh3x4x5x6.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,x), (-3.,one)]), &poly([(2.,z), (-1.,x*x)]), OShape(0), top_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.   
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4. * pow(1./5.,1)/1. * pow(1./6.,1)/1.  
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1. * pow(1./5.,2)/2. * pow(1./6.,1)/1.  
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.);
+                4. * pow(1./3.,2)/2. * pow(1./5.,2)/2. * pow(1./6.,1)/1.   
+              - 2. * pow(1./3.,4)/4. * pow(1./5.,1)/1. * pow(1./6.,1)/1.  
+              - 6. * pow(1./3.,1)/1. * pow(1./5.,2)/2. * pow(1./6.,1)/1.  
+              + 3. * pow(1./3.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.);
   assert_approx(rmesh3x4x5x6.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,x), (-3.,one)]), &poly([(2.,z), (-1.,x*x)]), OShape(0), bottom_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.  
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4. * pow(1./5.,1)/1. * pow(1./6.,1)/1.  
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1. * pow(1./5.,2)/2. * pow(1./6.,1)/1.  
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.);
+                4. * pow(1./3.,2)/2. * pow(1./5.,2)/2. * pow(1./6.,1)/1.   
+              - 2. * pow(1./3.,4)/4. * pow(1./5.,1)/1. * pow(1./6.,1)/1.  
+              - 6. * pow(1./3.,1)/1. * pow(1./5.,2)/2. * pow(1./6.,1)/1.  
+              + 3. * pow(1./3.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.);
 
   // (2x - 3)(2y - x^2) = 4xy - 2x^3 - 6y + 3x^2
   assert_approx(rmesh3x4x5x6.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,x), (-3.,one)]), &poly([(2.,y), (-1.,x*x)]), OShape(0), front_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.   
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4. * pow(1./5.,1)/1. * pow(1./6.,1)/1.  
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1. * pow(1./5.,1)/1. * pow(1./6.,1)/1.  
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.);
+                4. * pow(1./3.,2)/2. * pow(1./4.,2)/2. * pow(1./6.,1)/1.   
+              - 2. * pow(1./3.,4)/4. * pow(1./4.,1)/1. * pow(1./6.,1)/1.  
+              - 6. * pow(1./3.,1)/1. * pow(1./4.,2)/2. * pow(1./6.,1)/1.  
+              + 3. * pow(1./3.,3)/3. * pow(1./4.,1)/1. * pow(1./6.,1)/1.);
   assert_approx(rmesh3x4x5x6.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,x), (-3.,one)]), &poly([(2.,y), (-1.,x*x)]), OShape(0), back_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.   
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4. * pow(1./5.,1)/1. * pow(1./6.,1)/1.  
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1. * pow(1./5.,1)/1. * pow(1./6.,1)/1.  
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.);
+                4. * pow(1./3.,2)/2. * pow(1./4.,2)/2. * pow(1./6.,1)/1.   
+              - 2. * pow(1./3.,4)/4. * pow(1./4.,1)/1. * pow(1./6.,1)/1.  
+              - 6. * pow(1./3.,1)/1. * pow(1./4.,2)/2. * pow(1./6.,1)/1.  
+              + 3. * pow(1./3.,3)/3. * pow(1./4.,1)/1. * pow(1./6.,1)/1.);
   
   // (2x - 3)(2y - x^2) = 4xy - 2x^3 - 6y + 3x^2
   assert_approx(rmesh3x4x5x6.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,x), (-3.,one)]), &poly([(2.,y), (-1.,x*x)]), OShape(0), early_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.   
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4. * pow(1./5.,1)/1. * pow(1./6.,1)/1.  
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1. * pow(1./5.,1)/1. * pow(1./6.,1)/1.  
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.);
+                4. * pow(1./3.,2)/2. * pow(1./4.,2)/2. * pow(1./5.,1)/1.   
+              - 2. * pow(1./3.,4)/4. * pow(1./4.,1)/1. * pow(1./5.,1)/1.  
+              - 6. * pow(1./3.,1)/1. * pow(1./4.,2)/2. * pow(1./5.,1)/1.  
+              + 3. * pow(1./3.,3)/3. * pow(1./4.,1)/1. * pow(1./5.,1)/1.);
   assert_approx(rmesh3x4x5x6.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,x), (-3.,one)]), &poly([(2.,y), (-1.,x*x)]), OShape(0), late_side),
-                4. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.   
-              - 2. * pow(1./3.,1)/1. * pow(1./4.,4)/4. * pow(1./5.,1)/1. * pow(1./6.,1)/1.  
-              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1. * pow(1./5.,1)/1. * pow(1./6.,1)/1.  
-              + 3. * pow(1./3.,1)/1. * pow(1./4.,3)/3. * pow(1./5.,1)/1. * pow(1./6.,1)/1.);
+                4. * pow(1./3.,2)/2. * pow(1./4.,2)/2. * pow(1./5.,1)/1.   
+              - 2. * pow(1./3.,4)/4. * pow(1./4.,1)/1. * pow(1./5.,1)/1.  
+              - 6. * pow(1./3.,1)/1. * pow(1./4.,2)/2. * pow(1./5.,1)/1.  
+              + 3. * pow(1./3.,3)/3. * pow(1./4.,1)/1. * pow(1./5.,1)/1.);
+
+  // (2x - 3)(2t - x^2) = 4xt - 2x^3 - 6t + 3x^2
+  assert_approx(rmesh3x4x5x6.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,x), (-3.,one)]), &poly([(2.,t), (-1.,x*x)]), OShape(0), front_side),
+                4. * pow(1./3.,2)/2. * pow(1./4.,1)/1. * pow(1./6.,2)/2.   
+              - 2. * pow(1./3.,4)/4. * pow(1./4.,1)/1. * pow(1./6.,1)/1.  
+              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1. * pow(1./6.,2)/2.  
+              + 3. * pow(1./3.,3)/3. * pow(1./4.,1)/1. * pow(1./6.,1)/1.);
+  assert_approx(rmesh3x4x5x6.intg_facerel_poly_x_facerel_poly_on_oshape_side(&poly([(2.,x), (-3.,one)]), &poly([(2.,t), (-1.,x*x)]), OShape(0), back_side),
+                4. * pow(1./3.,2)/2. * pow(1./4.,1)/1. * pow(1./6.,2)/2.   
+              - 2. * pow(1./3.,4)/4. * pow(1./4.,1)/1. * pow(1./6.,1)/1.  
+              - 6. * pow(1./3.,1)/1. * pow(1./4.,1)/1. * pow(1./6.,2)/2.  
+              + 3. * pow(1./3.,3)/3. * pow(1./4.,1)/1. * pow(1./6.,1)/1.);
 }
 
 #[test]
@@ -1731,8 +1745,6 @@ fn test_intg_facerel_mon_on_oshape_int_4d() -> () {
   assert_approx(rmesh3x4x5x6.intg_facerel_mon_on_oshape_int(x*y*z*z*t, OShape(0)),
                 pow(1./3.,2)/2. * pow(1./4.,2)/2. * pow(1./5.,3)/3. * pow(1./6.,2)/2.);
 }
-
-// TODO >>>
 
 #[test]
 fn test_intg_global_x_facerel_mon_on_fe4_sides_2d() -> () {
@@ -2154,6 +2166,7 @@ fn test_intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side_dim0() -> () {
              0.);
 }  
 
+#[test]
 fn test_intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side_dim1() -> () {
   let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
@@ -2188,7 +2201,7 @@ fn test_intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side_dim1() -> () {
              0.);
   assert_eq!(rmesh3x4x5.intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(
                x*z, &VectorMonomial{mon: x*x*x*z, mon_dim: Dim(1)}, OShape(0), bottom_side),
-             pow(1./3.,5)/5. * pow(1./5.,3)/3.);
+             -pow(1./3.,5)/5. * pow(1./5.,3)/3.);
   assert_eq!(rmesh3x4x5.intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(
                one, &VectorMonomial{mon: x*x*x*y*y*y*y*z, mon_dim: Dim(1)}, OShape(0), top_side),
              pow(1./4.,4) * pow(1./3.,4)/4. * pow(1./5.,2)/2.);
@@ -2200,6 +2213,7 @@ fn test_intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side_dim1() -> () {
              0.);
 }
 
+#[test]
 fn test_intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side_dim2() -> () {
   let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
@@ -2238,7 +2252,7 @@ fn test_intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side_dim2() -> () {
 
   assert_eq!(rmesh3x4x5.intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(
                x*y, &VectorMonomial{mon: x*x*y*y*y, mon_dim: Dim(2)}, OShape(0), back_side),
-             pow(1./3.,4)/4. * pow(1./4.,5)/5.);
+             -pow(1./3.,4)/4. * pow(1./4.,5)/5.);
   assert_eq!(rmesh3x4x5.intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(
                x*y, &VectorMonomial{mon: x*x*y*y*y, mon_dim: Dim(2)}, OShape(0), front_side),
              pow(1./3.,4)/4. * pow(1./4.,5)/5.);
@@ -2298,6 +2312,7 @@ fn test_intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side_dim0() -> () {
              0.);
 }  
 
+#[test]
 fn test_intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side_dim1() -> () {
   let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
@@ -2333,20 +2348,21 @@ fn test_intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side_dim1() -> () {
              0.);
   assert_eq!(rmesh3x4x5.intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side(
                &poly([(2.,x*z), (3.,x*x*z*z)]), &VectorMonomial{mon: x*x*x*z, mon_dim: Dim(1)}, OShape(0), bottom_side),
-             2. * pow(1./3.,5)/5. * pow(1./5.,3)/3.
-           + 3. * pow(1./3.,6)/6. * pow(1./5.,4)/4.);
+             -2. * pow(1./3.,5)/5. * pow(1./5.,3)/3.
+            - 3. * pow(1./3.,6)/6. * pow(1./5.,4)/4.);
   assert_eq!(rmesh3x4x5.intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side(
                one_poly, &VectorMonomial{mon: x*x*x*y*y*y*y*z, mon_dim: Dim(1)}, OShape(0), top_side),
              pow(1./4.,4) * pow(1./3.,4)/4. * pow(1./5.,2)/2.);
-  assert_eq!(rmesh3x4x5.intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side(
-               &poly([(2.,x*x*x*z), (-3.25,x*z*z)]), &VectorMonomial{mon: y*y*y*y, mon_dim: Dim(1)}, OShape(0), top_side),
-             2. * pow(1./4.,4) * pow(1./3.,4)/4. * pow(1./5.,2)/2.
-           - 3.25 * pow(1./4.,4) * pow(1./3.,3)/3. * pow(1./5.,3)/3.);
+  assert_approx(rmesh3x4x5.intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side(
+                &poly([(2.,x*x*x*z), (-3.25,x*z*z)]), &VectorMonomial{mon: y*y*y*y, mon_dim: Dim(1)}, OShape(0), top_side),
+                2. * pow(1./4.,4) * pow(1./3.,4)/4. * pow(1./5.,2)/2.
+              - 3.25 * pow(1./4.,4) * pow(1./3.,2)/2. * pow(1./5.,3)/3.);
   assert_eq!(rmesh3x4x5.intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side(
                &poly([(2.,y*x*z), (5.2,y*z*z)]), &VectorMonomial{mon: y*y*y*y, mon_dim: Dim(1)}, OShape(0), top_side),
              0.);
 }
 
+#[test]
 fn test_intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side_dim2() -> () {
   let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
@@ -2388,8 +2404,8 @@ fn test_intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side_dim2() -> () {
 
   assert_eq!(rmesh3x4x5.intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side(
                &poly([(2.,x*y), (5.2,x*x*y*y)]), &VectorMonomial{mon: x*x*y*y*y, mon_dim: Dim(2)}, OShape(0), back_side),
-             2. * pow(1./3.,4)/4. * pow(1./4.,5)/5.
-         + 5.2  * pow(1./3.,5)/5. * pow(1./4.,6)/6.);
+             -2. * pow(1./3.,4)/4. * pow(1./4.,5)/5.
+             - 5.2  * pow(1./3.,5)/5. * pow(1./4.,6)/6.);
 
   assert_eq!(rmesh3x4x5.intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side(
                &poly([(2.,x*y), (5.2,x*x*y*y)]), &VectorMonomial{mon: x*x*y*y*y, mon_dim: Dim(2)}, OShape(0), front_side),

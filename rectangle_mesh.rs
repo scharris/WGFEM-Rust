@@ -408,9 +408,9 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
   }
   
   #[inline]
-  fn num_non_boundary_sides_for_fe(&self, fe: FENum) -> uint {
+  fn num_nb_sides_for_fe(&self, fe: FENum) -> uint {
     range(0, self.num_side_faces_for_fe(fe))
-      .count(|sf| self.is_boundary_side(fe, SideFace(sf))) 
+      .count(|sf| !self.is_boundary_side(fe, SideFace(sf))) 
   }
   
   #[inline]
