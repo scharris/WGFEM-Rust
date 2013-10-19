@@ -62,7 +62,7 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
     let num_vmons = vmons.len();
     
     let ips = vec::from_fn(mesh.num_oriented_element_shapes(), |os| {
-      DenseMatrix::with_upper_triangle_from_fn(num_vmons, num_vmons, |i,j| {
+      DenseMatrix::upper_triangle_from_fn(num_vmons, |i,j| {
         if vmons[i].mon_dim != vmons[j].mon_dim { 0 as R }
         else {
           mesh.intg_facerel_mon_on_oshape_int(vmons[i].mon * vmons[j].mon, OShape(os))

@@ -70,7 +70,7 @@ fn test_bad_col_access_under_capacity2() {
 
 #[test]
 fn test_constr_upper_triangle_from_fn() {
-  let m = DenseMatrix::with_upper_triangle_from_fn(3,3, |r,c| {
+  let m = DenseMatrix::upper_triangle_from_fn(3, |r,c| {
     1000. * (r as R) + (c as R)
   });
   assert_eq!(m.get(0,0), 0.);
@@ -78,6 +78,19 @@ fn test_constr_upper_triangle_from_fn() {
   assert_eq!(m.get(1,1), 1001.);
   assert_eq!(m.get(0,2), 2.);
   assert_eq!(m.get(1,2), 1002.);
+  assert_eq!(m.get(2,2), 2002.);
+}
+
+#[test]
+fn test_constr_lower_triangle_from_fn() {
+  let m = DenseMatrix::lower_triangle_from_fn(3, |r,c| {
+    1000. * (r as R) + (c as R)
+  });
+  assert_eq!(m.get(0,0), 0.);
+  assert_eq!(m.get(1,0), 1000.);
+  assert_eq!(m.get(1,1), 1001.);
+  assert_eq!(m.get(2,0), 2000.);
+  assert_eq!(m.get(2,1), 2001.);
   assert_eq!(m.get(2,2), 2002.);
 }
 

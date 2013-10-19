@@ -1,11 +1,12 @@
 use common::*;
 use lapack;
 
-use extra::c_vec;
-use extra::c_vec::CVec;
 use std::routine::Runnable;
 use std::libc::{c_ulong};
 use std::ptr;
+use std::iter::{range_inclusive};
+use extra::c_vec;
+use extra::c_vec::CVec;
 
 /// Column major dense matrix type.
 pub struct DenseMatrix {
@@ -73,21 +74,37 @@ impl DenseMatrix {
     }
   }
 
-  // NOTE: This constructor does not initialize the lower triangular values: lower triangular values are undefined.
-  pub fn with_upper_triangle_from_fn(num_rows: uint, num_cols: uint, f: &fn(row:uint, col:uint) -> R) -> DenseMatrix {
-    let n = num_rows * num_cols;
+  // NOTE: This constructor does not initialize the lower triangular values.
+  pub fn upper_triangle_from_fn(side_len: uint, f: &fn(row:uint, col:uint) -> R) -> DenseMatrix {
+    let n = side_len * side_len;
     let data = unsafe { alloc_data(n) };
-    for c in range(0, num_cols) {
-      for r in range(0, c) {
-        c_vec::set(data, c * num_rows + r, f(r,c));
+    for c in range(0, side_len) {
+      for r in range_inclusive(0, c) {
+        c_vec::set(data, c * side_len + r, f(r,c));
       }
-      c_vec::set(data, c * num_cols + c, f(c,c));
     }
     DenseMatrix {
       data: data,
-      num_rows: num_rows,
-      num_cols: num_cols,
-      capacity_cols: num_cols,
+      num_rows: side_len,
+      num_cols: side_len,
+      capacity_cols: side_len,
+    }
+  }
+  
+  // NOTE: This constructor does not initialize the upper triangular values.
+  pub fn lower_triangle_from_fn(side_len: uint, f: &fn(row:uint, col:uint) -> R) -> DenseMatrix {
+    let n = side_len * side_len;
+    let data = unsafe { alloc_data(n) };
+    for r in range(0, side_len) {
+      for c in range_inclusive(0, r) {
+        c_vec::set(data, c * side_len + r, f(r,c));
+      }
+    }
+    DenseMatrix {
+      data: data,
+      num_rows: side_len,
+      num_cols: side_len,
+      capacity_cols: side_len,
     }
   }
 

@@ -50,7 +50,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
     let ips_int_mons_by_oshape = {
       let int_mons = basis.ref_int_mons();
       vec::from_fn(mesh.num_oriented_element_shapes(), |os| {
-        DenseMatrix::with_upper_triangle_from_fn(int_mons.len(), int_mons.len(), |i,j| {
+        DenseMatrix::upper_triangle_from_fn(int_mons.len(), |i,j| {
           mesh.intg_facerel_mon_on_oshape_int(int_mons[i] * int_mons[j], OShape(os))
         })
       })
@@ -59,7 +59,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
     let ips_side_mons_by_oshape_side = vec::from_fn(mesh.num_oriented_element_shapes(), |os| {
       vec::from_fn(mesh.num_side_faces_for_shape(OShape(os)), |sf| {
         let side_mons = basis.side_mons_for_oshape_side(OShape(os), SideFace(sf));
-        DenseMatrix::with_upper_triangle_from_fn(side_mons.len(), side_mons.len(), |i,j| {
+        DenseMatrix::upper_triangle_from_fn(side_mons.len(), |i,j| {
           mesh.intg_facerel_mon_on_oshape_side(side_mons[i] * side_mons[j], OShape(os), SideFace(sf))
         })
       })
