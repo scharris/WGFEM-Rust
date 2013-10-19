@@ -362,8 +362,8 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
     let greater_fe = FENum(*lesser_fe + (if *a == 0 {1} else {self.cumprods_mesh_ldims[*a-1]}));
     NBSideInclusions {
       nb_side_num: n,
-      fe1: lesser_fe,  sideface_in_fe1: greater_side_face_perp_to_axis(a),
-      fe2: greater_fe, sideface_in_fe2: lesser_side_face_perp_to_axis(a)
+      fe1: lesser_fe,  side_face_in_fe1: greater_side_face_perp_to_axis(a),
+      fe2: greater_fe, side_face_in_fe2: lesser_side_face_perp_to_axis(a)
     }
   }
  

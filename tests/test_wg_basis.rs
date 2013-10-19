@@ -120,58 +120,58 @@ fn test_vert_nb_side_fe_incls_3x2_deg2() {
   assert_eq!(basis.fe_inclusions_of_side_support(BasisElNum(36)),
              NBSideInclusions { nb_side_num: NBSideNum(0),
                                 fe1: FENum(0),
-                                sideface_in_fe1: right_face,
+                                side_face_in_fe1: right_face,
                                 fe2: FENum(1),
-                                sideface_in_fe2: left_face });
+                                side_face_in_fe2: left_face });
 
   assert_eq!(basis.fe_inclusions_of_side_support(BasisElNum(37)),
              NBSideInclusions { nb_side_num: NBSideNum(0),
                                 fe1: FENum(0),
-                                sideface_in_fe1: right_face,
+                                side_face_in_fe1: right_face,
                                 fe2: FENum(1),
-                                sideface_in_fe2: left_face });
+                                side_face_in_fe2: left_face });
   
   assert_eq!(basis.fe_inclusions_of_side_support(BasisElNum(38)),
              NBSideInclusions { nb_side_num: NBSideNum(1),
                                 fe1: FENum(1),
-                                sideface_in_fe1: right_face,
+                                side_face_in_fe1: right_face,
                                 fe2: FENum(2),
-                                sideface_in_fe2: left_face });
+                                side_face_in_fe2: left_face });
 
   assert_eq!(basis.fe_inclusions_of_side_support(BasisElNum(39)),
              NBSideInclusions { nb_side_num: NBSideNum(1),
                                 fe1: FENum(1),
-                                sideface_in_fe1: right_face,
+                                side_face_in_fe1: right_face,
                                 fe2: FENum(2),
-                                sideface_in_fe2: left_face });
+                                side_face_in_fe2: left_face });
 
   assert_eq!(basis.fe_inclusions_of_side_support(BasisElNum(40)),
              NBSideInclusions { nb_side_num: NBSideNum(2),
                                 fe1: FENum(3),
-                                sideface_in_fe1: right_face,
+                                side_face_in_fe1: right_face,
                                 fe2: FENum(4),
-                                sideface_in_fe2: left_face });
+                                side_face_in_fe2: left_face });
 
   assert_eq!(basis.fe_inclusions_of_side_support(BasisElNum(41)),
              NBSideInclusions { nb_side_num: NBSideNum(2),
                                 fe1: FENum(3),
-                                sideface_in_fe1: right_face,
+                                side_face_in_fe1: right_face,
                                 fe2: FENum(4),
-                                sideface_in_fe2: left_face });
+                                side_face_in_fe2: left_face });
   
   assert_eq!(basis.fe_inclusions_of_side_support(BasisElNum(42)),
              NBSideInclusions { nb_side_num: NBSideNum(3),
                                 fe1: FENum(4),
-                                sideface_in_fe1: right_face,
+                                side_face_in_fe1: right_face,
                                 fe2: FENum(5),
-                                sideface_in_fe2: left_face });
+                                side_face_in_fe2: left_face });
 
   assert_eq!(basis.fe_inclusions_of_side_support(BasisElNum(43)),
              NBSideInclusions { nb_side_num: NBSideNum(3),
                                 fe1: FENum(4),
-                                sideface_in_fe1: right_face,
+                                side_face_in_fe1: right_face,
                                 fe2: FENum(5),
-                                sideface_in_fe2: left_face });
+                                side_face_in_fe2: left_face });
 }
 
 // The final section of basis elements contains the horizontal side monomials. 
@@ -186,44 +186,44 @@ fn test_horiz_nb_side_fe_incls_3x2_deg2() {
   assert_eq!(basis.fe_inclusions_of_side_support(BasisElNum(44)),
              NBSideInclusions { nb_side_num: NBSideNum(4),
                                 fe1: FENum(0),
-                                sideface_in_fe1: top_face,
+                                side_face_in_fe1: top_face,
                                 fe2: FENum(3),
-                                sideface_in_fe2: bottom_face });
+                                side_face_in_fe2: bottom_face });
 
   assert_eq!(basis.fe_inclusions_of_side_support(BasisElNum(45)),
              NBSideInclusions { nb_side_num: NBSideNum(4),
                                 fe1: FENum(0),
-                                sideface_in_fe1: top_face,
+                                side_face_in_fe1: top_face,
                                 fe2: FENum(3),
-                                sideface_in_fe2: bottom_face });
+                                side_face_in_fe2: bottom_face });
   
   assert_eq!(basis.fe_inclusions_of_side_support(BasisElNum(46)),
              NBSideInclusions { nb_side_num: NBSideNum(5),
                                 fe1: FENum(1),
-                                sideface_in_fe1: top_face,
+                                side_face_in_fe1: top_face,
                                 fe2: FENum(4),
-                                sideface_in_fe2: bottom_face });
+                                side_face_in_fe2: bottom_face });
 
   assert_eq!(basis.fe_inclusions_of_side_support(BasisElNum(47)),
              NBSideInclusions { nb_side_num: NBSideNum(5),
                                 fe1: FENum(1),
-                                sideface_in_fe1: top_face,
+                                side_face_in_fe1: top_face,
                                 fe2: FENum(4),
-                                sideface_in_fe2: bottom_face });
+                                side_face_in_fe2: bottom_face });
   
   assert_eq!(basis.fe_inclusions_of_side_support(BasisElNum(48)),
              NBSideInclusions { nb_side_num: NBSideNum(6),
                                 fe1: FENum(2),
-                                sideface_in_fe1: top_face,
+                                side_face_in_fe1: top_face,
                                 fe2: FENum(5),
-                                sideface_in_fe2: bottom_face });
+                                side_face_in_fe2: bottom_face });
   
   assert_eq!(basis.fe_inclusions_of_side_support(BasisElNum(49)),
              NBSideInclusions { nb_side_num: NBSideNum(6),
                                 fe1: FENum(2),
-                                sideface_in_fe1: top_face,
+                                side_face_in_fe1: top_face,
                                 fe2: FENum(5),
-                                sideface_in_fe2: bottom_face });
+                                side_face_in_fe2: bottom_face });
 }
 
 // interior monomials, first finite element

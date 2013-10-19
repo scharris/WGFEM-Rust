@@ -598,8 +598,8 @@ fn test_3x4_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0)], Dim(0)), NBSideNum(0));
   assert_eq!(rmesh3x4.fe_inclusions_of_nb_side(NBSideNum(0)),
              NBSideInclusions { nb_side_num: NBSideNum(0),
-                                fe1: FENum(0), sideface_in_fe1: right_side,
-                                fe2: FENum(1), sideface_in_fe2: left_side });
+                                fe1: FENum(0), side_face_in_fe1: right_side,
+                                fe2: FENum(1), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4.nb_side_num_for_fe_side(FENum(0), right_side), NBSideNum(0));
   assert_eq!(rmesh3x4.nb_side_num_for_fe_side(FENum(1), left_side),  NBSideNum(0));
 
@@ -610,8 +610,8 @@ fn test_3x4_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(0)], Dim(0)), NBSideNum(1));
   assert_eq!(rmesh3x4.fe_inclusions_of_nb_side(NBSideNum(1)),
              NBSideInclusions { nb_side_num: NBSideNum(1),
-                                fe1: FENum(1), sideface_in_fe1: right_side,
-                                fe2: FENum(2), sideface_in_fe2: left_side });
+                                fe1: FENum(1), side_face_in_fe1: right_side,
+                                fe2: FENum(2), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4.nb_side_num_for_fe_side(FENum(1), right_side), NBSideNum(1));
   assert_eq!(rmesh3x4.nb_side_num_for_fe_side(FENum(2), left_side),  NBSideNum(1));
 
@@ -622,8 +622,8 @@ fn test_3x4_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(1)], Dim(0)), NBSideNum(2));
   assert_eq!(rmesh3x4.fe_inclusions_of_nb_side(NBSideNum(2)),
              NBSideInclusions { nb_side_num: NBSideNum(2),
-                                fe1: FENum(3), sideface_in_fe1: right_side,
-                                fe2: FENum(4), sideface_in_fe2: left_side });
+                                fe1: FENum(3), side_face_in_fe1: right_side,
+                                fe2: FENum(4), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4.nb_side_num_for_fe_side(FENum(3), right_side), NBSideNum(2));
   assert_eq!(rmesh3x4.nb_side_num_for_fe_side(FENum(4), left_side),  NBSideNum(2));
 
@@ -634,8 +634,8 @@ fn test_3x4_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(3)], Dim(0)), NBSideNum(7));
   assert_eq!(rmesh3x4.fe_inclusions_of_nb_side(NBSideNum(7)),
              NBSideInclusions { nb_side_num: NBSideNum(7),
-                                fe1: FENum(10), sideface_in_fe1: right_side,
-                                fe2: FENum(11), sideface_in_fe2: left_side });
+                                fe1: FENum(10), side_face_in_fe1: right_side,
+                                fe2: FENum(11), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4.nb_side_num_for_fe_side(FENum(10), right_side), NBSideNum(7));
   assert_eq!(rmesh3x4.nb_side_num_for_fe_side(FENum(11), left_side),  NBSideNum(7));
 }
@@ -659,8 +659,8 @@ fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(0)], Dim(0)), NBSideNum(0));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(0)),
              NBSideInclusions { nb_side_num: NBSideNum(0),
-                                fe1: FENum(0), sideface_in_fe1: right_side,
-                                fe2: FENum(1), sideface_in_fe2: left_side });
+                                fe1: FENum(0), side_face_in_fe1: right_side,
+                                fe2: FENum(1), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(0), right_side), NBSideNum(0));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(1), left_side),  NBSideNum(0));
 
@@ -671,8 +671,8 @@ fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(0), MeshCoord(0)], Dim(0)), NBSideNum(1));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(1)),
              NBSideInclusions { nb_side_num: NBSideNum(1),
-                                fe1: FENum(1), sideface_in_fe1: right_side,
-                                fe2: FENum(2), sideface_in_fe2: left_side });
+                                fe1: FENum(1), side_face_in_fe1: right_side,
+                                fe2: FENum(2), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(1), right_side), NBSideNum(1));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(2), left_side),  NBSideNum(1));
 
@@ -683,8 +683,8 @@ fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(1), MeshCoord(0)], Dim(0)), NBSideNum(2));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(2)),
              NBSideInclusions { nb_side_num: NBSideNum(2),
-                                fe1: FENum(3), sideface_in_fe1: right_side,
-                                fe2: FENum(4), sideface_in_fe2: left_side });
+                                fe1: FENum(3), side_face_in_fe1: right_side,
+                                fe2: FENum(4), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(3), right_side), NBSideNum(2));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(4), left_side),  NBSideNum(2));
 
@@ -695,8 +695,8 @@ fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(3), MeshCoord(0)], Dim(0)), NBSideNum(7));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(7)),
              NBSideInclusions { nb_side_num: NBSideNum(7),
-                                fe1: FENum(10), sideface_in_fe1: right_side,
-                                fe2: FENum(11), sideface_in_fe2: left_side });
+                                fe1: FENum(10), side_face_in_fe1: right_side,
+                                fe2: FENum(11), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(10), right_side), NBSideNum(7));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(11), left_side),  NBSideNum(7));
 
@@ -707,8 +707,8 @@ fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(1)], Dim(0)), NBSideNum(8));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(8)),
              NBSideInclusions { nb_side_num: NBSideNum(8),
-                                fe1: FENum(12), sideface_in_fe1: right_side,
-                                fe2: FENum(13), sideface_in_fe2: left_side });
+                                fe1: FENum(12), side_face_in_fe1: right_side,
+                                fe2: FENum(13), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(12), right_side), NBSideNum(8));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(13), left_side),  NBSideNum(8));
 
@@ -719,8 +719,8 @@ fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(4)], Dim(0)), NBSideNum(32));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(32)),
              NBSideInclusions { nb_side_num: NBSideNum(32),
-                                fe1: FENum(48), sideface_in_fe1: right_side,
-                                fe2: FENum(49), sideface_in_fe2: left_side });
+                                fe1: FENum(48), side_face_in_fe1: right_side,
+                                fe2: FENum(49), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(48), right_side), NBSideNum(32));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(49), left_side),  NBSideNum(32));
 
@@ -731,8 +731,8 @@ fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(3), MeshCoord(4)], Dim(0)), NBSideNum(39));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(39)),
              NBSideInclusions { nb_side_num: NBSideNum(39),
-                                fe1: FENum(58), sideface_in_fe1: right_side,
-                                fe2: FENum(59), sideface_in_fe2: left_side });
+                                fe1: FENum(58), side_face_in_fe1: right_side,
+                                fe2: FENum(59), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(58), right_side), NBSideNum(39));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(59), left_side),  NBSideNum(39));
 }
@@ -755,8 +755,8 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(0), MeshCoord(0)], Dim(0)), NBSideNum(0));
   assert_eq!(rmesh3x4x5x6.fe_inclusions_of_nb_side(NBSideNum(0)),
              NBSideInclusions { nb_side_num: NBSideNum(0),
-                                fe1: FENum(0), sideface_in_fe1: right_side,
-                                fe2: FENum(1), sideface_in_fe2: left_side });
+                                fe1: FENum(0), side_face_in_fe1: right_side,
+                                fe2: FENum(1), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(0), right_side), NBSideNum(0));
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(1), left_side),  NBSideNum(0));
 
@@ -767,8 +767,8 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(0), MeshCoord(0), MeshCoord(0)], Dim(0)), NBSideNum(1));
   assert_eq!(rmesh3x4x5x6.fe_inclusions_of_nb_side(NBSideNum(1)),
              NBSideInclusions { nb_side_num: NBSideNum(1),
-                                fe1: FENum(1), sideface_in_fe1: right_side,
-                                fe2: FENum(2), sideface_in_fe2: left_side });
+                                fe1: FENum(1), side_face_in_fe1: right_side,
+                                fe2: FENum(2), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(1), right_side), NBSideNum(1));
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(2), left_side),  NBSideNum(1));
 
@@ -779,8 +779,8 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(1), MeshCoord(0), MeshCoord(0)], Dim(0)), NBSideNum(2));
   assert_eq!(rmesh3x4x5x6.fe_inclusions_of_nb_side(NBSideNum(2)),
              NBSideInclusions { nb_side_num: NBSideNum(2),
-                                fe1: FENum(3), sideface_in_fe1: right_side,
-                                fe2: FENum(4), sideface_in_fe2: left_side });
+                                fe1: FENum(3), side_face_in_fe1: right_side,
+                                fe2: FENum(4), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(3), right_side), NBSideNum(2));
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(4), left_side),  NBSideNum(2));
 
@@ -791,8 +791,8 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(3), MeshCoord(0), MeshCoord(0)], Dim(0)), NBSideNum(7));
   assert_eq!(rmesh3x4x5x6.fe_inclusions_of_nb_side(NBSideNum(7)),
              NBSideInclusions { nb_side_num: NBSideNum(7),
-                                fe1: FENum(10), sideface_in_fe1: right_side,
-                                fe2: FENum(11), sideface_in_fe2: left_side });
+                                fe1: FENum(10), side_face_in_fe1: right_side,
+                                fe2: FENum(11), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(10), right_side), NBSideNum(7));
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(11), left_side),  NBSideNum(7));
 
@@ -803,8 +803,8 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(1), MeshCoord(0)], Dim(0)), NBSideNum(8));
   assert_eq!(rmesh3x4x5x6.fe_inclusions_of_nb_side(NBSideNum(8)),
              NBSideInclusions { nb_side_num: NBSideNum(8),
-                                fe1: FENum(12), sideface_in_fe1: right_side,
-                                fe2: FENum(13), sideface_in_fe2: left_side });
+                                fe1: FENum(12), side_face_in_fe1: right_side,
+                                fe2: FENum(13), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(12), right_side), NBSideNum(8));
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(13), left_side),  NBSideNum(8));
 
@@ -815,8 +815,8 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(4), MeshCoord(0)], Dim(0)), NBSideNum(32));
   assert_eq!(rmesh3x4x5x6.fe_inclusions_of_nb_side(NBSideNum(32)),
              NBSideInclusions { nb_side_num: NBSideNum(32),
-                                fe1: FENum(48), sideface_in_fe1: right_side,
-                                fe2: FENum(49), sideface_in_fe2: left_side });
+                                fe1: FENum(48), side_face_in_fe1: right_side,
+                                fe2: FENum(49), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(48), right_side), NBSideNum(32));
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(49), left_side),  NBSideNum(32));
 
@@ -827,8 +827,8 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(3), MeshCoord(4), MeshCoord(0)], Dim(0)), NBSideNum(39));
   assert_eq!(rmesh3x4x5x6.fe_inclusions_of_nb_side(NBSideNum(39)),
              NBSideInclusions { nb_side_num: NBSideNum(39),
-                                fe1: FENum(58), sideface_in_fe1: right_side,
-                                fe2: FENum(59), sideface_in_fe2: left_side });
+                                fe1: FENum(58), side_face_in_fe1: right_side,
+                                fe2: FENum(59), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(58), right_side), NBSideNum(39));
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(59), left_side),  NBSideNum(39));
 
@@ -839,8 +839,8 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(0), MeshCoord(1)], Dim(0)), NBSideNum(40));
   assert_eq!(rmesh3x4x5x6.fe_inclusions_of_nb_side(NBSideNum(40)),
              NBSideInclusions { nb_side_num: NBSideNum(40),
-                                fe1: FENum(60), sideface_in_fe1: right_side,
-                                fe2: FENum(61), sideface_in_fe2: left_side });
+                                fe1: FENum(60), side_face_in_fe1: right_side,
+                                fe2: FENum(61), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(60), right_side), NBSideNum(40));
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(61), left_side),  NBSideNum(40));
   
@@ -851,8 +851,8 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(0), MeshCoord(0), MeshCoord(1)], Dim(0)), NBSideNum(41));
   assert_eq!(rmesh3x4x5x6.fe_inclusions_of_nb_side(NBSideNum(41)),
              NBSideInclusions { nb_side_num: NBSideNum(41),
-                                fe1: FENum(61), sideface_in_fe1: right_side,
-                                fe2: FENum(62), sideface_in_fe2: left_side });
+                                fe1: FENum(61), side_face_in_fe1: right_side,
+                                fe2: FENum(62), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(61), right_side), NBSideNum(41));
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(62), left_side),  NBSideNum(41));
   
@@ -863,8 +863,8 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
   assert_eq!(rmesh3x4x5x6.nb_side_with_mesh_coords(&[MeshCoord(1), MeshCoord(3), MeshCoord(4), MeshCoord(5)], Dim(0)), NBSideNum(2*4*5*6-1));
   assert_eq!(rmesh3x4x5x6.fe_inclusions_of_nb_side(NBSideNum(2*4*5*6-1)),
              NBSideInclusions { nb_side_num: NBSideNum(2*4*5*6-1),
-                                fe1: FENum(3*4*5*6-2), sideface_in_fe1: right_side,
-                                fe2: FENum(3*4*5*6-1), sideface_in_fe2: left_side });
+                                fe1: FENum(3*4*5*6-2), side_face_in_fe1: right_side,
+                                fe2: FENum(3*4*5*6-1), side_face_in_fe2: left_side });
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(3*4*5*6-2), right_side), NBSideNum(2*4*5*6-1));
   assert_eq!(rmesh3x4x5x6.nb_side_num_for_fe_side(FENum(3*4*5*6-1), left_side),  NBSideNum(2*4*5*6-1));
 }
@@ -890,8 +890,8 @@ fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(0)], Dim(1)), NBSideNum(first_axis1+0));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(first_axis1+0)),
              NBSideInclusions { nb_side_num: NBSideNum(first_axis1+0),
-                                fe1: FENum(0), sideface_in_fe1: top_side,
-                                fe2: FENum(3), sideface_in_fe2: bottom_side });
+                                fe1: FENum(0), side_face_in_fe1: top_side,
+                                fe2: FENum(3), side_face_in_fe2: bottom_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(0), top_side), NBSideNum(first_axis1+0));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(3), bottom_side),  NBSideNum(first_axis1+0));
 
@@ -902,8 +902,8 @@ fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(2), MeshCoord(0), MeshCoord(0)], Dim(1)), NBSideNum(first_axis1+2));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(first_axis1+2)),
              NBSideInclusions { nb_side_num: NBSideNum(first_axis1+2),
-                                fe1: FENum(2), sideface_in_fe1: top_side,
-                                fe2: FENum(5), sideface_in_fe2: bottom_side });
+                                fe1: FENum(2), side_face_in_fe1: top_side,
+                                fe2: FENum(5), side_face_in_fe2: bottom_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(2), top_side), NBSideNum(first_axis1+2));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(5), bottom_side),  NBSideNum(first_axis1+2));
 
@@ -914,8 +914,8 @@ fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(1), MeshCoord(0)], Dim(1)), NBSideNum(first_axis1+3));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(first_axis1+3)),
              NBSideInclusions { nb_side_num: NBSideNum(first_axis1+3),
-                                fe1: FENum(3), sideface_in_fe1: top_side,
-                                fe2: FENum(6), sideface_in_fe2: bottom_side });
+                                fe1: FENum(3), side_face_in_fe1: top_side,
+                                fe2: FENum(6), side_face_in_fe2: bottom_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(3), top_side), NBSideNum(first_axis1+3));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(6), bottom_side),  NBSideNum(first_axis1+3));
 
@@ -926,8 +926,8 @@ fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(2), MeshCoord(2), MeshCoord(0)], Dim(1)), NBSideNum(first_axis1+8));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(first_axis1+8)),
              NBSideInclusions { nb_side_num: NBSideNum(first_axis1+8),
-                                fe1: FENum(8), sideface_in_fe1: top_side,
-                                fe2: FENum(11), sideface_in_fe2: bottom_side });
+                                fe1: FENum(8), side_face_in_fe1: top_side,
+                                fe2: FENum(11), side_face_in_fe2: bottom_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(8), top_side), NBSideNum(first_axis1+8));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(11), bottom_side),  NBSideNum(first_axis1+8));
 
@@ -938,8 +938,8 @@ fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(1)], Dim(1)), NBSideNum(first_axis1+9));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(first_axis1+9)),
              NBSideInclusions { nb_side_num: NBSideNum(first_axis1+9),
-                                fe1: FENum(12), sideface_in_fe1: top_side,
-                                fe2: FENum(15), sideface_in_fe2: bottom_side });
+                                fe1: FENum(12), side_face_in_fe1: top_side,
+                                fe2: FENum(15), side_face_in_fe2: bottom_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(12), top_side), NBSideNum(first_axis1+9));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(15), bottom_side),  NBSideNum(first_axis1+9));
 
@@ -950,8 +950,8 @@ fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(4)], Dim(1)), NBSideNum(first_axis1+36));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(first_axis1+36)),
              NBSideInclusions { nb_side_num: NBSideNum(first_axis1+36),
-                                fe1: FENum(48), sideface_in_fe1: top_side,
-                                fe2: FENum(51), sideface_in_fe2: bottom_side });
+                                fe1: FENum(48), side_face_in_fe1: top_side,
+                                fe2: FENum(51), side_face_in_fe2: bottom_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(48), top_side), NBSideNum(first_axis1+36));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(51), bottom_side),  NBSideNum(first_axis1+36));
 
@@ -962,8 +962,8 @@ fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(4)], Dim(1)), NBSideNum(first_axis1+36));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(first_axis1+36)),
              NBSideInclusions { nb_side_num: NBSideNum(first_axis1+36),
-                                fe1: FENum(48), sideface_in_fe1: top_side,
-                                fe2: FENum(51), sideface_in_fe2: bottom_side });
+                                fe1: FENum(48), side_face_in_fe1: top_side,
+                                fe2: FENum(51), side_face_in_fe2: bottom_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(48), top_side), NBSideNum(first_axis1+36));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(51), bottom_side),  NBSideNum(first_axis1+36));
 
@@ -990,8 +990,8 @@ fn test_3x4x5_nonboundary_side_coords_axis2() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(0)], Dim(2)), NBSideNum(first_axis2+0));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(first_axis2+0)),
              NBSideInclusions { nb_side_num: NBSideNum(first_axis2+0),
-                                fe1: FENum(0),  sideface_in_fe1: back_side,
-                                fe2: FENum(12), sideface_in_fe2: front_side });
+                                fe1: FENum(0),  side_face_in_fe1: back_side,
+                                fe2: FENum(12), side_face_in_fe2: front_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(0),  back_side), NBSideNum(first_axis2+0));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(12), front_side),  NBSideNum(first_axis2+0));
 
@@ -1002,8 +1002,8 @@ fn test_3x4x5_nonboundary_side_coords_axis2() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(2), MeshCoord(0), MeshCoord(0)], Dim(2)), NBSideNum(first_axis2+2));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(first_axis2+2)),
              NBSideInclusions { nb_side_num: NBSideNum(first_axis2+2),
-                                fe1: FENum(2),  sideface_in_fe1: back_side,
-                                fe2: FENum(14), sideface_in_fe2: front_side });
+                                fe1: FENum(2),  side_face_in_fe1: back_side,
+                                fe2: FENum(14), side_face_in_fe2: front_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(2),  back_side), NBSideNum(first_axis2+2));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(14), front_side),  NBSideNum(first_axis2+2));
 
@@ -1015,8 +1015,8 @@ fn test_3x4x5_nonboundary_side_coords_axis2() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(1), MeshCoord(0)], Dim(2)), NBSideNum(first_axis2+3));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(first_axis2+3)),
              NBSideInclusions { nb_side_num: NBSideNum(first_axis2+3),
-                                fe1: FENum(3),  sideface_in_fe1: back_side,
-                                fe2: FENum(15), sideface_in_fe2: front_side });
+                                fe1: FENum(3),  side_face_in_fe1: back_side,
+                                fe2: FENum(15), side_face_in_fe2: front_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(3),  back_side), NBSideNum(first_axis2+3));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(15), front_side),  NBSideNum(first_axis2+3));
   
@@ -1027,8 +1027,8 @@ fn test_3x4x5_nonboundary_side_coords_axis2() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(1)], Dim(2)), NBSideNum(first_axis2+12));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(first_axis2+12)),
              NBSideInclusions { nb_side_num: NBSideNum(first_axis2+12),
-                                fe1: FENum(12), sideface_in_fe1: back_side,
-                                fe2: FENum(24), sideface_in_fe2: front_side });
+                                fe1: FENum(12), side_face_in_fe1: back_side,
+                                fe2: FENum(24), side_face_in_fe2: front_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(12), back_side), NBSideNum(first_axis2+12));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(24), front_side),  NBSideNum(first_axis2+12));
 
@@ -1039,8 +1039,8 @@ fn test_3x4x5_nonboundary_side_coords_axis2() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(0), MeshCoord(0), MeshCoord(3)], Dim(2)), NBSideNum(first_axis2+36));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(first_axis2+36)),
              NBSideInclusions { nb_side_num: NBSideNum(first_axis2+36),
-                                fe1: FENum(36), sideface_in_fe1: back_side,
-                                fe2: FENum(48), sideface_in_fe2: front_side });
+                                fe1: FENum(36), side_face_in_fe1: back_side,
+                                fe2: FENum(48), side_face_in_fe2: front_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(36), back_side), NBSideNum(first_axis2+36));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(48), front_side),  NBSideNum(first_axis2+36));
 
@@ -1051,8 +1051,8 @@ fn test_3x4x5_nonboundary_side_coords_axis2() -> () {
   assert_eq!(rmesh3x4x5.nb_side_with_mesh_coords(&[MeshCoord(2), MeshCoord(3), MeshCoord(3)], Dim(2)), NBSideNum(first_axis2+47));
   assert_eq!(rmesh3x4x5.fe_inclusions_of_nb_side(NBSideNum(first_axis2+47)),
              NBSideInclusions { nb_side_num: NBSideNum(first_axis2+47),
-                                fe1: FENum(47), sideface_in_fe1: back_side,
-                                fe2: FENum(59), sideface_in_fe2: front_side });
+                                fe1: FENum(47), side_face_in_fe1: back_side,
+                                fe2: FENum(59), side_face_in_fe2: front_side });
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(47), back_side), NBSideNum(first_axis2+47));
   assert_eq!(rmesh3x4x5.nb_side_num_for_fe_side(FENum(59), front_side), NBSideNum(first_axis2+47));
 

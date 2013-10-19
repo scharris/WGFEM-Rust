@@ -15,31 +15,33 @@ pub struct NBSideNum(uint);
 #[deriving(Eq,TotalEq,Ord,TotalOrd,Clone)]
 pub struct SideFace(uint);
 
-// A Face locally identifies either the interior or a side in the
-// context of a single oriented shape or finite element.
+/// A Face locally identifies either the interior or a side in the context of a single
+/// oriented shape or finite element.
 #[deriving(Eq,TotalEq,Ord,TotalOrd,Clone)]
 pub enum Face {
   Interior,
   Side(SideFace)
 }
 
-// An identifier for the shape of a finite element together with the orientation
-// of the shape (rotation will yield a different oriented shape). Many calculations
-// on a finite element can be expressed in element-local coordinates and will only
-// depend on the oriented shape of the element.
+/// An identifier for the shape of a finite element together with the orientation
+/// of the shape (rotation will yield a different oriented shape). Many calculations
+/// on a finite element can be expressed in element-local coordinates and will only
+/// depend on the oriented shape of the element.
 #[deriving(Eq,TotalEq,Ord,TotalOrd,Clone)]
 pub struct OShape(uint);
 
 
+/// The representations of a non-boundary side as a pair of finite element faces.
+/// The elements are arranged so that fe1 < fe2.
 #[deriving(Eq,TotalEq,Ord,TotalOrd,Clone)]
 pub struct NBSideInclusions {
   nb_side_num: NBSideNum,
 
   fe1: FENum,
-  sideface_in_fe1: SideFace,
+  side_face_in_fe1: SideFace,
 
   fe2: FENum,
-  sideface_in_fe2: SideFace
+  side_face_in_fe2: SideFace
 }
 
 pub trait Mesh<Mon> {
