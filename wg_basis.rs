@@ -318,7 +318,7 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
     self.nb_side_mon_el_num(nbsn, monn)
   }
 
-  /// Get the basis element number for the given finite element side face and face monomial number.
+  /// Get the basis element number for the given finite element non-boundary side and face monomial number.
   #[inline(always)]
   pub fn nb_side_mon_el_num(&self, nbsn: NBSideNum, monn: FaceMonNum) -> BasisElNum {
     BasisElNum(*self.first_nb_side_beln + (*nbsn * self.mons_per_fe_side) + *monn)
