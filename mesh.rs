@@ -2,6 +2,8 @@ use common::*;
 use polynomial::Polynomial;
 use vector_monomial::VectorMonomial;
 
+use std::num::{One};
+
 // An FENum identifies a finite element in the mesh.
 #[deriving(Eq,TotalEq,Ord,TotalOrd,Clone)]
 pub struct FENum(uint);
@@ -155,4 +157,18 @@ pub trait Mesh<Mon> {
        side_face: SideFace) -> R;
 
 }
+
+// Implement necessary traits to use range() for FENums, NBSideNums, SideFaces, and OShapes.
+
+impl One for FENum { fn one() -> FENum { FENum(1) } }
+impl Add<FENum,FENum> for FENum { fn add(&self, other: &FENum) -> FENum { FENum(**self + **other) } }
+
+impl One for NBSideNum { fn one() -> NBSideNum { NBSideNum(1) } }
+impl Add<NBSideNum,NBSideNum> for NBSideNum { fn add(&self, other: &NBSideNum) -> NBSideNum { NBSideNum(**self + **other) } }
+
+impl One for SideFace { fn one() -> SideFace { SideFace(1) } }
+impl Add<SideFace,SideFace> for SideFace { fn add(&self, other: &SideFace) -> SideFace { SideFace(**self + **other) } }
+
+impl One for OShape { fn one() -> OShape { OShape(1) } }
+impl Add<OShape,OShape> for OShape { fn add(&self, other: &OShape) -> OShape { OShape(**self + **other) } }
 

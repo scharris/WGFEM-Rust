@@ -5,6 +5,7 @@ use mesh::{Mesh, FENum, NBSideNum, NBSideInclusions, OShape, SideFace};
 use weak_gradient::{WeakGradSolver, WeakGrad};
 
 use std::vec;
+use std::num::One;
 
 /* Overview
  * --------
@@ -384,4 +385,11 @@ fn compute_wgrads<Mon:Monomial,MeshT:Mesh<Mon>>(wgrad_solver: &mut WeakGradSolve
 
   (int_mon_wgrads_by_oshape, side_mon_wgrads_by_oshape)
 }
+
+
+// Implement necessary traits to use range() for FaceMonNums.
+
+impl One for FaceMonNum { fn one() -> FaceMonNum { FaceMonNum(1) } }
+impl Add<FaceMonNum,FaceMonNum> for FaceMonNum{ fn add(&self, other: &FaceMonNum) -> FaceMonNum { FaceMonNum(**self + **other) } }
+
 
