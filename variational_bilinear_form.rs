@@ -10,35 +10,35 @@ use std::option::{Option};
 use extra::sort;
 
 
-pub trait VariationalBilinearForm<Mon:Monomial, MeshT:Mesh<Mon>> {
+pub trait VariationalBilinearForm<'self,Mon:Monomial,MeshT:Mesh<Mon>> {
+
+  fn basis(&self) -> &'self WgBasis<Mon,MeshT>;
 
   fn is_symmetric(&self) -> bool;
 
   fn int_mon_vs_int_mon(&self,
                         oshape: OShape,
                         monn_1: FaceMonNum,
-                        monn_2: FaceMonNum,
-                        basis: &WgBasis<Mon,MeshT>) -> R;
+                        monn_2: FaceMonNum) -> R;
 
   fn side_mon_vs_int_mon(&self,
                          oshape: OShape,
                          side_monn: FaceMonNum, side_face: SideFace,
-                         int_monn: FaceMonNum,
-                         basis: &WgBasis<Mon,MeshT>) -> R;
+                         int_monn: FaceMonNum) -> R;
   
   fn int_mon_vs_side_mon(&self,
                          oshape: OShape,
                          int_monn: FaceMonNum,
-                         side_monn: FaceMonNum, side_face: SideFace,
-                         basis: &WgBasis<Mon,MeshT>) -> R;
+                         side_monn: FaceMonNum, side_face: SideFace) -> R;
 
   fn side_mon_vs_side_mon_fe_contr(&self,
                                    oshape: OShape,
                                    monn_1: FaceMonNum, side_face_1: SideFace,
-                                   monn_2: FaceMonNum, side_face_2: SideFace,
-                                   basis: &WgBasis<Mon,MeshT>) -> R;
+                                   monn_2: FaceMonNum, side_face_2: SideFace) -> R;
 
-  fn basis_els_vs_basis_els_transpose(&self, basis: &WgBasis<Mon,MeshT>) -> SparseMatrix {
+  fn basis_els_vs_basis_els_transpose(&self) -> SparseMatrix {
+
+    let basis = self.basis();
 
     let sym = self.is_symmetric();
     let (num_int_mons, num_side_mons) = (basis.mons_per_fe_int(), basis.mons_per_fe_side());
@@ -54,10 +54,10 @@ pub trait VariationalBilinearForm<Mon:Monomial, MeshT:Mesh<Mon>> {
 
     // Create precomputed reference vbf values between monomials on single oriented shapes.
     let (int_vs_int_vbf_vals, int_vs_side_vbf_vals, side_vs_int_vbf_vals, side_vs_side_vbf_fe_contrs) = 
-      (self.ref_int_vs_int_vbf_values(basis), 
-       if !sym { self.ref_int_vs_side_vbf_values(basis) } else { Tensor4::from_elem(0,0,0,0,0 as R) },
-       self.ref_side_vs_int_vbf_values(basis),
-       self.ref_side_vs_side_vbf_fe_contrs(basis));
+      (self.ref_int_vs_int_vbf_values(), 
+       if !sym { self.ref_int_vs_side_vbf_values() } else { Tensor4::from_elem(0,0,0,0,0 as R) },
+       self.ref_side_vs_int_vbf_values(),
+       self.ref_side_vs_side_vbf_fe_contrs());
 
     // Iteration Order
     // We have to fill the sparse matrix in row-major order to satisfy the sparse matrix format requirments.
@@ -170,12 +170,13 @@ pub trait VariationalBilinearForm<Mon:Monomial, MeshT:Mesh<Mon>> {
    * first monomial number, and second monomial number. If this variational form is symmetric, then only
    * values for which the first monomial is greater or equal to the second are provided.
    */
-  fn ref_int_vs_int_vbf_values(&self, basis: &WgBasis<Mon,MeshT>) -> Tensor3 { // indexed by oshape, monn, monn
+  fn ref_int_vs_int_vbf_values(&self) -> Tensor3 { // indexed by oshape, monn, monn
+    let basis = self.basis();
     let num_int_mons = basis.mons_per_fe_int();
     let sym = self.is_symmetric();
     Tensor3::from_fn(basis.mesh().num_oriented_element_shapes(), num_int_mons, num_int_mons, |os, monn_1, monn_2| {
       if !sym || monn_1 >= monn_2 {
-        self.int_mon_vs_int_mon(OShape(os), FaceMonNum(monn_1), FaceMonNum(monn_2), basis)
+        self.int_mon_vs_int_mon(OShape(os), FaceMonNum(monn_1), FaceMonNum(monn_2))
       }
       else { R_NaN }
     })
@@ -183,14 +184,15 @@ pub trait VariationalBilinearForm<Mon:Monomial, MeshT:Mesh<Mon>> {
 
   /* Returns a tensor of vbf values indexed by oshape, side face, side monomial number, and interior monomial number.
    */
-  fn ref_side_vs_int_vbf_values(&self, basis: &WgBasis<Mon,MeshT>) -> Tensor4 { // indexed by oshape, sf, side monn, int monn
+  fn ref_side_vs_int_vbf_values(&self) -> Tensor4 { // indexed by oshape, sf, side monn, int monn
+    let basis = self.basis();
     Tensor4::from_fn(basis.mesh().num_oriented_element_shapes(),
                      basis.mesh().max_num_shape_sides(),
                      basis.mons_per_fe_side(),
                      basis.mons_per_fe_int(),
                      |os, sf, side_monn, int_monn| {
       if sf < basis.mesh().num_side_faces_for_shape(OShape(os)) {
-        self.side_mon_vs_int_mon(OShape(os), FaceMonNum(side_monn), SideFace(sf), FaceMonNum(int_monn), basis)
+        self.side_mon_vs_int_mon(OShape(os), FaceMonNum(side_monn), SideFace(sf), FaceMonNum(int_monn))
       }
       else { R_NaN }
     })
@@ -198,14 +200,15 @@ pub trait VariationalBilinearForm<Mon:Monomial, MeshT:Mesh<Mon>> {
 
   /* Returns a tensor of vbf values indexed by oshape, side face, interior monomial number, and side monomial number.
    */
-  fn ref_int_vs_side_vbf_values(&self, basis: &WgBasis<Mon,MeshT>) -> Tensor4 { // indexed by oshape, sf, int monn, side monn
+  fn ref_int_vs_side_vbf_values(&self) -> Tensor4 { // indexed by oshape, sf, int monn, side monn
+    let basis = self.basis();
     Tensor4::from_fn(basis.mesh().num_oriented_element_shapes(),
                      basis.mesh().max_num_shape_sides(),
                      basis.mons_per_fe_int(),
                      basis.mons_per_fe_side(),
                      |os, sf, int_monn, side_monn| {
       if sf < basis.mesh().num_side_faces_for_shape(OShape(os)) {
-        self.int_mon_vs_side_mon(OShape(os), FaceMonNum(int_monn), FaceMonNum(side_monn), SideFace(sf), basis)
+        self.int_mon_vs_side_mon(OShape(os), FaceMonNum(int_monn), FaceMonNum(side_monn), SideFace(sf))
       }
       else { R_NaN }
     })
@@ -218,7 +221,8 @@ pub trait VariationalBilinearForm<Mon:Monomial, MeshT:Mesh<Mon>> {
    * function to obtain values from the returned data, which will find the proper value by reversing indexes as
    * necessary in the case that the vbf is symmetric.
    */
-  fn ref_side_vs_side_vbf_fe_contrs(&self, basis: &WgBasis<Mon,MeshT>) -> Tensor5 { // indexed by oshape, sf, sf, side monn side monn
+  fn ref_side_vs_side_vbf_fe_contrs(&self) -> Tensor5 { // indexed by oshape, sf, sf, side monn side monn
+    let basis = self.basis();
     let num_oshapes = basis.mesh().num_oriented_element_shapes();
     let (max_sides, num_side_mons) = (basis.mesh().max_num_shape_sides(), basis.mons_per_fe_side());
     let sym = self.is_symmetric();
@@ -229,7 +233,7 @@ pub trait VariationalBilinearForm<Mon:Monomial, MeshT:Mesh<Mon>> {
         R_NaN
       }
       else {
-        self.side_mon_vs_side_mon_fe_contr(OShape(os), FaceMonNum(monn_1), SideFace(sf_1), FaceMonNum(monn_2), SideFace(sf_2), basis)
+        self.side_mon_vs_side_mon_fe_contr(OShape(os), FaceMonNum(monn_1), SideFace(sf_1), FaceMonNum(monn_2), SideFace(sf_2))
       }
     })
   }
