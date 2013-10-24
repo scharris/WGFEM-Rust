@@ -2,7 +2,7 @@ use common::*;
 use monomial::{Monomial, DegLim, MaxMonDeg, MaxMonFactorDeg, domain_space_dims};
 use polynomial::{PolyBorrowing};
 use mesh::{Mesh, FENum, NBSideNum, NBSideInclusions, OShape, SideFace};
-use weak_gradient::{WeakGradSolver, WeakGrad};
+use weak_gradient::{WeakGradSolver, WeakGrad, WeakGradOps};
 
 use std::vec;
 
@@ -345,14 +345,19 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
 
   /// Get the weak gradient of the interior supported shape function defined by the given monomial on the interior of the given oriented shape. 
   #[inline]
-  pub fn wgrad_int_mon<'a>(&'a self, monn: FaceMonNum, oshape: OShape) -> &'a WeakGrad {
+  pub fn int_mon_wgrad<'a>(&'a self, monn: FaceMonNum, oshape: OShape) -> &'a WeakGrad {
     &self.int_mon_wgrads[*oshape][*monn]
   }
 
   /// Get the weak gradient of the side supported shape function defined by the given monomial on the given side of the given oriented shape. 
   #[inline]
-  pub fn wgrad_side_mon<'a>(&'a self, monn: FaceMonNum, oshape: OShape, side_face: SideFace) -> &'a WeakGrad {
+  pub fn side_mon_wgrad<'a>(&'a self, monn: FaceMonNum, oshape: OShape, side_face: SideFace) -> &'a WeakGrad {
     &self.side_mon_wgrads[*oshape][*side_face][*monn]
+  }
+
+  #[inline]
+  pub fn new_weak_grad_ops(&self) -> ~WeakGradOps<Mon> {
+    self.weak_grad_solver.weak_grad_ops()
   }
 
 }  // WgBasis impl

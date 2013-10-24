@@ -29,7 +29,7 @@ use std::vec;
  *
  * We will only actually need weak gradients of weak functions which are monomials
  * on a single face (interior or side) of a finite element and 0 elsewhere. These
- * are given by the functions wgrad_int_mon and wgrad_side_mon.
+ * are given by the functions int_mon_wgrad and side_mon_wgrad.
  */
 
 pub struct WeakGrad {
