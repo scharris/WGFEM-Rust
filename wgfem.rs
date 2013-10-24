@@ -19,6 +19,9 @@ pub mod dense_matrix;
 pub mod weak_gradient;
 pub mod wg_basis;
 pub mod projection;
+pub mod sparse_matrix;
+pub mod tensor;
+pub mod variational_bilinear_form;
 pub mod lapack;
 mod quadrature;
 
@@ -30,8 +33,11 @@ mod tests {
   // no tests for abstract mesh
   mod test_rectangle_mesh;
   mod test_dense_matrix;
+  mod test_sparse_matrix;
+  mod test_tensor;
   mod test_weak_gradient;
   mod test_wg_basis;
   mod test_projection;
+  mod test_variational_bilinear_form;
 }
 
