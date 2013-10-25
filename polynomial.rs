@@ -401,3 +401,7 @@ pub fn approx_equiv<Mon:Monomial,P:Polynomial<Mon>>(p1: &P, p2: &P, tol: R) -> b
   diff.coefs.iter().all(|&c| abs(c) <= tol)
 }
 
+pub fn approx_equiv_v<Mon:Monomial,P:Polynomial<Mon>>(p1s: &[P], p2s: &[P], tol: R) -> bool {
+  p1s.len() == p2s.len() && range(0, p1s.len()).all(|i| approx_equiv(&p1s[i], &p2s[i], tol))
+}
+
