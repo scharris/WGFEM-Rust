@@ -368,29 +368,29 @@ impl Monomial for Mon4d {
 
 impl ToStr for Mon1d {
   fn to_str(&self) -> ~str {
-    fmt!("x^%d",
-         *self.exps[0] as int)
+    format!("x^{:d}",
+            *self.exps[0] as int)
   }
 }
 
 impl ToStr for Mon2d {
   fn to_str(&self) -> ~str {
-    fmt!("x^%dy^%d",
-         *self.exps[0] as int, *self.exps[1] as int)
+    format!("x^{:d}y^{:d}",
+            *self.exps[0] as int, *self.exps[1] as int)
   }
 }
 
 impl ToStr for Mon3d {
   fn to_str(&self) -> ~str {
-    fmt!("x^%dy^%dz^%d",
-         *self.exps[0] as int, *self.exps[1] as int, *self.exps[2] as int)
+    format!("x^{:d}y^{:d}z^{:d}",
+            *self.exps[0] as int, *self.exps[1] as int, *self.exps[2] as int)
   }
 }
 
 impl ToStr for Mon4d {
   fn to_str(&self) -> ~str {
-    fmt!("x1^%dx2^%dx3^%dx4^%d",
-         *self.exps[0] as int, *self.exps[1] as int, *self.exps[2] as int, *self.exps[3] as int)
+    format!("x1^{:d}x2^{:d}x3^{:d}x4^{:d}",
+            *self.exps[0] as int, *self.exps[1] as int, *self.exps[2] as int, *self.exps[3] as int)
   }
 }
 
