@@ -126,6 +126,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
       lapack::solve_symmetric_as_col_maj_with_ut_sys(a, int_mons.len() as lapack_int,
                                                      b, fes.len() as lapack_int,
                                                      self.lapack_pivots_buf);
+
       vec::from_buf(b as *R, int_mons.len() * fes.len())
     };
 
@@ -174,6 +175,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
       lapack::solve_symmetric_as_col_maj_with_ut_sys(a, side_mons.len() as lapack_int,
                                                      b, fes.len() as lapack_int,
                                                      self.lapack_pivots_buf);
+
       vec::from_buf(b as *R, side_mons.len() * fes.len())
     };
 
@@ -185,12 +187,12 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
 
   #[fixed_stack_segment]
   #[inline(never)]
-  pub fn proj_int_mon_to_span_oshape_side_supp_basis_els(&mut self,
-     int_mon: Mon, oshape: OShape, side_face: SideFace) -> PolyBorrowingMons<'self,Mon> {
+  pub fn proj_int_mons_to_span_oshape_side_supp_basis_els(&mut self,
+     int_mons: &[Mon], oshape: OShape, side_face: SideFace) -> ~[PolyBorrowingMons<'self,Mon>] {
 
-    let side_basis_mons = self.basis.side_mons_for_oshape_side(oshape, side_face);
+    let side_mons = self.basis.side_mons_for_oshape_side(oshape, side_face);
     
-    let sol_vec = unsafe {
+    let sol_as_col_maj_vec = unsafe {
 
       // Prepare system matrix a, consisting of inner products between basis elements supported on the side.
       let a = {
@@ -198,25 +200,34 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
         self.lapack_ips_side_mons.mut_col_maj_data_ptr()
       };
 
-      // Fill the rhs column b, with inner products between the monomial to be projected and our side supported basis monomials.
+      // Prepare right hand side b matrix, one column per interior monomial to be projected onto the side.
       let b = {
-        self.lapack_side_proj_rhs.set_num_cols(1);
-        self.lapack_side_proj_rhs.fill_from_fn(|r,_c| {
-          let (int_mon, side_basis_mon) = (int_mon.clone(), side_basis_mons[r].clone());
+        //   - Set the proper number of columns for our sequence of fes, recreate matrix if necessary.
+        if self.lapack_side_proj_rhs.capacity_cols >= int_mons.len() {
+          self.lapack_side_proj_rhs.set_num_cols(int_mons.len());
+        } else {
+          self.lapack_side_proj_rhs = ~DenseMatrix::of_size_with_cols_capacity(side_mons.len(), int_mons.len(), 3*int_mons.len()/2);
+        }
+        //   - Fill the rhs matrix with inner products between our side monomials (rows) and the interior monomials (cols) to be projected. 
+        self.lapack_side_proj_rhs.fill_from_fn(|r,c| {
+          let (int_mon, side_basis_mon) = (int_mons[c].clone(), side_mons[r].clone());
           self.basis.mesh.intg_intrel_mon_x_siderel_mon_on_oshape_side(int_mon, side_basis_mon, oshape, side_face)
         });
         self.lapack_side_proj_rhs.mut_col_maj_data_ptr()
       };
 
-      lapack::solve_symmetric_as_col_maj_with_ut_sys(a, side_basis_mons.len() as lapack_int,
-                                                     b, 1 as lapack_int,
+      lapack::solve_symmetric_as_col_maj_with_ut_sys(a, side_mons.len() as lapack_int,
+                                                     b, int_mons.len() as lapack_int,
                                                      self.lapack_pivots_buf);
-      vec::from_buf(b as *R, side_basis_mons.len())
+
+      vec::from_buf(b as *R, side_mons.len() * int_mons.len())
     };
 
-    PolyBorrowingMons { coefs: sol_vec, mons: side_basis_mons }
+    sol_as_col_maj_vec
+      .chunk_iter(side_mons.len()) // Chunk into columns representing the projection coefficients.
+      .map(|proj_coefs| PolyBorrowingMons { coefs: proj_coefs.to_owned(), mons: side_mons })
+      .collect()
   }
-
 
 } // impl Projector
 

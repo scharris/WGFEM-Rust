@@ -1,6 +1,6 @@
 use projection::{Projector};
 use common::{R, Deg, pow};
-use polynomial::{Polynomial, PolyBorrowingMons, approx_equiv};
+use polynomial::{Polynomial, PolyBorrowingMons, approx_equiv, approx_equiv_v};
 use monomial::{Monomial, Mon2d, MaxMonDeg}; 
 use mesh::{FENum, OShape, SideFace};
 use rectangle_mesh::{RectMesh, MeshCoord};
@@ -147,56 +147,41 @@ fn test_int_mons_side_projs() {
   let vert_side_mons = basis.side_mons_for_oshape_side(OShape(0), left_side);
   let horz_side_mons = basis.side_mons_for_oshape_side(OShape(0), SideFace(2));
 
-  // Test identity projections.
-  
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(one, OShape(0), right_side),
-                       &PolyBorrowingMons::new(~[1.,0.,0.], vert_side_mons), 1e-10));
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(one, OShape(0), left_side),
-                       &PolyBorrowingMons::new(~[1.,0.,0.], vert_side_mons), 1e-10));
-  
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(y, OShape(0), right_side),
-                       &PolyBorrowingMons::new(~[0.,1.,0.], vert_side_mons), 1e-10));
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(y, OShape(0), left_side),
-                       &PolyBorrowingMons::new(~[0.,1.,0.], vert_side_mons), 1e-10));
+  // Test identity projections onto vertical sides.
 
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(y*y, OShape(0), right_side),
-                       &PolyBorrowingMons::new(~[0.,0.,1.], vert_side_mons), 1e-10));
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(y*y, OShape(0), left_side),
-                       &PolyBorrowingMons::new(~[0.,0.,1.], vert_side_mons), 1e-10));
+  assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([one, y, y*y], OShape(0), right_side),
+                         [PolyBorrowingMons::new(~[1.,0.,0.], vert_side_mons),
+                          PolyBorrowingMons::new(~[0.,1.,0.], vert_side_mons),
+                          PolyBorrowingMons::new(~[0.,0.,1.], vert_side_mons)], 1e-10));
+  
+  assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([one, y, y*y], OShape(0), left_side),
+                         [PolyBorrowingMons::new(~[1.,0.,0.], vert_side_mons),
+                          PolyBorrowingMons::new(~[0.,1.,0.], vert_side_mons),
+                          PolyBorrowingMons::new(~[0.,0.,1.], vert_side_mons)], 1e-10));
+
 
   // Test projections with a perpendicular axis variable factor in the interior monomial, which should introduce a constant factor
   // into the projection which is 0 if projecting onto the lesser side along the perpendicular axis, or the side length along the
   // axis for the greater side. The fe side lengths are 2 horizontally and 3 vertically.
-
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(x, OShape(0), right_side),
-                       &PolyBorrowingMons::new(~[2.,0.,0.], vert_side_mons), 1e-10));
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(x, OShape(0), left_side),
-                       &PolyBorrowingMons::new(~[0.,0.,0.], vert_side_mons), 1e-10));
   
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(x*y, OShape(0), right_side),
-                       &PolyBorrowingMons::new(~[0.,2.,0.], vert_side_mons), 1e-10));
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(x*y, OShape(0), left_side),
-                       &PolyBorrowingMons::new(~[0.,0.,0.], vert_side_mons), 1e-10));
-
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(x*y*y, OShape(0), right_side),
-                       &PolyBorrowingMons::new(~[0.,0.,2.], vert_side_mons), 1e-10));
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(x*y*y, OShape(0), left_side),
-                       &PolyBorrowingMons::new(~[0.,0.,0.], vert_side_mons), 1e-10));
-
-
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(y, OShape(0), top_side),
-                       &PolyBorrowingMons::new(~[3.,0.,0.], horz_side_mons), 1e-10));
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(y, OShape(0), bottom_side),
-                       &PolyBorrowingMons::new(~[0.,0.,0.], horz_side_mons), 1e-10));
+  assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([x, x*y, x*y*y], OShape(0), right_side),
+                         [PolyBorrowingMons::new(~[2.,0.,0.], vert_side_mons),
+                          PolyBorrowingMons::new(~[0.,2.,0.], vert_side_mons),
+                          PolyBorrowingMons::new(~[0.,0.,2.], vert_side_mons)], 1e-10));
   
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(y*x, OShape(0), top_side),
-                       &PolyBorrowingMons::new(~[0.,3.,0.], horz_side_mons), 1e-10));
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(y*x, OShape(0), bottom_side),
-                       &PolyBorrowingMons::new(~[0.,0.,0.], horz_side_mons), 1e-10));
-
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(y*x*x, OShape(0), top_side),
-                       &PolyBorrowingMons::new(~[0.,0.,3.], horz_side_mons), 1e-10));
-  assert!(approx_equiv(&projector.proj_int_mon_to_span_oshape_side_supp_basis_els(y*x*x, OShape(0), bottom_side),
-                       &PolyBorrowingMons::new(~[0.,0.,0.], horz_side_mons), 1e-10));
+  assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([x, x*y, x*y*y], OShape(0), left_side),
+                         [PolyBorrowingMons::new(~[0.,0.,0.], vert_side_mons),
+                          PolyBorrowingMons::new(~[0.,0.,0.], vert_side_mons),
+                          PolyBorrowingMons::new(~[0.,0.,0.], vert_side_mons)], 1e-10));
+  
+  assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([y, y*x, y*x*x], OShape(0), top_side),
+                         [PolyBorrowingMons::new(~[3.,0.,0.], horz_side_mons),
+                          PolyBorrowingMons::new(~[0.,3.,0.], horz_side_mons),
+                          PolyBorrowingMons::new(~[0.,0.,3.], horz_side_mons)], 1e-10));
+  
+  assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([y, y*x, y*x*x], OShape(0), bottom_side),
+                         [PolyBorrowingMons::new(~[0.,0.,0.], horz_side_mons),
+                          PolyBorrowingMons::new(~[0.,0.,0.], horz_side_mons),
+                          PolyBorrowingMons::new(~[0.,0.,0.], horz_side_mons)], 1e-10));
 }
 
