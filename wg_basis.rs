@@ -3,6 +3,7 @@ use monomial::{Monomial, DegLim, MaxMonDeg, MaxMonFactorDeg, domain_space_dims};
 use polynomial::{PolyBorrowing};
 use mesh::{Mesh, FENum, NBSideNum, NBSideInclusions, OShape, SideFace};
 use weak_gradient::{WeakGradSolver, WeakGrad, WeakGradOps};
+use projection::Projector;
 
 use std::vec;
 
@@ -358,6 +359,13 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
   #[inline]
   pub fn new_weak_grad_ops(&self) -> ~WeakGradOps<Mon> {
     self.weak_grad_solver.weak_grad_ops()
+  }
+
+
+  // projection
+
+  pub fn new_projector<'a>(&'a self) -> Projector<'a,Mon,MeshT> {
+    Projector::new(self)
   }
 
 }  // WgBasis impl
