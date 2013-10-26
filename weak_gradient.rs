@@ -1,5 +1,6 @@
 use common::*;
 use vector_monomial::VectorMonomial;
+use monomial;
 use monomial::{Monomial, DegLim, MaxMonDeg, MaxMonFactorDeg};
 use polynomial::{PolyBorrowing};
 use mesh::{Mesh, OShape, SideFace};
@@ -225,7 +226,7 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
   pub fn weak_grad_ops(&self) -> ~WeakGradOps<Mon> {
     use std::hashmap::HashMap;
 
-    let comp_mons = self.wgrad_comp_mons.clone(); // TWEAK: Could try borrowing this instead (add lifetime param to the type). 
+    let comp_mons = self.wgrad_comp_mons.clone();
 
     let prod_mons = { 
       let prod_mons_deg_lim = match self.wgrad_comp_mons_deg_lim {
@@ -250,30 +251,47 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
       vec::from_fn(num_prod_mons, |prod_monn| { comp_monns_by_prod_monn.get(&prod_mons[prod_monn]).clone() })
     };
 
+    let wgrad_mmult_coefs_buf = vec::from_elem(monomial::domain_space_dims::<Mon>(),
+                                  vec::from_elem(comp_mons.len(), 0 as R));
+    
     ~WeakGradOps {
-      dotprod_coefs_buf: vec::from_elem(num_prod_mons, 0 as R),
-      dotprod_mons: prod_mons,
       wgrad_comp_mons: comp_mons,
-      wgrad_comp_monns_by_dotprod_monn: comp_monns_by_prod_monn
+      dotprod_mons: prod_mons,
+      wgrad_comp_monns_by_dotprod_monn: comp_monns_by_prod_monn,
+      dotprod_coefs_buf: vec::from_elem(num_prod_mons, 0 as R),
+      wgrad_mmult_coefs_buf:  wgrad_mmult_coefs_buf, 
     }
   }
 
 } // WeakGradSolver impl
 
+
 /// This class holds context information and work buffers used to perform efficient operations on weak gradients. 
 pub struct WeakGradOps<Mon> {
-  wgrad_comp_mons: ~[Mon],
-  // dot product support
-  dotprod_coefs_buf: ~[R],
-  dotprod_mons: ~[Mon],
-  wgrad_comp_monns_by_dotprod_monn: ~[~[(uint,uint)]]
+
+  // implied monomial sequence corresponding to the stored coefficients for each component of the gradient
+  priv wgrad_comp_mons: ~[Mon],
+
+  // monomial sequence for the dot product polynomial of two weak gradients
+  priv dotprod_mons: ~[Mon],
+  
+  // pairs of factor monomial numbers by product monomial number, for fast dot product implementation
+  priv wgrad_comp_monns_by_dotprod_monn: ~[~[(uint,uint)]],
+  
+  // buffer for the coefficients of the dot product of weak gradients
+  priv dotprod_coefs_buf: ~[R],
+
+  // buffer for the coefficients of a matrix multiplied by a weak gradient
+  priv wgrad_mmult_coefs_buf: ~[~[R]],
+
 }
 
 impl<Mon:Monomial> WeakGradOps<Mon> {
 
-  pub fn dot<'a>(&'a mut self, wgrad1: &WeakGrad, wgrad2: &WeakGrad) -> PolyBorrowing<'a,Mon> {
-    let space_dims = wgrad1.comp_mon_coefs.len();
-    assert!(space_dims == wgrad2.comp_mon_coefs.len());
+  #[inline]
+  pub fn dot<'a>(&'a mut self, wgrad_1: &WeakGrad, wgrad_2: &WeakGrad) -> PolyBorrowing<'a,Mon> {
+    let space_dims = wgrad_1.comp_mon_coefs.len();
+    assert!(space_dims == wgrad_2.comp_mon_coefs.len());
 
     // Set the coefficients for the product monomials in the dot product coefficients buffer.
     for prod_monn in range(0, self.dotprod_mons.len()) {
@@ -284,8 +302,56 @@ impl<Mon:Monomial> WeakGradOps<Mon> {
         sum_coef_prods
           + range(0, space_dims).fold(0 as R, |dim_contrs, d| { // sum contributions for this factor pair over space dimensions
               dim_contrs
-                + wgrad1.comp_mon_coefs[d][fac1_monn] * wgrad2.comp_mon_coefs[d][fac2_monn]
-                + if fac1_monn != fac2_monn { wgrad1.comp_mon_coefs[d][fac2_monn] * wgrad2.comp_mon_coefs[d][fac1_monn] }
+                + wgrad_1.comp_mon_coefs[d][fac1_monn] * wgrad_2.comp_mon_coefs[d][fac2_monn]
+                + if fac1_monn != fac2_monn { wgrad_1.comp_mon_coefs[d][fac2_monn] * wgrad_2.comp_mon_coefs[d][fac1_monn] }
+                  else { 0 as R }
+            })
+      );
+      
+      self.dotprod_coefs_buf[prod_monn] = sum_coef_prods;
+    }
+    
+    PolyBorrowing::new(self.dotprod_coefs_buf, self.dotprod_mons)
+  }
+ 
+  // Compute (m wgrad_1) . (wgrad_2) for matrix m and weak gradients wgrad_1/2.
+  #[inline]
+  pub fn mdot<'a>(&'a mut self, m: &DenseMatrix, wgrad_1: &WeakGrad, wgrad_2: &WeakGrad) -> PolyBorrowing<'a,Mon> {
+    let space_dims = monomial::domain_space_dims::<Mon>();
+    assert!(space_dims == wgrad_1.comp_mon_coefs.len());
+    assert!(space_dims == wgrad_2.comp_mon_coefs.len());
+    let num_comp_mons = self.wgrad_comp_mons.len();
+    assert!(wgrad_1.comp_mon_coefs[0].len() == num_comp_mons);
+    assert!(wgrad_2.comp_mon_coefs[0].len() == num_comp_mons);
+   
+    // Multiply matrix m with wgrad_1, yielding another vector of polynomials. Component i of the
+    // resulting polynomial vector will be the linear combination of the original component
+    // polynomials given by row i of m. Since the component polynomials have the same (implied)
+    // sequence of monomials, we can compute the coefficient of any given monomial in result
+    // component i as the same linear combination m(i,*) of the coefficients of the monomial
+    // in the component polynomials.
+    let m_wgrad_1_comp_coefs = {
+      for comp in range(0, space_dims) {
+        for comp_monn in range(0, num_comp_mons) {
+          self.wgrad_mmult_coefs_buf[comp][comp_monn] = range(0, space_dims).fold(0 as R, |lc_mon_coefs, j| {
+            lc_mon_coefs + m.get(comp,j) * wgrad_1.comp_mon_coefs[j][comp_monn]
+          });
+        }
+      }
+      &self.wgrad_mmult_coefs_buf
+    };
+
+    // Set the coefficients for the product monomials in the dot product coefficients buffer.
+    for prod_monn in range(0, self.dotprod_mons.len()) {
+      // Get the mon nums of the the component mons which produce this product monomial - only non-descending pairs included.
+      let ref fac_monn_pairs = self.wgrad_comp_monns_by_dotprod_monn[prod_monn];
+      // Sum the products of all coefficient pairs where the corresponding monomials multiply to give the product monomial.
+      let sum_coef_prods = fac_monn_pairs.iter().fold(0 as R, |sum_coef_prods, &(fac1_monn, fac2_monn)|
+        sum_coef_prods
+          + range(0, space_dims).fold(0 as R, |dim_contrs, d| { // sum contributions for this factor pair over space dimensions
+              dim_contrs
+                + m_wgrad_1_comp_coefs[d][fac1_monn] * wgrad_2.comp_mon_coefs[d][fac2_monn]
+                + if fac1_monn != fac2_monn { m_wgrad_1_comp_coefs[d][fac2_monn] * wgrad_2.comp_mon_coefs[d][fac1_monn] }
                   else { 0 as R }
             })
       );

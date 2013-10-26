@@ -4,6 +4,7 @@ use polynomial::{Polynomial, PolyOwning, PolyBorrowingMons, approx_equiv};
 use monomial::{Mon2d, MaxMonDeg}; 
 use mesh::{OShape};
 use rectangle_mesh::{RectMesh, MeshCoord};
+use dense_matrix::DenseMatrix;
 
 use common::*;
 use std::vec;
@@ -265,20 +266,50 @@ fn test_wgrad_dot() {
   // buffer (beautiful!).
   // let wgrad_x_top_dot_wgrad_y_right = wgrad_ops.dot(&wgrad1, &wgrad1);
   //   =>  error: cannot borrow `*wgrad_ops` as mutable more than once at a time
- 
+
+  // Effect a brute force dot product using polynomials for comparison.
   let p1_0 = PolyBorrowingMons::new(wgrad1.comp_mon_coefs[0].clone(), wgrad_solver.wgrad_comp_mons);
   let p1_1 = PolyBorrowingMons::new(wgrad1.comp_mon_coefs[1].clone(), wgrad_solver.wgrad_comp_mons);
   let p2_0 = PolyBorrowingMons::new(wgrad2.comp_mon_coefs[0].clone(), wgrad_solver.wgrad_comp_mons);
   let p2_1 = PolyBorrowingMons::new(wgrad2.comp_mon_coefs[1].clone(), wgrad_solver.wgrad_comp_mons);
-  let polys_dot_prod = PolyOwning::from_polys_lcomb([(1., &polynomial::mul(&p1_0, &p2_0)), (1., &polynomial::mul(&p1_1, &p2_1))]);
-
-  println!("fast dot product:  {}", fast_dot_prod.to_str());
-  println!("polys dot product: {}", polys_dot_prod.to_str());
+  let polys_dot_prod = PolyOwning::from_polys_lcomb([(1., &polynomial::mul(&p1_0, &p2_0)),
+                                                     (1., &polynomial::mul(&p1_1, &p2_1))]);
 
   let canon_fast_dot_prod = fast_dot_prod.canonical_form();
   assert_eq!(&canon_fast_dot_prod.coefs, &polys_dot_prod.coefs);
-  assert_eq!(&canon_fast_dot_prod.mons, &polys_dot_prod.mons);
+  assert_eq!(&canon_fast_dot_prod.mons,  &polys_dot_prod.mons);
 }
+
+#[test]
+fn test_wgrad_mdot() {
+  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0f64, 0.],
+                                              ~[3f64, 3.],
+                                              ~[MeshCoord(3), MeshCoord(3)]);
+  let wgrad_solver: WeakGradSolver<Mon2d> = WeakGradSolver::new(MaxMonDeg(2), rmesh);
+
+  // row swap matrix
+  let m = DenseMatrix::from_fn(2,2, |r,c| { if r != c { 1. } else { 0. } });
+
+  let wgrad1 = WeakGrad { comp_mon_coefs: ~[~[-1., 2., -3., 4., -5., 6.], ~[-2., 5., -3., 3., -6., 2.]] };
+  let wgrad2 = WeakGrad { comp_mon_coefs: ~[~[ 5.,-4., -3., 2., 1., -2.], ~[ 1., 2.,  3., 4.,  5., 6.]] }; 
+
+  let mut wgrad_ops = wgrad_solver.weak_grad_ops();
+ 
+  let fast_dot_prod = wgrad_ops.mdot(&m, &wgrad1, &wgrad2);
+ 
+  // Effect a brute force dot product using polynomials for comparison.
+  let p1_0 = PolyBorrowingMons::new(wgrad1.comp_mon_coefs[0].clone(), wgrad_solver.wgrad_comp_mons);
+  let p1_1 = PolyBorrowingMons::new(wgrad1.comp_mon_coefs[1].clone(), wgrad_solver.wgrad_comp_mons);
+  let p2_0 = PolyBorrowingMons::new(wgrad2.comp_mon_coefs[0].clone(), wgrad_solver.wgrad_comp_mons);
+  let p2_1 = PolyBorrowingMons::new(wgrad2.comp_mon_coefs[1].clone(), wgrad_solver.wgrad_comp_mons);
+  let polys_dot_prod = PolyOwning::from_polys_lcomb([(1., &polynomial::mul(&p1_1, &p2_0)),   // p1's components swapped
+                                                     (1., &polynomial::mul(&p1_0, &p2_1))]);
+
+  let canon_fast_dot_prod = fast_dot_prod.canonical_form();
+  assert_eq!(&canon_fast_dot_prod.coefs, &polys_dot_prod.coefs);
+  assert_eq!(&canon_fast_dot_prod.mons,  &polys_dot_prod.mons);
+}
+
 
 fn lcomb_wgrads(terms: &[(R,&WeakGrad)]) -> WeakGrad {
   if terms.len() == 0 { fail!("lcomb_wgrads: At least one weak gradient is required.") }
