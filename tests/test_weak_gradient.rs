@@ -258,7 +258,7 @@ fn test_wgrad_dot() {
   let wgrad1 = WeakGrad { comp_mon_coefs: ~[~[-2.5, 3., 0., 15., -6., -15.], ~[-2.5, 15., -15., 3., -6., 0.]] };
   let wgrad2 = WeakGrad { comp_mon_coefs: ~[~[2.5, -2., -0., -15., 6., 15.], ~[0., 0., 0., 0., 0., 0.]] }; 
 
-  let mut wgrad_ops = wgrad_solver.weak_grad_ops();
+  let mut wgrad_ops = wgrad_solver.new_weak_grad_ops();
   
   let fast_dot_prod = wgrad_ops.dot(&wgrad1, &wgrad2);
  
@@ -293,7 +293,7 @@ fn test_wgrad_mdot() {
   let wgrad1 = WeakGrad { comp_mon_coefs: ~[~[-1., 2., -3., 4., -5., 6.], ~[-2., 5., -3., 3., -6., 2.]] };
   let wgrad2 = WeakGrad { comp_mon_coefs: ~[~[ 5.,-4., -3., 2., 1., -2.], ~[ 1., 2.,  3., 4.,  5., 6.]] }; 
 
-  let mut wgrad_ops = wgrad_solver.weak_grad_ops();
+  let mut wgrad_ops = wgrad_solver.new_weak_grad_ops();
  
   let fast_dot_prod = wgrad_ops.mdot(&m, &wgrad1, &wgrad2);
  

@@ -3,7 +3,6 @@ use monomial::{Monomial, DegLim, MaxMonDeg, MaxMonFactorDeg, domain_space_dims};
 use polynomial::{PolyBorrowing};
 use mesh::{Mesh, FENum, NBSideNum, NBSideInclusions, OShape, SideFace};
 use weak_gradient::{WeakGradSolver, WeakGrad, WeakGradOps};
-use projection::Projector;
 
 use std::vec;
 
@@ -109,11 +108,12 @@ struct WgBasis<Mon,Mesh> {
   first_nb_side_beln: BasisElNum,
 
   // Weak gradients generator.
-  weak_grad_solver: ~WeakGradSolver<Mon>,
+  weak_grad_solver: WeakGradSolver<Mon>,
 
   // Pre-calculated weak gradients of basis elements supported on reference oriented shapes.
   int_mon_wgrads: ~[~[WeakGrad]],     // by fe oshape, then interior monomial number
   side_mon_wgrads: ~[~[~[WeakGrad]]], // by fe oshape, then side face, then side monomial number
+
 }
 
 
@@ -139,10 +139,10 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
 
     let mut wgrad_solver = {
       let k = match int_polys_deg_lim { MaxMonDeg(k) => k, MaxMonFactorDeg(k) => k };
-      ~WeakGradSolver::new(MaxMonDeg(k-1), mesh)
+      WeakGradSolver::new(MaxMonDeg(k-1), mesh)
     };
 
-    let (int_mon_wgrads, side_mon_wgrads) = compute_wgrads(wgrad_solver, int_mons, side_mons_by_dep_dim, mesh);
+    let (int_mon_wgrads, side_mon_wgrads) = compute_wgrads(&mut wgrad_solver, int_mons, side_mons_by_dep_dim, mesh);
     
     ~WgBasis {
       mesh: mesh,
@@ -357,15 +357,8 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
   }
 
   #[inline]
-  pub fn new_weak_grad_ops(&self) -> ~WeakGradOps<Mon> {
-    self.weak_grad_solver.weak_grad_ops()
-  }
-
-
-  // projection
-
-  pub fn new_projector<'a>(&'a self) -> Projector<'a,Mon,MeshT> {
-    Projector::new(self)
+  pub fn new_weak_grad_ops(&self) -> WeakGradOps<Mon> {
+    self.weak_grad_solver.new_weak_grad_ops()
   }
 
 }  // WgBasis impl

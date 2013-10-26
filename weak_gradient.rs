@@ -223,7 +223,7 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
   }
 
 
-  pub fn weak_grad_ops(&self) -> ~WeakGradOps<Mon> {
+  pub fn new_weak_grad_ops(&self) -> WeakGradOps<Mon> {
     use std::hashmap::HashMap;
 
     let comp_mons = self.wgrad_comp_mons.clone();
@@ -254,7 +254,7 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
     let wgrad_mmult_coefs_buf = vec::from_elem(monomial::domain_space_dims::<Mon>(),
                                   vec::from_elem(comp_mons.len(), 0 as R));
     
-    ~WeakGradOps {
+    WeakGradOps {
       wgrad_comp_mons: comp_mons,
       dotprod_mons: prod_mons,
       wgrad_comp_monns_by_dotprod_monn: comp_monns_by_prod_monn,
