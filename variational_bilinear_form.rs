@@ -38,7 +38,7 @@ pub trait VariationalBilinearForm<'self,Mon:Monomial,MeshT:Mesh<Mon>> {
 
   fn basis_els_vs_basis_els_transpose(&self) -> SparseMatrix {
 
-    let basis = self.basis();
+    let (basis, mesh) = (self.basis(), self.basis().mesh());
 
     let sym = self.is_symmetric();
     let (num_int_mons, num_side_mons) = (basis.mons_per_fe_int(), basis.mons_per_fe_side());
@@ -47,9 +47,9 @@ pub trait VariationalBilinearForm<'self,Mon:Monomial,MeshT:Mesh<Mon>> {
     let mut m = SparseMatrix::new_with_capacities(basis.est_num_el_el_pairs_with_common_supp_fes(sym), basis.num_els());
 
     // Buffer to store non-boundary sides' numbers and fe side faces for either one or two finite elements.
-    let mut fe_nb_sides_buf = vec::from_elem(basis.mesh().max_num_shape_sides()*2, (NBSideNum(0), FENum(0), SideFace(0)));
+    let mut fe_nb_sides_buf = vec::from_elem(mesh.max_num_shape_sides()*2, (NBSideNum(0), FENum(0), SideFace(0)));
     // Buffer to store the non-boundary side interactions with a single given non-boundary side.
-    let mut nb_side_interactions_buf = vec::from_elem(basis.mesh().max_num_shape_sides()*2,
+    let mut nb_side_interactions_buf = vec::from_elem(mesh.max_num_shape_sides()*2,
       OneFESideSideInter(NBSideNum(0), NBSideNum(0), FENum(0), SideFace(0), SideFace(0)));
 
     // Create precomputed reference vbf values between monomials on single oriented shapes.
@@ -73,8 +73,8 @@ pub trait VariationalBilinearForm<'self,Mon:Monomial,MeshT:Mesh<Mon>> {
 
     // Iterate basis element pairs beginning with an interior supported element. 
     
-    for fe in range(0, basis.mesh().num_fes()) { let fe = FENum(fe);
-      let oshape = basis.mesh().oriented_shape_for_fe(fe);
+    for fe in range(0, mesh.num_fes()) { let fe = FENum(fe);
+      let oshape = mesh.oriented_shape_for_fe(fe);
 
       for monn_1 in range(0, num_int_mons) { let monn_1 = FaceMonNum(monn_1);
         let r = *basis.int_mon_el_num(fe, monn_1);
@@ -90,7 +90,7 @@ pub trait VariationalBilinearForm<'self,Mon:Monomial,MeshT:Mesh<Mon>> {
 
         // Iterate element pairs with our interior supported element vs side supported elements.
         // The support sides are iterated in order of increasing non-boundary side number.
-        for &(nbs, _, sf) in asc_nbsn_fe_sf_triplets_for_fes(fe, None, |_nbs_2| true, basis.mesh(), fe_nb_sides_buf).iter() {
+        for &(nbs, _, sf) in asc_nbsn_fe_sf_triplets_for_fes(fe, None, |_nbs_2| true, mesh, fe_nb_sides_buf).iter() {
           for monn_2 in range(0, num_side_mons) { let monn_2 = FaceMonNum(monn_2);
             let c = *basis.nb_side_mon_el_num(nbs, monn_2);
             let ip = side_vs_int_vbf_vals.get(*oshape, *sf, *monn_2, *monn_1);
@@ -102,9 +102,9 @@ pub trait VariationalBilinearForm<'self,Mon:Monomial,MeshT:Mesh<Mon>> {
 
     // Iterate basis element pairs beginning with a side supported element.
 
-    for nbs in range(0, basis.mesh().num_nb_sides()) { let nbs = NBSideNum(nbs);
+    for nbs in range(0, mesh.num_nb_sides()) { let nbs = NBSideNum(nbs);
       // Get the representations of our nbs as the side faces of finite elements.
-      let nbs_incls = basis.mesh().fe_inclusions_of_nb_side(nbs);
+      let nbs_incls = mesh.fe_inclusions_of_nb_side(nbs);
   
       for monn_1 in range(0, num_side_mons) { let monn_1 = FaceMonNum(monn_1);
         let r = *basis.nb_side_mon_el_num(nbs, monn_1);
@@ -115,7 +115,7 @@ pub trait VariationalBilinearForm<'self,Mon:Monomial,MeshT:Mesh<Mon>> {
         if !sym {
           let incl_fe_sf_pairs = [(nbs_incls.fe1, nbs_incls.side_face_in_fe1), (nbs_incls.fe2, nbs_incls.side_face_in_fe2)];
           for &(mon_2_fe, mon_1_sf) in incl_fe_sf_pairs.iter() {
-            let mon_2_fe_oshape = basis.mesh().oriented_shape_for_fe(mon_2_fe);
+            let mon_2_fe_oshape = mesh.oriented_shape_for_fe(mon_2_fe);
             for monn_2 in range(0, num_int_mons) { let monn_2 = FaceMonNum(monn_2);
               let c = *basis.int_mon_el_num(mon_2_fe, monn_2);
               let ip = int_vs_side_vbf_vals.get(*mon_2_fe_oshape, *mon_1_sf, *monn_2, *monn_1);
@@ -130,11 +130,11 @@ pub trait VariationalBilinearForm<'self,Mon:Monomial,MeshT:Mesh<Mon>> {
         let nbs_filter = if sym { |nbs_2: NBSideNum| nbs_2 >= nbs } else { |_nbs_2| true };
         for nb_sides_interaction in asc_nb_sides_interactions(&nbs_incls,
                                                               nbs_filter,
-                                                              basis.mesh(),
+                                                              mesh,
                                                               fe_nb_sides_buf, nb_side_interactions_buf).iter() {
           match nb_sides_interaction {
             &OneFESideSideInter(_, nbs_2, fe, nbs_sf_in_fe, nbs_2_sf_in_fe) => {
-              let fe_oshape = basis.mesh().oriented_shape_for_fe(fe);
+              let fe_oshape = mesh.oriented_shape_for_fe(fe);
               let monn_range_lower = if sym && nbs_2 == nbs { *monn_1 } else { 0 };
               for monn_2 in range(monn_range_lower, num_side_mons) { let monn_2 = FaceMonNum(monn_2);
                  let c = *basis.nb_side_mon_el_num(nbs_2, monn_2);
@@ -146,8 +146,8 @@ pub trait VariationalBilinearForm<'self,Mon:Monomial,MeshT:Mesh<Mon>> {
             &TwoFESideSideInter(_, nbs_2,
                                 fe_a, nbs_sf_in_fe_a, nbs_2_sf_in_fe_a,
                                 fe_b, nbs_sf_in_fe_b, nbs_2_sf_in_fe_b) => {
-              let fe_a_oshape = basis.mesh().oriented_shape_for_fe(fe_a);
-              let fe_b_oshape = basis.mesh().oriented_shape_for_fe(fe_b);
+              let fe_a_oshape = mesh.oriented_shape_for_fe(fe_a);
+              let fe_b_oshape = mesh.oriented_shape_for_fe(fe_b);
               let monn_range_lower = if sym && nbs_2 == nbs { *monn_1 } else { 0 };
               for monn_2 in range(monn_range_lower, num_side_mons) { let monn_2 = FaceMonNum(monn_2);
                 let c = *basis.nb_side_mon_el_num(nbs_2, monn_2);
