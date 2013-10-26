@@ -1,10 +1,10 @@
 use common::*;
 use lapack;
 
-use std::routine::Runnable;
 use std::libc::{c_ulong};
 use std::ptr;
 use std::iter::{range_inclusive};
+use std::cast;
 use extra::c_vec;
 use extra::c_vec::CVec;
 
@@ -201,19 +201,16 @@ impl DenseMatrix {
 #[inline(never)]
 pub unsafe fn alloc_data(num_doubles: uint) -> CVec<R> {
   let doubles = lapack::alloc_doubles(num_doubles as c_ulong);
-  let dealloc = ~Deallocator { mem: doubles } as ~Runnable;
-  c_vec::c_vec_with_dtor(doubles, num_doubles, dealloc)
+  c_vec::CVec(doubles, num_doubles)
 }
 
-struct Deallocator {
-  mem: *mut R
-}
-
-impl Runnable for Deallocator {
+#[unsafe_destructor]
+impl Drop for DenseMatrix {
   #[fixed_stack_segment]
-  fn run(~self) {
+  #[inline(never)]
+  fn drop(&mut self) {
     unsafe {
-      lapack::free_doubles(self.mem);
+      lapack::free_doubles(cast::transmute(c_vec::ptr(self.data)))
     }
   }
 }

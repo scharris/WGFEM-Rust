@@ -13,7 +13,7 @@ fn test_int_L2_inner_products_3x2_deg2() {
   
   let projector: Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
   
-  let int_ips = projector.ips_int_mons_by_oshape[0];
+  let int_ips = &projector.ips_int_mons_by_oshape[0];
   assert_eq!(int_ips.get(0,0), 1.);    // one vs one
   assert_eq!(int_ips.get(0,1), 1./2.); // one vs y
   assert_eq!(int_ips.get(0,2), 1./3.); // one vs y^2
@@ -29,12 +29,12 @@ fn test_side_L2_inner_products_3x2_deg2() {
   
   let projector: Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
 
-  let right_ips = projector.ips_side_mons_by_oshape_side[0][3];
+  let right_ips = &projector.ips_side_mons_by_oshape_side[0][3];
   assert_eq!(right_ips.get(0,0), 1.);    // one vs one
   assert_eq!(right_ips.get(0,1), 1./2.); // one vs y
   assert_eq!(right_ips.get(1,1), 1./3.); // y vs y
 
-  let top_ips = projector.ips_side_mons_by_oshape_side[0][1];
+  let top_ips = &projector.ips_side_mons_by_oshape_side[0][1];
   assert_eq!(top_ips.get(0,0), 1.);    // one vs one
   assert_eq!(top_ips.get(0,1), 1./2.); // one vs x
   assert_eq!(top_ips.get(1,1), 1./3.); // x vs x
