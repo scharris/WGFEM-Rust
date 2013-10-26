@@ -28,12 +28,12 @@ pub struct Projector<'self,Mon,MeshT> {
   ips_side_mons_by_oshape_side: ~[~[DenseMatrix]], // by fe oriented shape, then side face, then (side mon #, side mon #)
 
   // Work matrices for lapack to avoid allocations and because lapack enjoys writing over its inputs.
-  lapack_ips_int_mons: ~DenseMatrix,
-  lapack_ips_side_mons: ~DenseMatrix,
+  lapack_ips_int_mons: DenseMatrix,
+  lapack_ips_side_mons: DenseMatrix,
   lapack_pivots: ~[lapack_int],
   lapack_pivots_buf: *mut lapack_int,
-  lapack_int_proj_rhs: ~DenseMatrix,
-  lapack_side_proj_rhs: ~DenseMatrix,
+  lapack_int_proj_rhs: DenseMatrix,
+  lapack_side_proj_rhs: DenseMatrix,
 }
 
 impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
@@ -66,13 +66,13 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
     });
 
     let (num_int_mons, num_side_mons) = (basis.mons_per_fe_int(), basis.mons_per_fe_side());
-    let lapack_ips_int_mons = ~DenseMatrix::from_elem(num_int_mons, num_int_mons, 0 as R);  
-    let lapack_ips_side_mons = ~DenseMatrix::from_elem(num_side_mons, num_side_mons, 0 as R);  
+    let lapack_ips_int_mons = DenseMatrix::from_elem(num_int_mons, num_int_mons, 0 as R);  
+    let lapack_ips_side_mons = DenseMatrix::from_elem(num_side_mons, num_side_mons, 0 as R);  
     let mut lapack_pivots = vec::from_elem(num::max(num_int_mons, num_side_mons), 0 as lapack_int);
     let lapack_pivots_buf = vec::raw::to_mut_ptr(lapack_pivots);
     let init_num_rhs_cols = init_rhs_cols_capacity;
-    let lapack_int_proj_rhs = ~DenseMatrix::from_elem(num_int_mons, init_num_rhs_cols, 0 as R);
-    let lapack_side_proj_rhs = ~DenseMatrix::from_elem(num_side_mons, init_num_rhs_cols, 0 as R);
+    let lapack_int_proj_rhs = DenseMatrix::from_elem(num_int_mons, init_num_rhs_cols, 0 as R);
+    let lapack_side_proj_rhs = DenseMatrix::from_elem(num_side_mons, init_num_rhs_cols, 0 as R);
 
     Projector {
       basis: basis,
@@ -118,7 +118,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
         if self.lapack_int_proj_rhs.capacity_cols >= fes.len() {
           self.lapack_int_proj_rhs.set_num_cols(fes.len());
         } else {
-          self.lapack_int_proj_rhs = ~DenseMatrix::of_size_with_cols_capacity(int_mons.len(), fes.len(), 3*fes.len()/2);
+          self.lapack_int_proj_rhs = DenseMatrix::of_size_with_cols_capacity(int_mons.len(), fes.len(), 3*fes.len()/2);
         }
         //   - Fill the rhs matrix with inner products between g and our interior monomials (rows) on the fes (cols). 
         self.lapack_int_proj_rhs.fill_from_fn(|r,c| {
@@ -167,7 +167,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
         if self.lapack_side_proj_rhs.capacity_cols >= fes.len() {
           self.lapack_side_proj_rhs.set_num_cols(fes.len());
         } else {
-          self.lapack_side_proj_rhs = ~DenseMatrix::of_size_with_cols_capacity(side_mons.len(), fes.len(), 3*fes.len()/2);
+          self.lapack_side_proj_rhs = DenseMatrix::of_size_with_cols_capacity(side_mons.len(), fes.len(), 3*fes.len()/2);
         }
         //   - Fill the rhs matrix with inner products between g and our side monomials (rows) on the fes (cols). 
         self.lapack_side_proj_rhs.fill_from_fn(|r,c| {
@@ -212,7 +212,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
         if self.lapack_side_proj_rhs.capacity_cols >= int_mons.len() {
           self.lapack_side_proj_rhs.set_num_cols(int_mons.len());
         } else {
-          self.lapack_side_proj_rhs = ~DenseMatrix::of_size_with_cols_capacity(side_mons.len(), int_mons.len(), 3*int_mons.len()/2);
+          self.lapack_side_proj_rhs = DenseMatrix::of_size_with_cols_capacity(side_mons.len(), int_mons.len(), 3*int_mons.len()/2);
         }
         //   - Fill the rhs matrix with inner products between our side monomials (rows) and the interior monomials (cols) to be projected. 
         self.lapack_side_proj_rhs.fill_from_fn(|r,c| {

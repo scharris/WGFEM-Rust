@@ -21,7 +21,7 @@ use std::iter::{AdditiveIterator};
 
 struct LaplaceVBF<'self,Mon,MeshT> {
 
-  left_wgrad_multiplier: Option<~DenseMatrix>, // post-multiplier matrix for left weak gradient in inner product
+  left_wgrad_multiplier: Option<DenseMatrix>, // post-multiplier matrix for left weak gradient in inner product
 
   int_mon_side_projs: ~[~[~[PolyBorrowingMons<'self,Mon>]]], // indexed by fe oshape, side face, int mon num
 
@@ -33,7 +33,7 @@ struct LaplaceVBF<'self,Mon,MeshT> {
 
 impl<'self, Mon:Monomial, MeshT:Mesh<Mon>> LaplaceVBF<'self,Mon,MeshT> {
 
-  pub fn new(left_wgrad_multiplier: Option<~DenseMatrix>,
+  pub fn new(left_wgrad_multiplier: Option<DenseMatrix>,
              projector: &'self mut Projector<'self,Mon,MeshT>) -> LaplaceVBF<'self,Mon,MeshT> {
     
     let basis = projector.basis();
@@ -56,7 +56,7 @@ impl<'self, Mon:Monomial, MeshT:Mesh<Mon>> LaplaceVBF<'self,Mon,MeshT> {
   fn ip_wgrads_term(&self, wgrad_1: &WeakGrad, wgrad_2: &WeakGrad, oshape: OShape) -> R {
     let wgrads_prod = unsafe {
       match self.left_wgrad_multiplier {
-        Some(ref m) => cast::transmute_mut(self).weak_grad_ops.mdot(*m, wgrad_1, wgrad_2),
+        Some(ref m) => cast::transmute_mut(self).weak_grad_ops.mdot(m, wgrad_1, wgrad_2),
         None => cast::transmute_mut(self).weak_grad_ops.dot(wgrad_1, wgrad_2)
       }
     };

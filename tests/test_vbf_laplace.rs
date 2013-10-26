@@ -10,14 +10,13 @@ use projection::Projector;
 
 use std::num::{sqrt};
 
-
 #[test]
-fn test_symmetric() {
+fn test_is_symmetric() {
   let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WgBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
  
   let mut projector = Projector::new(basis);
-  let m = ~DenseMatrix::from_fn(2,2, |r,c| { if r != c { 1. } else { 0. } });
+  let m = DenseMatrix::from_fn(2,2, |r,c| { if r != c { 1. } else { 0. } });
   let vbf_asym = LaplaceVBF::new(Some(m), &mut projector);
   assert!(!vbf_asym.is_symmetric());
 
@@ -72,12 +71,12 @@ fn test_int_vs_int_asym() {
   let wgrad_int_xy = basis.int_mon_wgrad(FaceMonNum(5), OShape(0));
   let wgrad_int_y2 = basis.int_mon_wgrad(FaceMonNum(2), OShape(0));
 
-  let m = ~DenseMatrix::from_rows(2,2,
+  let m = DenseMatrix::from_rows(2,2,
     [~[1./sqrt(2.), -1./sqrt(2.)],
      ~[1./sqrt(2.),  1./sqrt(2.)]]);
   
   let mut wgrad_ops = basis.new_weak_grad_ops();
-  let wgrads_prod = wgrad_ops.mdot(m, wgrad_int_xy, wgrad_int_y2);
+  let wgrads_prod = wgrad_ops.mdot(&m, wgrad_int_xy, wgrad_int_y2);
   let ips_term = basis.mesh().intg_facerel_poly_on_oshape_int(&wgrads_prod, OShape(0));
 
   // stabilization term
@@ -112,12 +111,12 @@ fn test_top_side_vs_int() {
   let wgrad_top_x = basis.side_mon_wgrad(FaceMonNum(1), OShape(0), SideFace(3));
   let wgrad_int_xy = basis.int_mon_wgrad(FaceMonNum(5), OShape(0));
 
-  let m = ~DenseMatrix::from_rows(2,2,
+  let m = DenseMatrix::from_rows(2,2,
     [~[1./sqrt(2.), -1./sqrt(2.)],
      ~[1./sqrt(2.),  1./sqrt(2.)]]);
   
   let mut wgrad_ops = basis.new_weak_grad_ops();
-  let wgrads_prod = wgrad_ops.mdot(m, wgrad_top_x, wgrad_int_xy);
+  let wgrads_prod = wgrad_ops.mdot(&m, wgrad_top_x, wgrad_int_xy);
   let ips_term = basis.mesh().intg_facerel_poly_on_oshape_int(&wgrads_prod, OShape(0));
 
   // stabilization term: s(v,w) = (1/h_T) <Q_b v_T0 - v, Q_b w_T0 - w>_bnd(T)
@@ -150,12 +149,12 @@ fn test_bottom_side_vs_int() {
   let wgrad_bottom_x = basis.side_mon_wgrad(FaceMonNum(1), OShape(0), SideFace(2));
   let wgrad_int_xy = basis.int_mon_wgrad(FaceMonNum(5), OShape(0));
 
-  let m = ~DenseMatrix::from_rows(2,2,
+  let m = DenseMatrix::from_rows(2,2,
     [~[1./sqrt(2.), -1./sqrt(2.)],
      ~[1./sqrt(2.),  1./sqrt(2.)]]);
   
   let mut wgrad_ops = basis.new_weak_grad_ops();
-  let wgrads_prod = wgrad_ops.mdot(m, wgrad_bottom_x, wgrad_int_xy);
+  let wgrads_prod = wgrad_ops.mdot(&m, wgrad_bottom_x, wgrad_int_xy);
   let ips_term = basis.mesh().intg_facerel_poly_on_oshape_int(&wgrads_prod, OShape(0));
 
   // stabilization term: s(v,w) = (1/h_T) <Q_b v_T0 - v, Q_b w_T0 - w>_bnd(T)
@@ -183,12 +182,12 @@ fn test_int_vs_right_side() {
   let wgrad_int_xy = basis.int_mon_wgrad(FaceMonNum(5), OShape(0));
   let wgrad_right_y2 = basis.side_mon_wgrad(FaceMonNum(2), OShape(0), SideFace(1));
 
-  let m = ~DenseMatrix::from_rows(2,2,
+  let m = DenseMatrix::from_rows(2,2,
     [~[1./sqrt(2.), -1./sqrt(2.)],
      ~[1./sqrt(2.),  1./sqrt(2.)]]);
   
   let mut wgrad_ops = basis.new_weak_grad_ops();
-  let wgrads_prod = wgrad_ops.mdot(m, wgrad_int_xy, wgrad_right_y2);
+  let wgrads_prod = wgrad_ops.mdot(&m, wgrad_int_xy, wgrad_right_y2);
   let ips_term = basis.mesh().intg_facerel_poly_on_oshape_int(&wgrads_prod, OShape(0));
 
   // stabilization term: s(v,w) = (1/h_T) <Q_b v_T0 - v, Q_b w_T0 - w>_bnd(T)
@@ -221,12 +220,12 @@ fn test_int_vs_left_side() {
   let wgrad_int_xy = basis.int_mon_wgrad(FaceMonNum(5), OShape(0));
   let wgrad_left_y2 = basis.side_mon_wgrad(FaceMonNum(2), OShape(0), SideFace(0));
 
-  let m = ~DenseMatrix::from_rows(2,2,
+  let m = DenseMatrix::from_rows(2,2,
     [~[1./sqrt(2.), -1./sqrt(2.)],
      ~[1./sqrt(2.),  1./sqrt(2.)]]);
   
   let mut wgrad_ops = basis.new_weak_grad_ops();
-  let wgrads_prod = wgrad_ops.mdot(m, wgrad_int_xy, wgrad_left_y2);
+  let wgrads_prod = wgrad_ops.mdot(&m, wgrad_int_xy, wgrad_left_y2);
   let ips_term = basis.mesh().intg_facerel_poly_on_oshape_int(&wgrads_prod, OShape(0));
 
   // stabilization term: s(v,w) = (1/h_T) <Q_b v_T0 - v, Q_b w_T0 - w>_bnd(T)
@@ -253,12 +252,12 @@ fn test_right_side_vs_left_side() {
   let wgrad_right_y = basis.side_mon_wgrad(FaceMonNum(1), OShape(0), SideFace(1));
   let wgrad_left_y2 = basis.side_mon_wgrad(FaceMonNum(2), OShape(0), SideFace(0));
 
-  let m = ~DenseMatrix::from_rows(2,2,
+  let m = DenseMatrix::from_rows(2,2,
     [~[1./sqrt(2.), -1./sqrt(2.)],
      ~[1./sqrt(2.),  1./sqrt(2.)]]);
   
   let mut wgrad_ops = basis.new_weak_grad_ops();
-  let wgrads_prod = wgrad_ops.mdot(m, wgrad_right_y, wgrad_left_y2);
+  let wgrads_prod = wgrad_ops.mdot(&m, wgrad_right_y, wgrad_left_y2);
   let ips_term = basis.mesh().intg_facerel_poly_on_oshape_int(&wgrads_prod, OShape(0));
 
   // stabilization term: s(v,w) = (1/h_T) <Q_b v_T0 - v, Q_b w_T0 - w>_bnd(T)
@@ -287,12 +286,12 @@ fn test_bottom_side_vs_left_side() {
   let wgrad_bottom_x = basis.side_mon_wgrad(FaceMonNum(1), OShape(0), SideFace(2));
   let wgrad_left_y2 = basis.side_mon_wgrad(FaceMonNum(2), OShape(0), SideFace(0));
 
-  let m = ~DenseMatrix::from_rows(2,2,
+  let m = DenseMatrix::from_rows(2,2,
     [~[1./sqrt(2.), -1./sqrt(2.)],
      ~[1./sqrt(2.),  1./sqrt(2.)]]);
   
   let mut wgrad_ops = basis.new_weak_grad_ops();
-  let wgrads_prod = wgrad_ops.mdot(m, wgrad_bottom_x, wgrad_left_y2);
+  let wgrads_prod = wgrad_ops.mdot(&m, wgrad_bottom_x, wgrad_left_y2);
   let ips_term = basis.mesh().intg_facerel_poly_on_oshape_int(&wgrads_prod, OShape(0));
 
   // stabilization term: s(v,w) = (1/h_T) <Q_b v_T0 - v, Q_b w_T0 - w>_bnd(T)
@@ -320,12 +319,12 @@ fn test_right_side_vs_right_side() {
   let wgrad_right_y = basis.side_mon_wgrad(FaceMonNum(1), OShape(0), SideFace(1));
   let wgrad_right_y2 = basis.side_mon_wgrad(FaceMonNum(2), OShape(0), SideFace(1));
 
-  let m = ~DenseMatrix::from_rows(2,2,
+  let m = DenseMatrix::from_rows(2,2,
     [~[1./sqrt(2.), -1./sqrt(2.)],
      ~[1./sqrt(2.),  1./sqrt(2.)]]);
   
   let mut wgrad_ops = basis.new_weak_grad_ops();
-  let wgrads_prod = wgrad_ops.mdot(m, wgrad_right_y, wgrad_right_y2);
+  let wgrads_prod = wgrad_ops.mdot(&m, wgrad_right_y, wgrad_right_y2);
   let ips_term = basis.mesh().intg_facerel_poly_on_oshape_int(&wgrads_prod, OShape(0));
 
   // stabilization term: s(v,w) = (1/h_T) <Q_b v_T0 - v, Q_b w_T0 - w>_bnd(T)
@@ -357,12 +356,12 @@ fn test_bottom_side_vs_bottom_side() {
   let wgrad_bottom_x = basis.side_mon_wgrad(FaceMonNum(1), OShape(0), SideFace(2));
   let wgrad_bottom_x2 = basis.side_mon_wgrad(FaceMonNum(2), OShape(0), SideFace(2));
 
-  let m = ~DenseMatrix::from_rows(2,2,
+  let m = DenseMatrix::from_rows(2,2,
     [~[1./sqrt(2.), -1./sqrt(2.)],
      ~[1./sqrt(2.),  1./sqrt(2.)]]);
   
   let mut wgrad_ops = basis.new_weak_grad_ops();
-  let wgrads_prod = wgrad_ops.mdot(m, wgrad_bottom_x, wgrad_bottom_x2);
+  let wgrads_prod = wgrad_ops.mdot(&m, wgrad_bottom_x, wgrad_bottom_x2);
   let ips_term = basis.mesh().intg_facerel_poly_on_oshape_int(&wgrads_prod, OShape(0));
 
   // stabilization term: s(v,w) = (1/h_T) <Q_b v_T0 - v, Q_b w_T0 - w>_bnd(T)
