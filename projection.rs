@@ -86,6 +86,12 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
       lapack_side_proj_rhs: lapack_side_proj_rhs,
     }
   }
+ 
+  #[inline]
+  pub fn basis(&self) -> &'self WgBasis<Mon,MeshT> {
+    self.basis
+  }
+
   
   /// Returns the projections of function g to the spaces spanned by the basis functions supported on
   /// the interiors of the given finite elements in turn. The monomials of the returned polynomials are
