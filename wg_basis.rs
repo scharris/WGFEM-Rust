@@ -138,7 +138,7 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
     let first_nb_side_beln = BasisElNum(num_int_els);
 
     let mut wgrad_solver = {
-      let k = match int_polys_deg_lim { MaxMonDeg(k) => k, MaxMonFactorDeg(k) => k };
+      let k = match int_polys_deg_lim { MaxMonDeg(k) | MaxMonFactorDeg(k) => k };
       WeakGradSolver::new(MaxMonDeg(k-1), mesh)
     };
 
@@ -354,6 +354,11 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
   #[inline]
   pub fn side_mon_wgrad<'a>(&'a self, monn: FaceMonNum, oshape: OShape, side_face: SideFace) -> &'a WeakGrad {
     &self.side_mon_wgrads[*oshape][*side_face][*monn]
+  }
+  
+  #[inline]
+  pub fn weak_grad_solver<'a>(&'a self) -> &'a WeakGradSolver<Mon> {
+    &self.weak_grad_solver
   }
 
   #[inline]
