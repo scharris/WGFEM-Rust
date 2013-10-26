@@ -55,6 +55,18 @@ fn test_constr_of_size_with_cols_capacity() {
 }
 
 #[test]
+fn test_constr_from_rows() {
+  let m = DenseMatrix::from_rows(3,3,
+    [~[   0.,    1.,    2.],
+     ~[1000., 1001., 1002.],
+     ~[2000., 2001., 2002.]]);
+
+  let data_as_vec = unsafe { vec::from_buf(m.col_maj_data_ptr(), 9) };
+  assert_eq!(data_as_vec, ~[0.,1000.,2000.,1.,1001.,2001.,2.,1002.,2002.]);
+}
+
+
+#[test]
 #[should_fail]
 fn test_bad_col_access_under_capacity1() {
   let m = DenseMatrix::from_elem_with_cols_capacity(3,3, 10., 5);

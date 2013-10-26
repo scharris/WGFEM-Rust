@@ -108,6 +108,10 @@ impl DenseMatrix {
     }
   }
 
+  pub fn from_rows(num_rows: uint, num_cols: uint, elems: &[~[R]]) -> DenseMatrix {
+    DenseMatrix::from_fn(num_rows, num_cols, |r,c| elems[r][c])
+  }
+
   #[inline]
   pub fn get(&self, r: uint, c: uint) -> R {
     if c >= self.num_cols || r >= self.num_rows { fail!("Row or column out of range."); }
