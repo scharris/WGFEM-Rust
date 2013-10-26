@@ -11,7 +11,7 @@ fn test_int_L2_inner_products_3x2_deg2() {
   let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WgBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
-  let projector: ~Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
+  let projector: Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
   
   let int_ips = projector.ips_int_mons_by_oshape[0];
   assert_eq!(int_ips.get(0,0), 1.);    // one vs one
@@ -27,7 +27,7 @@ fn test_side_L2_inner_products_3x2_deg2() {
   let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WgBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
-  let projector: ~Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
+  let projector: Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
 
   let right_ips = projector.ips_side_mons_by_oshape_side[0][3];
   assert_eq!(right_ips.get(0,0), 1.);    // one vs one
@@ -44,7 +44,7 @@ fn test_side_L2_inner_products_3x2_deg2() {
 fn test_identity_proj_fe0() {
   let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WgBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
-  let mut projector: ~Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
+  let mut projector: Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
 
   // 0 x^0y^0 + -2 x^0y^1 + 0 x^0y^2 + -0 x^0y^3 + 1 x^1y^0 + -3 x^1y^1 + -2 x^1y^2 + 0 x^2y^0 + 1 x^2y^1 + -0 x^3y^0
   let p = PolyBorrowingMons::new(~[0., -2., 0., 0., 1., -3., -2., 0., 1., 0.], basis.ref_int_mons());
@@ -64,7 +64,7 @@ fn test_int_projs() {
   let fe4_int_orig_1 = 1.;
   
   let basis = WgBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
-  let mut projector: ~Projector<Mon2d,RectMesh<Mon2d>>  = Projector::with_rhs_cols_capacity(basis, 2); // force a reallocation of rhs buffer
+  let mut projector: Projector<Mon2d,RectMesh<Mon2d>>  = Projector::with_rhs_cols_capacity(basis, 2); // force a reallocation of rhs buffer
 
   let g = |x: &[R]| {
     // polynomial x^2 y - 2 x y^2 relative to fe 4 interior origin
@@ -96,7 +96,7 @@ fn test_right_side_projs() {
   let fe5_int_orig_1 = 1.;
   
   let basis = WgBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
-  let mut projector: ~Projector<Mon2d,RectMesh<Mon2d>>  = Projector::with_rhs_cols_capacity(basis, 2); // force a reallocation of rhs buffer
+  let mut projector: Projector<Mon2d,RectMesh<Mon2d>>  = Projector::with_rhs_cols_capacity(basis, 2); // force a reallocation of rhs buffer
 
   // The function to be projected is the polynomial whose representation relative to fe 5's interior is
   //   p_fe5(x,y) = 2x^2 - 3y^2 - 5x - 4y (relative to fe 5 origin at (2,1)).
@@ -133,7 +133,7 @@ fn test_right_side_projs() {
 fn test_int_mons_side_projs() {
   let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[6.,12.], ~[MeshCoord(3),MeshCoord(4)]);
   let basis = WgBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
-  let mut projector: ~Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
+  let mut projector: Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
 
   let one = Mon2d { exps: [Deg(0), Deg(0)] };
   let x = Mon2d { exps: [Deg(1), Deg(0)] };

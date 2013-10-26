@@ -38,11 +38,11 @@ pub struct Projector<'self,Mon,MeshT> {
 
 impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
 
-  pub fn new(basis: &'self WgBasis<Mon,MeshT>) -> ~Projector<'self,Mon,MeshT> {
+  pub fn new(basis: &'self WgBasis<Mon,MeshT>) -> Projector<'self,Mon,MeshT> {
     Projector::with_rhs_cols_capacity(basis, 1000u)
   }
   
-  pub fn with_rhs_cols_capacity(basis: &'self WgBasis<Mon,MeshT>, init_rhs_cols_capacity: uint) -> ~Projector<'self,Mon,MeshT> {
+  pub fn with_rhs_cols_capacity(basis: &'self WgBasis<Mon,MeshT>, init_rhs_cols_capacity: uint) -> Projector<'self,Mon,MeshT> {
     lapack::init(); // TODO: Move this to main when available.
 
     let mesh = basis.mesh();
@@ -74,7 +74,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
     let lapack_int_proj_rhs = ~DenseMatrix::from_elem(num_int_mons, init_num_rhs_cols, 0 as R);
     let lapack_side_proj_rhs = ~DenseMatrix::from_elem(num_side_mons, init_num_rhs_cols, 0 as R);
 
-    ~Projector {
+    Projector {
       basis: basis,
       ips_int_mons_by_oshape: ips_int_mons_by_oshape,
       ips_side_mons_by_oshape_side: ips_side_mons_by_oshape_side,
