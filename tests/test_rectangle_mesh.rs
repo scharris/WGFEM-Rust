@@ -353,6 +353,76 @@ fn test_3x4x5x6_bad_mesh_coords() -> () {
 }
 
 #[test]
+fn test_1x3_boundary_side_fes() -> () {
+  let rmesh1x3: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
+                                                 ~[2f64, 3.],
+                                                 ~[MeshCoord(1), MeshCoord(3)]);
+  let left_side = lesser_side_face_perp_to_axis(Dim(0));
+  let right_side = greater_side_face_perp_to_axis(Dim(0));
+  let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
+  let top_side = greater_side_face_perp_to_axis(Dim(1));
+
+  let b_side_fes = rmesh1x3.boundary_fes_by_oshape_side();
+
+  assert_eq!(b_side_fes.len(), 1); // one oshape
+
+  let fes_by_b_sf = b_side_fes[0];
+
+  assert_eq!(fes_by_b_sf[*left_side], ~[FENum(0), FENum(1), FENum(2)]);
+  assert_eq!(fes_by_b_sf[*right_side], ~[FENum(0), FENum(1), FENum(2)]);
+  assert_eq!(fes_by_b_sf[*bottom_side], ~[FENum(0)]);
+  assert_eq!(fes_by_b_sf[*top_side], ~[FENum(2)]);
+}
+
+#[test]
+fn test_2x3_boundary_side_fes() -> () {
+  let rmesh2x3: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
+                                                 ~[2f64, 3.],
+                                                 ~[MeshCoord(2), MeshCoord(3)]);
+  let left_side = lesser_side_face_perp_to_axis(Dim(0));
+  let right_side = greater_side_face_perp_to_axis(Dim(0));
+  let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
+  let top_side = greater_side_face_perp_to_axis(Dim(1));
+
+  let b_side_fes = rmesh2x3.boundary_fes_by_oshape_side();
+
+  assert_eq!(b_side_fes.len(), 1); // one oshape
+
+  let fes_by_b_sf = b_side_fes[0];
+
+  assert_eq!(fes_by_b_sf[*left_side], ~[FENum(0), FENum(2), FENum(4)]);
+  assert_eq!(fes_by_b_sf[*right_side], ~[FENum(1), FENum(3), FENum(5)]);
+  assert_eq!(fes_by_b_sf[*bottom_side], ~[FENum(0), FENum(1)]);
+  assert_eq!(fes_by_b_sf[*top_side], ~[FENum(4), FENum(5)]);
+}
+
+#[test]
+fn test_2x3x2_boundary_side_fes() -> () {
+  let rmesh2x3x2: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+                                                   ~[2f64, 3., 4.],
+                                                   ~[MeshCoord(2), MeshCoord(3), MeshCoord(2)]);
+  let left_side = lesser_side_face_perp_to_axis(Dim(0));
+  let right_side = greater_side_face_perp_to_axis(Dim(0));
+  let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
+  let top_side = greater_side_face_perp_to_axis(Dim(1));
+  let back_side = lesser_side_face_perp_to_axis(Dim(2));
+  let front_side = greater_side_face_perp_to_axis(Dim(2));
+
+  let b_side_fes = rmesh2x3x2.boundary_fes_by_oshape_side();
+
+  assert_eq!(b_side_fes.len(), 1); // one oshape
+
+  let fes_by_b_sf = b_side_fes[0];
+
+  assert_eq!(fes_by_b_sf[*left_side], ~[FENum(0), FENum(2), FENum(4), FENum(6), FENum(8), FENum(10)]);
+  assert_eq!(fes_by_b_sf[*right_side], ~[FENum(1), FENum(3), FENum(5), FENum(7), FENum(9), FENum(11)]);
+  assert_eq!(fes_by_b_sf[*bottom_side], ~[FENum(0), FENum(1), FENum(6), FENum(7)]);
+  assert_eq!(fes_by_b_sf[*top_side], ~[FENum(4), FENum(5), FENum(10), FENum(11)]);
+  assert_eq!(fes_by_b_sf[*back_side], ~[FENum(0), FENum(1), FENum(2), FENum(3), FENum(4), FENum(5)]);
+  assert_eq!(fes_by_b_sf[*front_side], ~[FENum(6), FENum(7), FENum(8), FENum(9), FENum(10), FENum(11)]);
+}
+
+#[test]
 fn test_3x4_boundary_side_determ() -> () {
   let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
                                                  ~[2f64, 3.],

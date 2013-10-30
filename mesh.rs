@@ -75,6 +75,8 @@ pub trait Mesh<Mon> {
 
   fn num_boundary_sides(&self) -> uint;
   
+  fn boundary_fes_by_oshape_side(&self) -> ~[~[~[FENum]]]; // oshape, side face -> fes
+  
   fn shape_diameter_inv(&self, oshape: OShape) -> R;
 
   fn max_fe_diameter(&self) -> R;

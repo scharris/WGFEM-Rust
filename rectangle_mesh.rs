@@ -395,6 +395,68 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
       })
     })
   }
+
+  fn boundary_fes_by_oshape_side(&self) -> ~[~[~[FENum]]] { // oshape, side face -> fes
+    let space_dims = domain_space_dims::<Mon>();
+    let est_b_fes_per_side_face = self.num_boundary_sides() / self.num_side_faces_per_fe;
+    
+    let mut res = ~[vec::from_elem(self.num_side_faces_per_fe, vec::with_capacity(est_b_fes_per_side_face))];
+    
+    let register_b_sides_on_perp_axis = |fe_lcoords: &[MeshCoord], perp_axis: Dim| {
+      let fe = self.fe_with_mesh_coords(fe_lcoords);
+
+      // If the fe is at the minimum mesh coord in the perp axis dim, then its lesser side along the axis is on the boundary.
+      let lesser_side_is_b_side = fe_lcoords[*perp_axis] == MeshCoord(0);
+      if lesser_side_is_b_side {
+        let sf = lesser_side_face_perp_to_axis(perp_axis);
+        res[0][*sf].push(fe);
+      }
+      
+      // If the fe is at the maximum mesh coord in the perp axis dim, then its greater side along the axis is on the boundary.
+      let greater_side_is_b_side = fe_lcoords[*perp_axis] == MeshCoord(*self.mesh_ldims[*perp_axis] - 1);
+      if greater_side_is_b_side {
+        let sf = greater_side_face_perp_to_axis(perp_axis);
+        res[0][*sf].push(fe);
+      }
+    };
+
+    // Buffer for fe coordinates used to iterate fe's with boundary sides.
+    let mut fe_lcoords = vec::from_elem(space_dims, MeshCoord(0));
+
+    for perp_axis in range(0, space_dims) {
+     
+      // Incrementor for fe_lcoords which will traverse all logical mesh values which have the min or max
+      // logical coordinate value in the perpendicular axis dimension.  Bumps the first non-max coord and
+      // resets all prior coords, going directly from min to max at the perpendicular axis dimension. Returns
+      // true if the coords were incremented, or false if every coord is at its maximum.
+      let bump_fe_lcoords = || {
+        let first_bumpable_dim = range(0, space_dims).position(|r| *fe_lcoords[r] < *self.mesh_ldims[r] - 1);
+        match first_bumpable_dim {
+          Some(bump_dim) => {
+            let bumped_val = if bump_dim == perp_axis { MeshCoord(*self.mesh_ldims[bump_dim] - 1) }
+                             else { MeshCoord(*fe_lcoords[bump_dim] + 1) };
+            fe_lcoords[bump_dim] = bumped_val;
+            for r in range(0, bump_dim) { fe_lcoords[r] = MeshCoord(0); } // Reset lesser coords.
+            true
+          }
+          None => false
+        }
+      };
+     
+
+      for r in range(0, space_dims) { fe_lcoords[r] = MeshCoord(0); }
+      register_b_sides_on_perp_axis(fe_lcoords, Dim(perp_axis));
+
+      loop {
+        if !bump_fe_lcoords() {
+          break;
+        }
+        register_b_sides_on_perp_axis(fe_lcoords, Dim(perp_axis));
+      }
+    }
+
+    res
+  }
   
   #[inline(always)]
   fn shape_diameter_inv(&self, oshape: OShape) -> R {
