@@ -5,7 +5,7 @@ use std::f64;
 // types and type aliases
 
 pub type R = f64;
-pub static R_NaN: R = f64::NaN;
+pub static R_NaN: R = f64::NAN;
 
 #[deriving(Eq, IterBytes, TotalOrd, TotalEq, Clone, Ord)]
 pub struct Deg(u8);
