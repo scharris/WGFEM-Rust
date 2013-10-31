@@ -3,16 +3,16 @@ use polynomial::Polynomial;
 use vector_monomial::VectorMonomial;
 
 // An FENum identifies a finite element in the mesh.
-#[deriving(Eq,TotalEq,Ord,TotalOrd,Clone)]
+#[deriving(Eq,TotalEq,Ord,TotalOrd,Clone,IterBytes)]
 pub struct FENum(uint);
 
 // An NBSideNum identifies a mesh side among all sides in the mesh.
-#[deriving(Eq,TotalEq,Ord,TotalOrd,Clone)]
+#[deriving(Eq,TotalEq,Ord,TotalOrd,Clone,IterBytes)]
 pub struct NBSideNum(uint);
 
 // A SideFace identifies a side within the context of a single oriented shape
 // or finite element.
-#[deriving(Eq,TotalEq,Ord,TotalOrd,Clone)]
+#[deriving(Eq,TotalEq,Ord,TotalOrd,Clone,IterBytes)]
 pub struct SideFace(uint);
 
 /// A Face locally identifies either the interior or a side in the context of a single
