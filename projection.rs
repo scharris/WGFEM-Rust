@@ -22,11 +22,6 @@ pub struct Projector<'self,Mon,MeshT> {
  
   basis: &'self WgBasis<Mon,MeshT>,
 
-  // Pre-calculated L2 inner products between basis elements supported on the same faces of reference oriented shapes.
-  // Only the upper triangle part of each matrix should be used, the contents of the lower parts are undefined.
-  ips_int_mons_by_oshape: ~[DenseMatrix],          // by fe oriented shape, then (int mon num, int mon num)
-  ips_side_mons_by_oshape_side: ~[~[DenseMatrix]], // by fe oriented shape, then side face, then (side mon #, side mon #)
-
   // Work matrices for lapack to avoid allocations and because lapack enjoys writing over its inputs.
   lapack_ips_int_mons: DenseMatrix,
   lapack_ips_side_mons: DenseMatrix,
@@ -46,24 +41,6 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
     lapack::init(); // TODO: Move this to main when available.
 
     let mesh = basis.mesh();
-    
-    let ips_int_mons_by_oshape = {
-      let int_mons = basis.ref_int_mons();
-      vec::from_fn(mesh.num_oriented_element_shapes(), |os| {
-        DenseMatrix::upper_triangle_from_fn(int_mons.len(), |i,j| {
-          mesh.intg_facerel_mon_on_oshape_int(int_mons[i] * int_mons[j], OShape(os))
-        })
-      })
-    };
-   
-    let ips_side_mons_by_oshape_side = vec::from_fn(mesh.num_oriented_element_shapes(), |os| {
-      vec::from_fn(mesh.num_side_faces_for_shape(OShape(os)), |sf| {
-        let side_mons = basis.side_mons_for_oshape_side(OShape(os), SideFace(sf));
-        DenseMatrix::upper_triangle_from_fn(side_mons.len(), |i,j| {
-          mesh.intg_facerel_mon_on_oshape_side(side_mons[i] * side_mons[j], OShape(os), SideFace(sf))
-        })
-      })
-    });
 
     let (num_int_mons, num_side_mons) = (basis.mons_per_fe_int(), basis.mons_per_fe_side());
     let lapack_ips_int_mons = DenseMatrix::from_elem(num_int_mons, num_int_mons, 0 as R);  
@@ -76,8 +53,6 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
 
     Projector {
       basis: basis,
-      ips_int_mons_by_oshape: ips_int_mons_by_oshape,
-      ips_side_mons_by_oshape_side: ips_side_mons_by_oshape_side,
       lapack_ips_int_mons: lapack_ips_int_mons,
       lapack_ips_side_mons: lapack_ips_side_mons,
       lapack_pivots: lapack_pivots,
@@ -108,7 +83,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
 
       // Prepare system matrix a.
       let a = {
-        self.lapack_ips_int_mons.fill_upper_triangle_from(&self.ips_int_mons_by_oshape[*fes_oshape]);
+        self.lapack_ips_int_mons.fill_upper_triangle_from(self.basis.ips_int_mons_for_oshape(fes_oshape));
         self.lapack_ips_int_mons.mut_col_maj_data_ptr()
       };
 
@@ -157,7 +132,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
 
       // Prepare system matrix a.
       let a = {
-        self.lapack_ips_side_mons.fill_upper_triangle_from(&self.ips_side_mons_by_oshape_side[*fes_oshape][*side_face]);
+        self.lapack_ips_side_mons.fill_upper_triangle_from(self.basis.ips_side_mons_for_oshape_side(fes_oshape, side_face));
         self.lapack_ips_side_mons.mut_col_maj_data_ptr()
       };
 
@@ -202,7 +177,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
 
       // Prepare system matrix a, consisting of inner products between basis elements supported on the side.
       let a = {
-        self.lapack_ips_side_mons.fill_upper_triangle_from(&self.ips_side_mons_by_oshape_side[*oshape][*side_face]);
+        self.lapack_ips_side_mons.fill_upper_triangle_from(self.basis.ips_side_mons_for_oshape_side(oshape, side_face));
         self.lapack_ips_side_mons.mut_col_maj_data_ptr()
       };
 

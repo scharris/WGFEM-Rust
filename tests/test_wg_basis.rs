@@ -689,3 +689,33 @@ fn test_interacting_els_est_5x6_deg4() {
   assert_eq!(basis.est_num_el_el_pairs_with_common_supp_fes(true), upper_triangle_inters);
 }
 
+#[test]
+fn test_int_L2_inner_products_3x2_deg2() {
+  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let basis = WgBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
+  
+  let int_ips = basis.ips_int_mons_for_oshape(OShape(0));
+  assert_eq!(int_ips.get(0,0), 1.);    // one vs one
+  assert_eq!(int_ips.get(0,1), 1./2.); // one vs y
+  assert_eq!(int_ips.get(0,2), 1./3.); // one vs y^2
+  assert_eq!(int_ips.get(0,3), 1./2.); // one vs x
+  assert_eq!(int_ips.get(0,4), 1./4.); // one vs xy
+  assert_eq!(int_ips.get(0,5), 1./3.); // one vs x^2
+}
+
+#[test]
+fn test_side_L2_inner_products_3x2_deg2() {
+  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let basis = WgBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
+  
+  let right_ips = basis.ips_side_mons_for_oshape_side(OShape(0), SideFace(3));
+  assert_eq!(right_ips.get(0,0), 1.);    // one vs one
+  assert_eq!(right_ips.get(0,1), 1./2.); // one vs y
+  assert_eq!(right_ips.get(1,1), 1./3.); // y vs y
+
+  let top_ips = basis.ips_side_mons_for_oshape_side(OShape(0), SideFace(1));
+  assert_eq!(top_ips.get(0,0), 1.);    // one vs one
+  assert_eq!(top_ips.get(0,1), 1./2.); // one vs x
+  assert_eq!(top_ips.get(1,1), 1./3.); // x vs x
+}
+

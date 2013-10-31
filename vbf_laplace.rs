@@ -34,9 +34,9 @@ struct LaplaceVBF<'self,Mon,MeshT> {
 impl<'self, Mon:Monomial, MeshT:Mesh<Mon>> LaplaceVBF<'self,Mon,MeshT> {
 
   pub fn new(left_wgrad_multiplier: Option<DenseMatrix>,
-             projector: &'self mut Projector<'self,Mon,MeshT>) -> LaplaceVBF<'self,Mon,MeshT> {
+             basis: &'self WgBasis<Mon,MeshT>) -> LaplaceVBF<'self,Mon,MeshT> {
     
-    let basis = projector.basis();
+    let mut projector = Projector::new(basis);
 
     let int_mon_side_projs = vec::from_fn(basis.mesh().num_oriented_element_shapes(), |os| {
       vec::from_fn(basis.mesh().num_side_faces_for_shape(OShape(os)), |sf| {

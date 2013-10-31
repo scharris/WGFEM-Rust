@@ -3,6 +3,7 @@ use monomial::{Monomial, DegLim, MaxMonDeg, MaxMonFactorDeg, domain_space_dims};
 use polynomial::{PolyBorrowing};
 use mesh::{Mesh, FENum, NBSideNum, NBSideInclusions, OShape, SideFace};
 use weak_gradient::{WeakGradSolver, WeakGrad, WeakGradOps};
+use dense_matrix::DenseMatrix;
 
 use std::vec;
 
@@ -114,6 +115,10 @@ struct WgBasis<Mon,Mesh> {
   int_mon_wgrads: ~[~[WeakGrad]],     // by fe oshape, then interior monomial number
   side_mon_wgrads: ~[~[~[WeakGrad]]], // by fe oshape, then side face, then side monomial number
 
+  // Pre-calculated L2 inner products between basis elements supported on the same faces of reference oriented shapes.
+  // Only the upper triangle part of each matrix should be used, the contents of the lower parts are undefined.
+  ips_int_mons_by_oshape: ~[DenseMatrix],          // by fe oriented shape, then (int mon num, int mon num)
+  ips_side_mons_by_oshape_side: ~[~[DenseMatrix]], // by fe oriented shape, then side face, then (side mon #, side mon #)
 }
 
 
@@ -144,6 +149,24 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
 
     let (int_mon_wgrads, side_mon_wgrads) = compute_wgrads(&mut wgrad_solver, int_mons, side_mons_by_dep_dim, mesh);
     
+    let ips_int_mons_by_oshape = {
+      vec::from_fn(mesh.num_oriented_element_shapes(), |os| {
+        DenseMatrix::upper_triangle_from_fn(int_mons.len(), |i,j| {
+          mesh.intg_facerel_mon_on_oshape_int(int_mons[i] * int_mons[j], OShape(os))
+        })
+      })
+    };
+   
+    let ips_side_mons_by_oshape_side = vec::from_fn(mesh.num_oriented_element_shapes(), |os| {
+      vec::from_fn(mesh.num_side_faces_for_shape(OShape(os)), |sf| {
+        let side_dep_dim = mesh.dependent_dim_for_oshape_side(OShape(os), SideFace(sf));
+        let side_mons = side_mons_by_dep_dim[*side_dep_dim].as_slice();
+        DenseMatrix::upper_triangle_from_fn(side_mons.len(), |i,j| {
+          mesh.intg_facerel_mon_on_oshape_side(side_mons[i] * side_mons[j], OShape(os), SideFace(sf))
+        })
+      })
+    });
+
     ~WgBasis {
       mesh: mesh,
       int_polys_deg_lim: int_polys_deg_lim,
@@ -158,6 +181,8 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
       weak_grad_solver: wgrad_solver,
       int_mon_wgrads: int_mon_wgrads,
       side_mon_wgrads: side_mon_wgrads,
+      ips_int_mons_by_oshape: ips_int_mons_by_oshape,
+      ips_side_mons_by_oshape_side: ips_side_mons_by_oshape_side,
     }
   }
   
@@ -364,6 +389,18 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
   #[inline]
   pub fn new_weak_grad_ops(&self) -> WeakGradOps<Mon> {
     self.weak_grad_solver.new_weak_grad_ops()
+  }
+
+  // Inner products of reference monomials on oriented shape faces.
+
+  #[inline]
+  pub fn ips_int_mons_for_oshape<'a>(&'a self, oshape: OShape) -> &'a DenseMatrix {
+    &self.ips_int_mons_by_oshape[*oshape]
+  }
+  
+  #[inline]
+  pub fn ips_side_mons_for_oshape_side<'a>(&'a self, oshape: OShape, side_face: SideFace) -> &'a DenseMatrix {
+    &self.ips_side_mons_by_oshape_side[*oshape][*side_face]
   }
 
 }  // WgBasis impl
