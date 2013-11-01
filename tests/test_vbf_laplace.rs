@@ -1,4 +1,4 @@
-use vbf_laplace::LaplaceVBF;
+use vbf_laplace::VBFLaplace;
 use variational_bilinear_form::VariationalBilinearForm;
 use common::{Deg};
 use monomial::{Mon2d, MaxMonDeg};
@@ -15,10 +15,10 @@ fn test_is_symmetric() {
   let basis = WgBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
  
   let m = DenseMatrix::from_fn(2,2, |r,c| { if r != c { 1. } else { 0. } });
-  let vbf_asym = LaplaceVBF::new(Some(m), basis);
+  let vbf_asym = VBFLaplace::new(Some(m), basis);
   assert!(!vbf_asym.is_symmetric());
 
-  let vbf_sym = LaplaceVBF::new(None, basis);
+  let vbf_sym = VBFLaplace::new(None, basis);
   assert!(vbf_sym.is_symmetric());
 }
 
@@ -51,7 +51,7 @@ fn test_int_vs_int_sym() {
     h_inv * sides_ip
   };
   
-  let vbf = LaplaceVBF::new(None, basis);
+  let vbf = VBFLaplace::new(None, basis);
   
   assert_eq!(vbf.int_mon_vs_int_mon(OShape(0), FaceMonNum(5), FaceMonNum(2)),
              ips_term + stab_term);
@@ -89,7 +89,7 @@ fn test_int_vs_int_asym() {
     h_inv * sides_ip
   };
   
-  let vbf = LaplaceVBF::new(Some(m), basis);
+  let vbf = VBFLaplace::new(Some(m), basis);
   
   assert_eq!(vbf.int_mon_vs_int_mon(OShape(0), FaceMonNum(5), FaceMonNum(2)),
              ips_term + stab_term);
@@ -126,7 +126,7 @@ fn test_top_side_vs_int() {
     h_inv * sides_ip
   };
   
-  let vbf = LaplaceVBF::new(Some(m), basis);
+  let vbf = VBFLaplace::new(Some(m), basis);
   
   assert_eq!(vbf.side_mon_vs_int_mon(OShape(0), FaceMonNum(1), SideFace(3), FaceMonNum(5)),
              ips_term + stab_term);
@@ -158,7 +158,7 @@ fn test_bottom_side_vs_int() {
   //        = (1/h_T) <-v, Q_b w_T0>_s where s is the supporting side face of v.
   let stab_term = 0.; // Because the xy projection is 0 on the right side of the inner product.
   
-  let vbf = LaplaceVBF::new(Some(m), basis);
+  let vbf = VBFLaplace::new(Some(m), basis);
   
   assert_eq!(vbf.side_mon_vs_int_mon(OShape(0), FaceMonNum(1), SideFace(2), FaceMonNum(5)),
              ips_term + stab_term);
@@ -195,7 +195,7 @@ fn test_int_vs_right_side() {
     h_inv * sides_ip
   };
   
-  let vbf = LaplaceVBF::new(Some(m), basis);
+  let vbf = VBFLaplace::new(Some(m), basis);
   
   assert_eq!(vbf.int_mon_vs_side_mon(OShape(0), FaceMonNum(5), FaceMonNum(2), SideFace(1)),
              ips_term + stab_term);
@@ -227,7 +227,7 @@ fn test_int_vs_left_side() {
   //        = (1/h_T) <Q_b v_T0, -w>_s where s is the supporting face of w.
   let stab_term = 0.; // Because the xy projection is 0 on the left side of the inner product.
   
-  let vbf = LaplaceVBF::new(Some(m), basis);
+  let vbf = VBFLaplace::new(Some(m), basis);
   
   assert_eq!(vbf.int_mon_vs_side_mon(OShape(0), FaceMonNum(5), FaceMonNum(2), SideFace(0)),
              ips_term + stab_term);
@@ -259,7 +259,7 @@ fn test_right_side_vs_left_side() {
   //          | 0, otherwise
   let stab_term = 0.; 
   
-  let vbf = LaplaceVBF::new(Some(m), basis);
+  let vbf = VBFLaplace::new(Some(m), basis);
   
   assert_eq!(vbf.side_mon_vs_side_mon_fe_contr(OShape(0), FaceMonNum(1), SideFace(1), FaceMonNum(2), SideFace(0)),
              ips_term + stab_term);
@@ -292,7 +292,7 @@ fn test_bottom_side_vs_left_side() {
   //          | 0, otherwise
   let stab_term = 0.; 
   
-  let vbf = LaplaceVBF::new(Some(m), basis);
+  let vbf = VBFLaplace::new(Some(m), basis);
   
   assert_eq!(vbf.side_mon_vs_side_mon_fe_contr(OShape(0), FaceMonNum(1), SideFace(2), FaceMonNum(2), SideFace(0)),
              ips_term + stab_term);
@@ -328,7 +328,7 @@ fn test_right_side_vs_right_side() {
     basis.mesh().shape_diameter_inv(OShape(0)) * ip
   };
   
-  let vbf = LaplaceVBF::new(Some(m), basis);
+  let vbf = VBFLaplace::new(Some(m), basis);
   
   assert_eq!(vbf.side_mon_vs_side_mon_fe_contr(OShape(0), FaceMonNum(1), SideFace(1), FaceMonNum(2), SideFace(1)),
              ips_term + stab_term);
@@ -364,7 +364,7 @@ fn test_bottom_side_vs_bottom_side() {
     basis.mesh().shape_diameter_inv(OShape(0)) * ip
   };
   
-  let vbf = LaplaceVBF::new(Some(m), basis);
+  let vbf = VBFLaplace::new(Some(m), basis);
   
   assert_eq!(vbf.side_mon_vs_side_mon_fe_contr(OShape(0), FaceMonNum(1), SideFace(2), FaceMonNum(2), SideFace(2)),
              ips_term + stab_term);

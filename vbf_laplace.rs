@@ -19,7 +19,7 @@ use std::iter::{AdditiveIterator};
  *    of basis elements supported on the boundary of T.
  */
 
-struct LaplaceVBF<'self,Mon,MeshT> {
+struct VBFLaplace<'self,Mon,MeshT> {
 
   left_wgrad_multiplier: Option<DenseMatrix>, // post-multiplier matrix for left weak gradient in inner product
 
@@ -31,10 +31,10 @@ struct LaplaceVBF<'self,Mon,MeshT> {
 
 }
 
-impl<'self, Mon:Monomial, MeshT:Mesh<Mon>> LaplaceVBF<'self,Mon,MeshT> {
+impl<'self, Mon:Monomial, MeshT:Mesh<Mon>> VBFLaplace<'self,Mon,MeshT> {
 
   pub fn new(left_wgrad_multiplier: Option<DenseMatrix>,
-             basis: &'self WgBasis<Mon,MeshT>) -> LaplaceVBF<'self,Mon,MeshT> {
+             basis: &'self WgBasis<Mon,MeshT>) -> VBFLaplace<'self,Mon,MeshT> {
     
     let mut projector = Projector::new(basis);
 
@@ -44,7 +44,7 @@ impl<'self, Mon:Monomial, MeshT:Mesh<Mon>> LaplaceVBF<'self,Mon,MeshT> {
       })
     });
 
-    LaplaceVBF { 
+    VBFLaplace { 
       left_wgrad_multiplier: left_wgrad_multiplier,
       basis: basis,
       int_mon_side_projs: int_mon_side_projs,
@@ -66,7 +66,7 @@ impl<'self, Mon:Monomial, MeshT:Mesh<Mon>> LaplaceVBF<'self,Mon,MeshT> {
 }
 
 impl<'self, Mon:Monomial, MeshT:Mesh<Mon>> VariationalBilinearForm<'self,Mon,MeshT>
-                                       for LaplaceVBF<'self,Mon,MeshT> {
+                                       for VBFLaplace<'self,Mon,MeshT> {
 
   #[inline]
   fn basis(&self) -> &'self WgBasis<Mon,MeshT> {
