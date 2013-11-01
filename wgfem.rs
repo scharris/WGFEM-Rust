@@ -13,11 +13,11 @@ pub mod common;
 pub mod monomial;
 pub mod polynomial;
 pub mod vector_monomial;
+mod quadrature;
+mod lapack;
 pub mod dense_matrix;
 pub mod sparse_matrix;
 pub mod tensor;
-mod quadrature;
-mod lapack;
 pub mod mesh;
 pub mod rectangle_mesh;
 pub mod weak_gradient;
@@ -25,6 +25,7 @@ pub mod wg_basis;
 pub mod projection;
 pub mod variational_bilinear_form;
 pub mod vbf_laplace;
+pub mod wg_solver;
 
 #[cfg(test)]
 mod tests {
