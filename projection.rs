@@ -40,8 +40,6 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
   pub fn with_rhs_cols_capacity(basis: &'self WgBasis<Mon,MeshT>, init_rhs_cols_capacity: uint) -> Projector<'self,Mon,MeshT> {
     lapack::init(); // TODO: Move this to main when available.
 
-    let mesh = basis.mesh();
-
     let (num_int_mons, num_side_mons) = (basis.mons_per_fe_int(), basis.mons_per_fe_side());
     let lapack_ips_int_mons = DenseMatrix::from_elem(num_int_mons, num_int_mons, 0 as R);  
     let lapack_ips_side_mons = DenseMatrix::from_elem(num_side_mons, num_side_mons, 0 as R);  
