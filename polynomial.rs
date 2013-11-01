@@ -105,6 +105,8 @@ pub trait Polynomial<Mon>: ToStr {
   fn term(&self, n: uint) -> (R,Mon);
 
   fn foldl_terms<A>(&self, z: A, f: &fn(a: A, term: (R,Mon)) -> A) -> A;
+  
+  fn foldl_numbered_terms<A>(&self, z: A, f: &fn(a: A, term: (uint,R,Mon)) -> A) -> A;
 
   fn value_at(&self, x: &[R]) -> R;
   
@@ -160,8 +162,16 @@ impl<Mon:Monomial> Polynomial<Mon>
   fn foldl_terms<A>(&self, z: A, f: &fn(a: A, term: (R,Mon)) -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.mons.len()) {
-      // let term = (self.coefs[n], self.mons[n].clone());
       let term = unsafe { (self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
+      acc_val = f(acc_val, term);
+    }
+    acc_val
+  }
+  
+  fn foldl_numbered_terms<A>(&self, z: A, f: &fn(a: A, term: (uint,R,Mon)) -> A) -> A {
+    let mut acc_val = z;
+    for n in range(0, self.num_terms()) {
+      let term = unsafe { (n, self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
       acc_val = f(acc_val, term);
     }
     acc_val
@@ -219,6 +229,15 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
     acc_val
   }
   
+  fn foldl_numbered_terms<A>(&self, z: A, f: &fn(a: A, term: (uint,R,Mon)) -> A) -> A {
+    let mut acc_val = z;
+    for n in range(0, self.num_terms()) {
+      let term = unsafe { (n, self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
+      acc_val = f(acc_val, term);
+    }
+    acc_val
+  }
+  
   #[inline]
   fn value_at(&self, x: &[R]) -> R {
     self.foldl_terms(0 as R, |sum, (c,m)| sum + c * m.value_at(x))
@@ -266,6 +285,15 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
     let mut acc_val = z;
     for n in range(0, self.mons.len()) {
       let term = unsafe { (self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
+      acc_val = f(acc_val, term);
+    }
+    acc_val
+  }
+  
+  fn foldl_numbered_terms<A>(&self, z: A, f: &fn(a: A, term: (uint,R,Mon)) -> A) -> A {
+    let mut acc_val = z;
+    for n in range(0, self.num_terms()) {
+      let term = unsafe { (n, self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
       acc_val = f(acc_val, term);
     }
     acc_val
