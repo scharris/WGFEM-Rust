@@ -104,7 +104,7 @@ MKL_INT solve_sparse_symmetric_as_ut_csr3(MKL_INT n, const MKL_INT* ia, const MK
   phase = 11;
   PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, &d_un, &d_un, &error);
   
-  if (error != 0) { printf ("\nERROR during symbolic factorization: %d", error); return error; }
+  if (error != 0) { fprintf (stderr, "\nERROR during symbolic factorization: %d", error); return error; }
   printf ("\nReordering and symbolic factorization completed ... ");
   printf ("\n  Number of nonzeros in factors = %d", iparm[17]);
   printf ("\n  Number of factorization MFLOPS = %d", iparm[18]);
@@ -113,14 +113,14 @@ MKL_INT solve_sparse_symmetric_as_ut_csr3(MKL_INT n, const MKL_INT* ia, const MK
   phase = 22;
   PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, &d_un, &d_un, &error);
   
-  if (error != 0) { printf ("\nERROR during numerical factorization: %d", error); return error; }
+  if (error != 0) { fprintf (stderr, "\nERROR during numerical factorization: %d", error); return error; }
   printf ("\nFactorization completed ... ");
 
   /* Back substitution and iterative refinement. */
   phase = 33;
   PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, b, x, &error);
 
-  if (error != 0) { printf ("\nERROR during solution: %d", error); return error; }
+  if (error != 0) { fprintf (stderr, "\nERROR during solution: %d", error); return error; }
   printf ("\nSolve completed ... ");
 
   /* Release resources. */
@@ -166,7 +166,7 @@ MKL_INT solve_sparse_structurally_symmetric_csr3(MKL_INT n, const MKL_INT* ia, c
   phase = 11;
   PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, &d_un, &d_un, &error);
   
-  if (error != 0) { printf ("\nERROR during symbolic factorization: %d", error); return error; }
+  if (error != 0) { fprintf (stderr, "\nERROR during symbolic factorization: %d", error); return error; }
   printf ("\nReordering completed ... ");
   printf ("\nNumber of nonzeros in factors = %d", iparm[17]);
   printf ("\nNumber of factorization MFLOPS = %d", iparm[18]);
@@ -175,7 +175,7 @@ MKL_INT solve_sparse_structurally_symmetric_csr3(MKL_INT n, const MKL_INT* ia, c
   phase = 22;
   PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, &d_un, &d_un, &error);
  
-  if (error != 0) { printf ("\nERROR during numerical factorization: %d", error); return error; }
+  if (error != 0) { fprintf ("\nERROR during numerical factorization: %d", error); return error; }
   printf ("\nFactorization completed ... ");
 
   /* Back substitution and iterative refinement. */
@@ -184,7 +184,7 @@ MKL_INT solve_sparse_structurally_symmetric_csr3(MKL_INT n, const MKL_INT* ia, c
 
   PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, b, x, &error);
  
-  if (error != 0) { printf ("\nERROR during solution: %d", error); return error; }
+  if (error != 0) { fprintf ("\nERROR during solution: %d", error); return error; }
 
   /* Release resources. */
   phase = -1;
