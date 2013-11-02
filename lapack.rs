@@ -1,14 +1,50 @@
+use common::R;
+use dense_matrix::DenseMatrix;
+use sparse_matrix::SparseMatrix;
 
-use std::libc::{c_double, c_ulong, c_int, c_void, malloc, calloc, realloc, free};
+use std::libc::{c_double, c_ulong, c_int, c_uint, c_void, malloc, calloc, realloc, free};
 use std::cast;
+use std::vec;
 
-pub type lapack_int = c_int; // Adjust according to whether LP64 or ILP64 libraries are being linked
+
+pub type lapack_int = c_int; // Adjust according to whether LP64 or ILP64 libraries are being linked.
+pub type mkl_int = c_int;    // Adjust according to whether LP64 or ILP64 libraries are being linked.
 
 #[fixed_stack_segment]
 #[inline(never)]
 pub fn init() {
   unsafe {
     init_allocator(cast::transmute(malloc), cast::transmute(calloc), cast::transmute(realloc), cast::transmute(free));
+  }
+}
+
+#[fixed_stack_segment]
+#[inline(never)]
+pub fn solve_sparse_structurally_symmetric(sys: &SparseMatrix, rhs: &DenseMatrix, sym: bool) -> ~[R] {
+  let n = sys.num_rows();
+  unsafe {
+    let (a, ia, ja) = sys.csr3_ptrs();  
+    let mut sol = vec::from_elem(n, 0 as R);
+    let cpu_cores = 4; // TODO
+
+    let stat = 
+      if sym {
+        solve_sparse_symmetric_as_ut_csr3(n as mkl_int, ia, ja, a,
+                                          rhs.col_maj_data_ptr(), rhs.num_cols as mkl_int,
+                                          vec::raw::to_mut_ptr(sol),
+                                          cpu_cores)
+      } else {
+        solve_sparse_structurally_symmetric_csr3(n as mkl_int, ia, ja, a,
+                                                 rhs.col_maj_data_ptr(), rhs.num_cols as mkl_int,
+                                                 vec::raw::to_mut_ptr(sol),
+                                                 cpu_cores)
+      };
+
+    if stat != 0 {
+      fail!(format!("solve_sparse_symmetric_as_ut_csr3 failed with error {:d}", stat));
+    }
+
+    sol
   }
 }
 
@@ -27,10 +63,23 @@ extern {
   pub fn copy_upper_triangle(from_data: *c_double, num_rows: c_ulong, num_cols: c_ulong, to_data: *mut c_double);
 
 
+  /* Dense symmetric matrix system solver. */
   pub fn solve_symmetric_as_col_maj_with_ut_sys(a: *mut c_double,
                                                 n: lapack_int,
                                                 b: *mut c_double,
                                                 nrhs: lapack_int,
                                                 ipiv: *mut lapack_int) -> lapack_int;
+  
+  /* Sparse symmetric matrix system solver. */
+  pub fn solve_sparse_symmetric_as_ut_csr3(n: mkl_int, ia: *mkl_int, ja: *mkl_int, a: *c_double,
+                                           b: *c_double, nrhs: mkl_int,
+                                           x: *mut c_double,
+                                           num_cpu_cores: c_uint) -> mkl_int;
+
+  /* Sparse structurally symmetric matrix system solver. */
+  pub fn solve_sparse_structurally_symmetric_csr3(n: mkl_int, ia: *mkl_int, ja: *mkl_int, a: *c_double,
+                                                  b: *c_double, nrhs: mkl_int,
+                                                  x: *mut c_double,
+                                                  num_cpu_cores: c_uint) -> mkl_int;
 }
 

@@ -1,8 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "mkl.h"
 #include "mkl_lapacke.h"
+#include "mkl_pardiso.h"
+#include "mkl_types.h"
 #include "i_malloc.h"
+
 
 void init_allocator(void* malloc_fn, void* calloc_fn, void* realloc_fn, void* free_fn) {
   i_malloc = malloc_fn;
@@ -12,33 +16,18 @@ void init_allocator(void* malloc_fn, void* calloc_fn, void* realloc_fn, void* fr
 }
 
 void printm(double* a, lapack_int m, lapack_int n, lapack_int lda) {
-	lapack_int i, j;
-	for(i = 0; i < m; i++) {
-		for(j = 0; j < n; j++) printf( " %6.2f", a[i+j*lda] );
-		printf( "\n" );
-	}
+  lapack_int i, j;
+  for(i = 0; i < m; i++) {
+    for(j = 0; j < n; j++) printf( " %6.2f", a[i+j*lda] );
+    printf( "\n" );
+  }
 }
 
 void printiv(lapack_int* a, lapack_int n) {
-	lapack_int j;
-	for( j = 0; j < n; j++ ) printf( " %6i", a[j] );
-	printf( "\n" );
+  lapack_int j;
+  for( j = 0; j < n; j++ ) printf( " %6i", a[j] );
+  printf( "\n" );
 }
-
-
-lapack_int solve_symmetric_as_col_maj_with_ut_sys(double* a,
-                                                  lapack_int n,
-                                                  double* b,
-                                                  lapack_int nrhs,
-                                                  lapack_int* ipiv) {
-  lapack_int info;
-  
-  /* printm(a, n, n, n); printm(b, n, nrhs, n); */
-
-  info = LAPACKE_dsysv(LAPACK_COL_MAJOR, 'U', n, nrhs, a, n, ipiv, b, n);
-
-  /* printm(b, n, nrhs, n); printm(a, n, n, n); printiv(ipiv, n); */
-} 
 
 
 /* allocation and de-allocation of aligned data for use as matrix storage */
@@ -73,4 +62,133 @@ void copy_upper_triangle(const double* from_data, unsigned long num_rows, unsign
          from_data, &rows, to_data, &rows);
 }
 
+/* Dense matrix system solver. */
+lapack_int solve_symmetric_as_col_maj_with_ut_sys
+           (double* a, lapack_int n, double* b, lapack_int nrhs, lapack_int* ipiv) {
+  return LAPACKE_dsysv(LAPACK_COL_MAJOR, 'U', n, nrhs, a, n, ipiv, b, n);
+} 
+
+
+/* Sparse symmetric matrix system solver. */
+MKL_INT solve_sparse_symmetric_as_ut_csr3(MKL_INT n, const MKL_INT* ia, const MKL_INT* ja, const double* a,
+                                          const double* b, MKL_INT nrhs,
+                                          double* x,
+                                          unsigned num_cpu_cores) {
+
+  MKL_INT mtype = -2; /* symmetric indefinite */
+  void *pt[64];
+  MKL_INT iparm[64];
+  MKL_INT maxfct, mnum, phase, error, msglvl;
+
+  MKL_INT i, i_un;
+  double d_un; /* "*_un" for unused params */
+
+  for (i = 0; i<64; i++) { iparm[i] = 0; }
+  iparm[0] = 1;  /* Not all defaults */
+  iparm[1] = 2;  /* Fill-in reordering from METIS */
+  iparm[7] = 2;  /* Max numbers of iterative refinement steps. 0 also means 2 iterations but does not seem to allow for early stopping.  */
+  iparm[9] = 8;  /* Perturb the pivot elements with 1E-8 which is the default for symmetric matrices. */
+  iparm[23] = num_cpu_cores > 8 ? 1 : 0; /* Use two level parallel factorization algorithm. */
+  iparm[26] = 1; /* Check matrix. TODO: Unset after testing. */
+  iparm[34] = 1; /* Use 0-based row and column numbers within ia and ja arrays. */
+
+  maxfct = 1;    /* Leave this at 1. Number of numerical factorizations to keep in memory */
+  mnum = 1;      /* Leave this at 1. Which factorization of the above to use in the solving step. */
+  msglvl = 0;    /* No statistical information output. */
+  error = 0;
+  
+  /* Required initialization for internal data pointer. */
+  for (i = 0; i<64; i++) { pt[i] = 0; }
+
+  /* Reordering and Symbolic Factorization. */
+  phase = 11;
+  PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, &d_un, &d_un, &error);
+  
+  if (error != 0) { printf ("\nERROR during symbolic factorization: %d", error); return error; }
+  printf ("\nReordering and symbolic factorization completed ... ");
+  printf ("\n  Number of nonzeros in factors = %d", iparm[17]);
+  printf ("\n  Number of factorization MFLOPS = %d", iparm[18]);
+  
+  /* Numerical factorization. */
+  phase = 22;
+  PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, &d_un, &d_un, &error);
+  
+  if (error != 0) { printf ("\nERROR during numerical factorization: %d", error); return error; }
+  printf ("\nFactorization completed ... ");
+
+  /* Back substitution and iterative refinement. */
+  phase = 33;
+  PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, b, x, &error);
+
+  if (error != 0) { printf ("\nERROR during solution: %d", error); return error; }
+  printf ("\nSolve completed ... ");
+
+  /* Release resources. */
+  phase = -1;
+  PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, &d_un, ia, ja, &i_un, &nrhs, iparm, &msglvl, &d_un, &d_un, &error);
+  return 0;
+}
+
+/* Sparse structurally symmetric matrix system solver. */
+MKL_INT solve_sparse_structurally_symmetric_csr3(MKL_INT n, const MKL_INT* ia, const MKL_INT* ja, const double* a,
+                                                 const double* b, MKL_INT nrhs,
+                                                 double* x,
+                                                 unsigned num_cpu_cores) {
+
+  MKL_INT mtype = 1; /* Real structurally symmetric matrix. */
+  void *pt[64];
+  MKL_INT iparm[64];
+  MKL_INT maxfct, mnum, phase, error, msglvl;
+  
+  MKL_INT i, i_un;
+  double d_un;  /* "*_un" for unused params */
+
+  for (i=0; i<64; i++) { iparm[i] = 0; }
+  iparm[0] = 1;  /* Not all defaults */
+  iparm[1] = 2;  /* Fill-in reordering from METIS */
+  iparm[7] = 2;  /* Max numbers of iterative refinement steps. 0 also means 2 iterations but does not seem to allow for early stopping.  */
+  iparm[9] = 13; /* Perturb the pivot elements with 1E-13 which is the default for nonsymmetric matrices. */
+  iparm[10] = 1; /* Use nonsymmetric permutation and scaling MPS. */
+  iparm[12] = 1; /* Maximum weighted matching algorithm is switched-on (default for nonsymmetric matrices). */
+  iparm[23] = num_cpu_cores > 8 ? 1 : 0; /* Use two level parallel factorization algorithm. */
+  iparm[26] = 1; /* Check matrix. TODO: Unset after testing. */
+  iparm[34] = 1; /* Use 0-based row and column numbers within ia and ja arrays. */
+
+  maxfct = 1;    /* Leave this at 1. Number of numerical factorizations to keep in memory. */
+  mnum = 1;      /* Leave this at 1. Which factorization of the above to use in the solving step. */
+  msglvl = 0;    /* No statistical information output. */
+  error = 0;
+  
+  /* Required initialization for MKL internal use data. */
+  for (i=0; i<64; i++) { pt[i] = 0; }
+
+  /*  Reordering and Symbolic Factorization. */
+  phase = 11;
+  PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, &d_un, &d_un, &error);
+  
+  if (error != 0) { printf ("\nERROR during symbolic factorization: %d", error); return error; }
+  printf ("\nReordering completed ... ");
+  printf ("\nNumber of nonzeros in factors = %d", iparm[17]);
+  printf ("\nNumber of factorization MFLOPS = %d", iparm[18]);
+
+  /* Numerical factorization. */
+  phase = 22;
+  PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, &d_un, &d_un, &error);
+ 
+  if (error != 0) { printf ("\nERROR during numerical factorization: %d", error); return error; }
+  printf ("\nFactorization completed ... ");
+
+  /* Back substitution and iterative refinement. */
+  phase = 33;
+  printf("\n\nSolving system...\n");
+
+  PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, b, x, &error);
+ 
+  if (error != 0) { printf ("\nERROR during solution: %d", error); return error; }
+
+  /* Release resources. */
+  phase = -1;
+  PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, &d_un, ia, ja, &i_un, &nrhs, iparm, &msglvl, &d_un, &d_un, &error);
+  return 0;
+}
 

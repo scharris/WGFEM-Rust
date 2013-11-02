@@ -36,7 +36,8 @@ mod tests {
   mod test_dense_matrix;
   mod test_sparse_matrix;
   mod test_tensor;
-  // no tests for quadrature, lapack
+  mod test_lapack;
+  // no tests for quadrature
   // no tests for abstract mesh
   mod test_rectangle_mesh;
   mod test_weak_gradient;
