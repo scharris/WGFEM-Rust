@@ -57,7 +57,7 @@ fn test_3x4_csr3() {
   m.push(3,2, 11.);
 
   unsafe {
-    let (vals, cols, row_begins) = m.csr3_ptrs();
+    let (vals, row_begins, cols) = m.csr3_ptrs();
     
     let vals_vec = vec::from_buf(vals, 7);
     assert_eq!(vals_vec, ~[0.,1.,3.,5.,6.,10.,11.]);

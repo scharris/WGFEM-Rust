@@ -63,8 +63,8 @@ impl SparseMatrix {
     0 as R
   }
 
-  /// Returns the 3-array variant of the Compressed Sparse Row format as pointers to the values array, the
-  /// corresponding column numbers of the values, and the row begin indexes in the values array, respectively.
+  /// Returns the 3-array variant (a, ia, ja) of the Compressed Sparse Row format as pointers to the values array a,
+  /// the row beginning indexes ia into the values array, and the corresponding column numbers ja of the values.
   /// The row_begins vector must have a capacity of at least one greater than its length, otherwise an error
   /// is generated. This allows an extra "cap" entry to be written past the proper row beginning index values
   /// as required by lapack, in the reserved capacity part of the row_begins buffer.
@@ -78,8 +78,8 @@ impl SparseMatrix {
       *ptr::mut_offset(row_begins_ptr, self.row_begins.len() as int) = self.values.len() as lapack_int;
       
       (raw::to_ptr(self.values),
-       raw::to_ptr(self.value_cols),
-       raw::to_ptr(self.row_begins))
+       raw::to_ptr(self.row_begins),
+       raw::to_ptr(self.value_cols))
     }
   }
 
