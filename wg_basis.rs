@@ -352,6 +352,7 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
 
 
   /// Get the polynomial representing the passed full WG solution restricted to a particular finite element interior.
+  #[inline]
   pub fn fe_int_poly<'a>(&'a self, fe: FENum, sol_basis_coefs: &'a [R]) -> PolyBorrowing<'a,Mon> {
     let fe_first_int_beln = self.int_mon_el_num(fe, FaceMonNum(0));
     let fe_int_coefs = sol_basis_coefs.slice(*fe_first_int_beln, *fe_first_int_beln + self.mons_per_fe_int);
@@ -359,6 +360,7 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
   }
 
   /// Get the polynomial representing the passed full WG solution restricted to a particular finite element interior.
+  #[inline]
   pub fn fe_side_poly<'a>(&'a self, fe: FENum, side_face: SideFace, sol_basis_coefs: &'a [R]) -> PolyBorrowing<'a,Mon> {
     let fe_side_mons = self.side_mons_for_fe_side(fe, side_face);
     let fe_side_first_beln = self.fe_side_mon_el_num(fe, side_face, FaceMonNum(0));
