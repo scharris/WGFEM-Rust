@@ -91,7 +91,7 @@ pub trait Mesh<Mon> {
   fn intg_global_fn_on_fe_int(&self,
        g: &fn(&[R]) -> R,
        fe: FENum) -> R;
-  
+
   fn intg_global_fn_x_facerel_mon_on_fe_int(&self,
        g: &fn(&[R]) -> R,
        mon: Mon,
@@ -102,6 +102,10 @@ pub trait Mesh<Mon> {
        mon: Mon,
        fe: FENum,
        side_face: SideFace) -> R;
+  
+  fn intg_mixed_global_and_facerel_fn_on_fe_int(&self,
+       f: &fn(&[R], &[R])->R,
+       fe: FENum) -> R; 
 
   fn intg_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self,
        p: &P,

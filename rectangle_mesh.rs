@@ -284,6 +284,7 @@ impl<Mon:Monomial> RectMesh<Mon> {
   }
 
   /// Retrieve the corners of minimum and maximum coordinates for the given finite element.
+  #[inline]
   fn fe_coord_min_max_corners<'a>(&'a mut self, fe: FENum) -> (&'a [R], &'a [R]) {
     for r in range(0, self.space_dims) {
       let min_corner_comp_r = self.fe_min_corner_comp(fe, Dim(r));
@@ -485,7 +486,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
 
   #[inline]
   fn intg_global_fn_on_fe_int(&self, f: &fn(&[R]) -> R, fe: FENum) -> R {
-    let (fe_min_corner, fe_max_corner) = unsafe { // Mutate a work buffer to hold the ranges of integration.
+    let (fe_min_corner, fe_max_corner) = unsafe { // Mutate a work buffer to hold the fe min and max corners.
       cast::transmute_mut(self).fe_coord_min_max_corners(fe)
     };
     quadrature(&f, fe_min_corner, fe_max_corner, self.integration_rel_err, self.integration_abs_err)
@@ -493,7 +494,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
 
   #[inline]
   fn intg_global_fn_x_facerel_mon_on_fe_int(&self, f: &fn(&[R]) -> R, mon: Mon, fe: FENum) -> R {
-    let (fe_min_corner, fe_max_corner) = unsafe { // Mutate a work buffer to hold the ranges of integration.
+    let (fe_min_corner, fe_max_corner) = unsafe { // Mutate a work buffer to hold the fe min and max corners.
       cast::transmute_mut(self).fe_coord_min_max_corners(fe)
     };
     let fe_int_origin = &fe_min_corner;
@@ -501,6 +502,28 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
                fe_min_corner, fe_max_corner,
                self.integration_rel_err, self.integration_abs_err)
   }
+  
+  #[inline]
+  fn intg_mixed_global_and_facerel_fn_on_fe_int(&self, f: &fn(&[R], &[R])->R, fe: FENum) -> R {
+    let (fe_min_corner, fe_max_corner) = unsafe { // Mutate a work buffer to hold the fe min and max corners.
+      cast::transmute_mut(self).fe_coord_min_max_corners(fe)
+    };
+    let fe_int_origin = &fe_min_corner;
+    
+    let x_rel = unsafe { cast::transmute_mut(self).intg_pt_trans_buf.mut_slice_from(0) };
+    
+    let integrand = |x: &[R]| {
+      for r in range(0, x_rel.len()) {
+        x_rel[r] = x[r] - fe_int_origin[r];
+      }
+      f(x, x_rel)
+    };
+    
+    quadrature(&integrand,
+               fe_min_corner, fe_max_corner,
+               self.integration_rel_err, self.integration_abs_err)
+  }
+
   
   fn intg_global_fn_x_facerel_mon_on_fe_side(&self, g: &fn(&[R]) -> R, mon: Mon, fe: FENum, side_face: SideFace) -> R {
     let a = side_face_perp_axis(side_face);
@@ -526,7 +549,6 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
                self.side_space_dims_zeros, self.fe_side_lens_wo_dim[*a],
                self.integration_rel_err, self.integration_abs_err)
   }
-
 
   #[inline]
   fn intg_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self, p: &P, oshape: OShape) -> R {

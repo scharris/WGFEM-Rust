@@ -1465,6 +1465,68 @@ fn test_intg_global_fn_x_facerel_mon_on_fe16_int_4d() -> () {
                 pow(1./3.,3)/3. * pow(1./4.,5)/5. * pow(1./5.,2)/2. * pow(1./6.,2)/2.);
 }
 
+// TODO >>>
+#[test]
+fn test_intg_mixed_global_and_facerel_fn_on_fe4_int_2d() {
+  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
+                                                 ~[2f64, 3.],
+                                                 ~[MeshCoord(3), MeshCoord(4)]);
+  let x = Mon2d { exps: [Deg(1), Deg(0)] };
+  let y = Mon2d { exps: [Deg(0), Deg(1)] };
+  let xy = x*y;
+
+  let int_origin_0 = rmesh3x4.fe_interior_origin_comp(FENum(4), Dim(0));
+  let int_origin_1 = rmesh3x4.fe_interior_origin_comp(FENum(4), Dim(1));
+  let x2_y3_xy = |x_g: &[R], x_rel: &[R]| -> R {
+    pow(x_g[0]-int_origin_0, 2) * pow(x_g[1]-int_origin_1, 3) * xy.value_at(x_rel)
+  };
+
+  assert_approx(rmesh3x4.intg_mixed_global_and_facerel_fn_on_fe_int(x2_y3_xy, FENum(4)),
+                pow(1./3.,4)/4. * pow(1./4.,5)/5.);
+}
+
+#[test]
+fn test_intg_mixed_global_and_facerel_fn_on_fe16_int_3d() {
+  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+                                                   ~[2f64, 3., 4.],
+                                                   ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
+  let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
+  let y = Mon3d { exps: [Deg(0), Deg(1), Deg(0)] };
+  let z = Mon3d { exps: [Deg(0), Deg(0), Deg(1)] };
+  let xyz = x*y*z;
+
+  let int_origin_0 = rmesh3x4x5.fe_interior_origin_comp(FENum(16), Dim(0));
+  let int_origin_1 = rmesh3x4x5.fe_interior_origin_comp(FENum(16), Dim(1));
+  let x2_y3_xyz = |x_g: &[R], x_rel: &[R]| -> R {
+    pow(x_g[0]-int_origin_0, 2) * pow(x_g[1]-int_origin_1, 3) * xyz.value_at(x_rel)
+  };
+
+  assert_approx(rmesh3x4x5.intg_mixed_global_and_facerel_fn_on_fe_int(x2_y3_xyz, FENum(16)),
+                pow(1./3.,4)/4. * pow(1./4.,5)/5. * pow(1./5.,2)/2.);
+}
+
+
+#[test]
+fn test_intg_mixed_global_and_facerel_fn_on_fe16_int_4d() {
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
+                                                     ~[2f64, 3., 4., 5.],
+                                                     ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
+  let y = Mon4d { exps: [Deg(0), Deg(1), Deg(0), Deg(0)] };
+  let z = Mon4d { exps: [Deg(0), Deg(0), Deg(1), Deg(0)] };
+  let t = Mon4d { exps: [Deg(0), Deg(0), Deg(0), Deg(1)] };
+  let yzt = y*z*t;
+
+  let int_origin_0 = rmesh3x4x5x6.fe_interior_origin_comp(FENum(16), Dim(0));
+  let int_origin_1 = rmesh3x4x5x6.fe_interior_origin_comp(FENum(16), Dim(1));
+  let x2_y3_yzt = |x_g: &[R], x_rel: &[R]| -> R {
+    pow(x_g[0]-int_origin_0, 2) * pow(x_g[1]-int_origin_1, 3) * yzt.value_at(x_rel)
+  };
+
+  assert_approx(rmesh3x4x5x6.intg_mixed_global_and_facerel_fn_on_fe_int(x2_y3_yzt, FENum(16)),
+                pow(1./3.,3)/3. * pow(1./4.,5)/5. * pow(1./5.,2)/2. * pow(1./6.,2)/2.);
+}
+
+
 #[test]
 fn test_intg_facerel_poly_on_oshape_int_2d() -> () {
   let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
