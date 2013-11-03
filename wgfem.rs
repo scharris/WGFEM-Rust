@@ -25,7 +25,9 @@ pub mod wg_basis;
 pub mod projection;
 pub mod variational_bilinear_form;
 pub mod vbf_laplace;
+pub mod wg_solution;
 pub mod wg_solver;
+pub mod wg_error_estimates;
 
 #[cfg(test)]
 mod tests {

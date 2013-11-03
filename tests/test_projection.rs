@@ -4,12 +4,12 @@ use polynomial::{Polynomial, PolyBorrowingMons, approx_equiv, approx_equiv_v};
 use monomial::{Monomial, Mon2d, MaxMonDeg}; 
 use mesh::{FENum, OShape, SideFace};
 use rectangle_mesh::{RectMesh, MeshCoord};
-use wg_basis::{WgBasis};
+use wg_basis::{WGBasis};
 
 #[test]
 fn test_identity_proj_fe0() {
   let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
-  let basis = WgBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
+  let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
   let mut projector: Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
 
   // 0 x^0y^0 + -2 x^0y^1 + 0 x^0y^2 + -0 x^0y^3 + 1 x^1y^0 + -3 x^1y^1 + -2 x^1y^2 + 0 x^2y^0 + 1 x^2y^1 + -0 x^3y^0
@@ -29,7 +29,7 @@ fn test_int_projs() {
   let fe4_int_orig_0 = 1.;
   let fe4_int_orig_1 = 1.;
   
-  let basis = WgBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
+  let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
   let mut projector: Projector<Mon2d,RectMesh<Mon2d>>  = Projector::with_rhs_cols_capacity(basis, 2); // force a reallocation of rhs buffer
 
   let g = |x: &[R]| {
@@ -61,7 +61,7 @@ fn test_right_side_projs() {
   let fe5_int_orig_0 = 2.;
   let fe5_int_orig_1 = 1.;
   
-  let basis = WgBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
+  let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
   let mut projector: Projector<Mon2d,RectMesh<Mon2d>>  = Projector::with_rhs_cols_capacity(basis, 2); // force a reallocation of rhs buffer
 
   // The function to be projected is the polynomial whose representation relative to fe 5's interior is
@@ -98,7 +98,7 @@ fn test_right_side_projs() {
 #[test]
 fn test_int_mons_side_projs() {
   let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[6.,12.], ~[MeshCoord(3),MeshCoord(4)]);
-  let basis = WgBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
+  let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
   let mut projector: Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
 
   let one = Mon2d { exps: [Deg(0), Deg(0)] };

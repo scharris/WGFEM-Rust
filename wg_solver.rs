@@ -1,9 +1,10 @@
 use common::{R};
 use monomial::Monomial;
-use polynomial::{Polynomial, PolyBorrowingMons};
+use polynomial::{Polynomial};
 use dense_matrix::DenseMatrix;
-use mesh::{Mesh, FENum, OShape, SideFace};
-use wg_basis::{WgBasis, FaceMonNum, BasisElNum};
+use mesh::{Mesh, OShape, SideFace};
+use wg_basis::{WGBasis, FaceMonNum, BasisElNum};
+use wg_solution::{WGSolution, BoundaryProjections};
 use projection::Projector;
 use variational_bilinear_form::VariationalBilinearForm;
 use lapack;
@@ -32,18 +33,13 @@ use vbf_laplace::VBFLaplace; // TODO: remove when Rust ICE is fixed
  * the *transpose* of the basis-vs-basis vbf values matrix.
  */
 
-struct WgSolution<'self,Mon,MeshT> {
-  basis_coefs: ~[R],
-  basis: &'self WgBasis<Mon,MeshT>,
-  bnd_projs: BoundaryProjections<'self,Mon>
-}
 
 /*
 pub fn solve<'self, Mon: Monomial, MeshT: Mesh<Mon>, VBF: VariationalBilinearForm<'self, Mon, MeshT>>
-       (vbf: &'self VBF, f: &fn(&[R])->R, g: &fn(&[R])->R) -> WgSolution<'self,Mon,MeshT> {
+       (vbf: &'self VBF, f: &fn(&[R])->R, g: &fn(&[R])->R) -> WGSolution<'self,Mon,MeshT> {
 */
 fn solve_laplace<'a, Mon:Monomial, MeshT:Mesh<Mon>>
-   (basis: &'a WgBasis<Mon,MeshT>, f: &fn(&[R])->R, g: &fn(&[R])->R) -> WgSolution<'a,Mon,MeshT> {
+   (basis: &'a WGBasis<Mon,MeshT>, f: &fn(&[R])->R, g: &fn(&[R])->R) -> WGSolution<'a,Mon,MeshT> {
   
   // TODO: Replace with vbf trait parameter when Rust internal compiler error is fixed. https://github.com/mozilla/rust/issues/10201
   let vbf = &VBFLaplace::new(None, basis);
@@ -58,19 +54,15 @@ fn solve_laplace<'a, Mon:Monomial, MeshT:Mesh<Mon>>
     vbf_bnd_projs_vs_bel(vbf, &bnd_projs, BasisElNum(i), basis)
   );
 
-  let sol = lapack::solve_sparse_structurally_symmetric(&sys_m, &sys_rhs, vbf.is_symmetric());
+  let sol_coefs = lapack::solve_sparse_structurally_symmetric(&sys_m, &sys_rhs, vbf.is_symmetric());
 
-  WgSolution {
-    basis_coefs: sol,
-    basis: basis,
-    bnd_projs: bnd_projs,
-  }
+  WGSolution::new(sol_coefs, basis, bnd_projs)
 }
 
 fn ip_on_ints<Mon:Monomial, MeshT: Mesh<Mon>>
    (f: &fn(&[R])->R,
     bel: BasisElNum,
-    basis: &WgBasis<Mon,MeshT>) -> R {
+    basis: &WGBasis<Mon,MeshT>) -> R {
   if basis.is_int_supported(bel) { 0 as R }
   else {
     let (bel_fe, bel_mon) = (basis.support_int_fe_num(bel), basis.int_mon(bel));
@@ -86,7 +78,7 @@ fn vbf_bnd_projs_vs_bel<'a, Mon:Monomial, MeshT: Mesh<Mon>>
    (vbf: &VBFLaplace<'a,Mon,MeshT>,
     bnd_projs: &BoundaryProjections<'a,Mon>,
     bel: BasisElNum,
-    basis: &WgBasis<Mon,MeshT>) -> R {
+    basis: &WGBasis<Mon,MeshT>) -> R {
 
   let mesh = basis.mesh();
   
@@ -134,10 +126,8 @@ fn vbf_bnd_projs_vs_bel<'a, Mon:Monomial, MeshT: Mesh<Mon>>
   }
 }
 
-type BoundaryProjections<'self,Mon> = HashMap<(FENum,SideFace), PolyBorrowingMons<'self,Mon>>;
-
 fn boundary_projections<'a, Mon: Monomial, MeshT: Mesh<Mon>>
-   (g: &fn(&[R])->R, basis: &'a WgBasis<Mon,MeshT>) -> BoundaryProjections<'a, Mon> {
+   (g: &fn(&[R])->R, basis: &'a WGBasis<Mon,MeshT>) -> BoundaryProjections<'a, Mon> {
  
   let mut projector = Projector::new(basis);
 
@@ -156,5 +146,4 @@ fn boundary_projections<'a, Mon: Monomial, MeshT: Mesh<Mon>>
   
   projs_by_fe_sf
 }
-
 

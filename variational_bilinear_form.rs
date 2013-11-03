@@ -1,6 +1,6 @@
 use common::{R, R_NaN};
 use mesh::{Mesh, FENum, OShape, SideFace, NBSideNum, NBSideInclusions};
-use wg_basis::{WgBasis, FaceMonNum};
+use wg_basis::{WGBasis, FaceMonNum};
 use monomial::Monomial;
 use tensor::{Tensor3, Tensor4, Tensor5};
 use sparse_matrix::{SparseMatrix};
@@ -12,7 +12,7 @@ use extra::sort;
 
 pub trait VariationalBilinearForm<'self,Mon:Monomial,MeshT:Mesh<Mon>> {
 
-  fn basis(&self) -> &'self WgBasis<Mon,MeshT>;
+  fn basis(&self) -> &'self WGBasis<Mon,MeshT>;
 
   fn is_symmetric(&self) -> bool;
 

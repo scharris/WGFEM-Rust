@@ -5,7 +5,7 @@ use dense_matrix::DenseMatrix;
 use monomial::{Monomial};
 use polynomial::{PolyBorrowingMons};
 use mesh::{Mesh, FENum, OShape, SideFace};
-use wg_basis::{WgBasis};
+use wg_basis::{WGBasis};
 
 use std::num;
 use std::vec;
@@ -20,7 +20,7 @@ use std::vec;
 
 pub struct Projector<'self,Mon,MeshT> {
  
-  basis: &'self WgBasis<Mon,MeshT>,
+  basis: &'self WGBasis<Mon,MeshT>,
 
   // Work matrices for lapack to avoid allocations and because lapack enjoys writing over its inputs.
   lapack_ips_int_mons: DenseMatrix,
@@ -33,11 +33,11 @@ pub struct Projector<'self,Mon,MeshT> {
 
 impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
 
-  pub fn new(basis: &'self WgBasis<Mon,MeshT>) -> Projector<'self,Mon,MeshT> {
+  pub fn new(basis: &'self WGBasis<Mon,MeshT>) -> Projector<'self,Mon,MeshT> {
     Projector::with_rhs_cols_capacity(basis, 1000u)
   }
   
-  pub fn with_rhs_cols_capacity(basis: &'self WgBasis<Mon,MeshT>, init_rhs_cols_capacity: uint) -> Projector<'self,Mon,MeshT> {
+  pub fn with_rhs_cols_capacity(basis: &'self WGBasis<Mon,MeshT>, init_rhs_cols_capacity: uint) -> Projector<'self,Mon,MeshT> {
     lapack::init(); // TODO: Move this to main when available.
 
     let (num_int_mons, num_side_mons) = (basis.mons_per_fe_int(), basis.mons_per_fe_side());
@@ -61,7 +61,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
   }
  
   #[inline]
-  pub fn basis(&self) -> &'self WgBasis<Mon,MeshT> {
+  pub fn basis(&self) -> &'self WGBasis<Mon,MeshT> {
     self.basis
   }
 

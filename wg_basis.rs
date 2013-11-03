@@ -80,7 +80,7 @@ pub struct FaceMonNum(uint);
 
 
 // A type representing a basis for Weak Galerkin approximating polynomials on an arbitrary mesh.
-struct WgBasis<Mon,Mesh> {
+struct WGBasis<Mon,Mesh> {
   
   // The mesh over which the Weak Galerkin basis is formed.
   mesh: ~Mesh,
@@ -122,9 +122,9 @@ struct WgBasis<Mon,Mesh> {
 }
 
 
-impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
+impl <Mon:Monomial, MeshT:Mesh<Mon>> WGBasis<Mon,MeshT> {
 
-  pub fn new(mesh: ~MeshT, int_polys_deg_lim: DegLim, side_polys_deg_lim: DegLim) -> ~WgBasis<Mon,MeshT> {
+  pub fn new(mesh: ~MeshT, int_polys_deg_lim: DegLim, side_polys_deg_lim: DegLim) -> ~WGBasis<Mon,MeshT> {
     
     let int_mons = Monomial::mons_with_deg_lim_asc(int_polys_deg_lim);
     
@@ -167,7 +167,7 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
       })
     });
 
-    ~WgBasis {
+    ~WGBasis {
       mesh: mesh,
       int_polys_deg_lim: int_polys_deg_lim,
       side_polys_deg_lim: side_polys_deg_lim,
@@ -405,7 +405,7 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WgBasis<Mon,MeshT> {
     &self.ips_side_mons_by_oshape_side[*oshape][*side_face]
   }
 
-}  // WgBasis impl
+}  // WGBasis impl
 
 
 

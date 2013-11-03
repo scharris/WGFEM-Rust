@@ -3,7 +3,7 @@ use monomial::Monomial;
 use polynomial::{PolyBorrowingMons};
 use dense_matrix::DenseMatrix;
 use mesh::{Mesh, OShape, SideFace};
-use wg_basis::{WgBasis, FaceMonNum};
+use wg_basis::{WGBasis, FaceMonNum};
 use weak_gradient::{WeakGrad, WeakGradOps};
 use projection::Projector;
 use variational_bilinear_form::VariationalBilinearForm;
@@ -27,14 +27,14 @@ struct VBFLaplace<'self,Mon,MeshT> {
 
   weak_grad_ops: WeakGradOps<Mon>,
   
-  basis: &'self WgBasis<Mon,MeshT>,
+  basis: &'self WGBasis<Mon,MeshT>,
 
 }
 
 impl<'self, Mon:Monomial, MeshT:Mesh<Mon>> VBFLaplace<'self,Mon,MeshT> {
 
   pub fn new(left_wgrad_multiplier: Option<DenseMatrix>,
-             basis: &'self WgBasis<Mon,MeshT>) -> VBFLaplace<'self,Mon,MeshT> {
+             basis: &'self WGBasis<Mon,MeshT>) -> VBFLaplace<'self,Mon,MeshT> {
     
     let mut projector = Projector::new(basis);
 
@@ -69,7 +69,7 @@ impl<'self, Mon:Monomial, MeshT:Mesh<Mon>> VariationalBilinearForm<'self,Mon,Mes
                                        for VBFLaplace<'self,Mon,MeshT> {
 
   #[inline]
-  fn basis(&self) -> &'self WgBasis<Mon,MeshT> {
+  fn basis(&self) -> &'self WGBasis<Mon,MeshT> {
     self.basis
   }
 
