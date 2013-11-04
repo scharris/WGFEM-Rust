@@ -5,14 +5,14 @@ use wg_solution::WGSolution;
 
 use std::num::sqrt;
 
-
 pub fn err_L2_norm<Mon:Monomial,MeshT:Mesh<Mon>>(exact_sol: &fn(&[R])->R, approx: &WGSolution<Mon,MeshT>) -> R {
   let mesh = approx.basis().mesh();
   let sum_fe_sq_err_intgs = range(0, mesh.num_fes()).fold(0 as R, |sum_fe_sq_err_intgs, fe| {
+    let fe = FENum(fe);
     let sq_err_at_pt = |x: &[R], x_int_rel: &[R]| {
-      sq(exact_sol(x) - approx.value_at_int_rel(FENum(fe), x_int_rel))
+      sq(exact_sol(x) - approx.value_at_int_rel(fe, x_int_rel))
     };
-    sum_fe_sq_err_intgs + mesh.intg_mixed_global_and_facerel_fn_on_fe_int(sq_err_at_pt, FENum(fe))
+    sum_fe_sq_err_intgs + mesh.intg_mixed_global_and_facerel_fn_on_fe_int(sq_err_at_pt, fe)
   });
 
   sqrt(sum_fe_sq_err_intgs)
@@ -61,7 +61,6 @@ end
 
 
 # Error Estimates
-
 
 function err_H1_norm(exact_sol::Function,
                      grad_exact_sol::Array{Function,1},
