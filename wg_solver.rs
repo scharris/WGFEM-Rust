@@ -38,7 +38,7 @@ use vbf_laplace::VBFLaplace; // TODO: remove when Rust ICE is fixed
 pub fn solve<'self, Mon: Monomial, MeshT: Mesh<Mon>, VBF: VariationalBilinearForm<'self, Mon, MeshT>>
        (vbf: &'self VBF, f: &fn(&[R])->R, g: &fn(&[R])->R) -> WGSolution<'self,Mon,MeshT> {
 */
-fn solve_laplace<'a, Mon:Monomial, MeshT:Mesh<Mon>>
+pub fn solve_laplace<'a, Mon:Monomial, MeshT:Mesh<Mon>>
    (basis: &'a WGBasis<Mon,MeshT>, f: &fn(&[R])->R, g: &fn(&[R])->R) -> WGSolution<'a,Mon,MeshT> {
   
   // TODO: Replace with vbf trait parameter when Rust internal compiler error is fixed. https://github.com/mozilla/rust/issues/10201
@@ -63,7 +63,7 @@ fn ip_on_ints<Mon:Monomial, MeshT: Mesh<Mon>>
    (f: &fn(&[R])->R,
     bel: BasisElNum,
     basis: &WGBasis<Mon,MeshT>) -> R {
-  if basis.is_int_supported(bel) { 0 as R }
+  if !basis.is_int_supported(bel) { 0 as R }
   else {
     let (bel_fe, bel_mon) = (basis.support_int_fe_num(bel), basis.int_mon(bel));
     basis.mesh().intg_global_fn_x_facerel_mon_on_fe_int(f, bel_mon, bel_fe)
