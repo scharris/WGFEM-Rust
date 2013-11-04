@@ -124,7 +124,7 @@ struct WGBasis<Mon,Mesh> {
 
 impl <Mon:Monomial, MeshT:Mesh<Mon>> WGBasis<Mon,MeshT> {
 
-  pub fn new(mesh: ~MeshT, int_polys_deg_lim: DegLim, side_polys_deg_lim: DegLim) -> ~WGBasis<Mon,MeshT> {
+  pub fn new(mesh: ~MeshT, int_polys_deg_lim: DegLim, side_polys_deg_lim: DegLim) -> WGBasis<Mon,MeshT> {
     
     let int_mons = Monomial::mons_with_deg_lim_asc(int_polys_deg_lim);
     
@@ -167,7 +167,7 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WGBasis<Mon,MeshT> {
       })
     });
 
-    ~WGBasis {
+    WGBasis {
       mesh: mesh,
       int_polys_deg_lim: int_polys_deg_lim,
       side_polys_deg_lim: side_polys_deg_lim,
