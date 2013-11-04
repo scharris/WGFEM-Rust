@@ -97,7 +97,7 @@ impl<'self,Mon:Monomial,MeshT:Mesh<Mon>> VariationalBilinearForm<'self,Mon,MeshT
 
 #[test]
 fn test_asymmetric() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[2.,2.], ~[MeshCoord(5),MeshCoord(4)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[2.,2.], ~[MeshCoord(5),MeshCoord(4)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
 
   let vbf: AsymmetricTestVBF<Mon2d,RectMesh<Mon2d>> = AsymmetricTestVBF { basis: basis };
@@ -168,7 +168,7 @@ fn test_asymmetric() {
 
 #[test]
 fn test_symmetric() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[2.,2.], ~[MeshCoord(5),MeshCoord(4)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[2.,2.], ~[MeshCoord(5),MeshCoord(4)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
 
   let vbf: SymmetricTestVBF<Mon2d,RectMesh<Mon2d>> = SymmetricTestVBF { basis: basis };

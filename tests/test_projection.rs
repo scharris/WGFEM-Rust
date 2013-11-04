@@ -8,7 +8,7 @@ use wg_basis::{WGBasis};
 
 #[test]
 fn test_identity_proj_fe0() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
   let mut projector: Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
 
@@ -24,7 +24,7 @@ fn test_identity_proj_fe0() {
 
 #[test]
 fn test_int_projs() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,4.], ~[MeshCoord(3),MeshCoord(4)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,4.], ~[MeshCoord(3),MeshCoord(4)]);
  
   let fe4_int_orig_0 = 1.;
   let fe4_int_orig_1 = 1.;
@@ -56,7 +56,7 @@ fn test_int_projs() {
 
 #[test]
 fn test_right_side_projs() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,4.], ~[MeshCoord(3),MeshCoord(4)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,4.], ~[MeshCoord(3),MeshCoord(4)]);
  
   let fe5_int_orig_0 = 2.;
   let fe5_int_orig_1 = 1.;
@@ -97,7 +97,7 @@ fn test_right_side_projs() {
 
 #[test]
 fn test_int_mons_side_projs() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[6.,12.], ~[MeshCoord(3),MeshCoord(4)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[6.,12.], ~[MeshCoord(3),MeshCoord(4)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
   let mut projector: Projector<Mon2d,RectMesh<Mon2d>>  = Projector::new(basis);
 

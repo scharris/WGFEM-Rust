@@ -11,9 +11,7 @@ use std::vec;
 
 #[test]
 fn test_top_x_wgrad() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0f64, 0.],
-                                              ~[3f64, 3.],
-                                              ~[MeshCoord(3), MeshCoord(3)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0f64, 0.], ~[3f64, 3.], ~[MeshCoord(3), MeshCoord(3)]);
   let mut wgrad_solver: WeakGradSolver<Mon2d> = WeakGradSolver::new(MaxMonDeg(1), rmesh);
 
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
@@ -84,9 +82,7 @@ fn test_top_x_wgrad() {
 
 #[test]
 fn test_right_y_wgrad() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0f64, 0.],
-                                              ~[3f64, 3.],
-                                              ~[MeshCoord(3), MeshCoord(3)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0f64, 0.], ~[3f64, 3.], ~[MeshCoord(3), MeshCoord(3)]);
   let mut wgrad_solver: WeakGradSolver<Mon2d> = WeakGradSolver::new(MaxMonDeg(1), rmesh);
 
   let y = Mon2d { exps: [Deg(0), Deg(1)] };
@@ -129,9 +125,7 @@ fn test_right_y_wgrad() {
 
 #[test]
 fn test_int_xy_wgrad() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0f64, 0.],
-                                              ~[3f64, 3.],
-                                              ~[MeshCoord(3), MeshCoord(3)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0f64, 0.], ~[3f64, 3.], ~[MeshCoord(3), MeshCoord(3)]);
   let mut wgrad_solver: WeakGradSolver<Mon2d> = WeakGradSolver::new(MaxMonDeg(1), rmesh);
 
   let xy = Mon2d { exps: [Deg(1), Deg(1)] };
@@ -184,9 +178,7 @@ fn test_int_xy_wgrad() {
 
 #[test]
 fn test_wgrad_full_xy() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0f64, 0.],
-                                              ~[3f64, 3.],
-                                              ~[MeshCoord(3), MeshCoord(3)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0f64, 0.], ~[3f64, 3.], ~[MeshCoord(3), MeshCoord(3)]);
   let mut wgrad_solver: WeakGradSolver<Mon2d> = WeakGradSolver::new(MaxMonDeg(3), rmesh);
 
   let one = Mon2d { exps: [Deg(0), Deg(0)] };
@@ -217,9 +209,7 @@ fn test_wgrad_full_xy() {
 
 #[test]
 fn test_wgrad_full_x2y() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0f64, 0.],
-                                              ~[3f64, 3.],
-                                              ~[MeshCoord(3), MeshCoord(3)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0f64, 0.], ~[3f64, 3.], ~[MeshCoord(3), MeshCoord(3)]);
   let mut wgrad_solver: WeakGradSolver<Mon2d> = WeakGradSolver::new(MaxMonDeg(3), rmesh);
 
   let one = Mon2d { exps: [Deg(0), Deg(0)] };
@@ -250,9 +240,7 @@ fn test_wgrad_full_x2y() {
 
 #[test]
 fn test_wgrad_dot() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0f64, 0.],
-                                              ~[3f64, 3.],
-                                              ~[MeshCoord(3), MeshCoord(3)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0f64, 0.], ~[3f64, 3.], ~[MeshCoord(3), MeshCoord(3)]);
   let wgrad_solver: WeakGradSolver<Mon2d> = WeakGradSolver::new(MaxMonDeg(2), rmesh);
 
   let wgrad1 = WeakGrad { comp_mon_coefs: ~[~[-2.5, 3., 0., 15., -6., -15.], ~[-2.5, 15., -15., 3., -6., 0.]] };
@@ -282,9 +270,7 @@ fn test_wgrad_dot() {
 
 #[test]
 fn test_wgrad_mdot() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0f64, 0.],
-                                              ~[3f64, 3.],
-                                              ~[MeshCoord(3), MeshCoord(3)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0f64, 0.], ~[3f64, 3.], ~[MeshCoord(3), MeshCoord(3)]);
   let wgrad_solver: WeakGradSolver<Mon2d> = WeakGradSolver::new(MaxMonDeg(2), rmesh);
 
   // row swap matrix

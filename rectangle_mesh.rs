@@ -83,7 +83,7 @@ fn new_impl<Mon:Monomial>(min_bounds: ~[R],
                           max_bounds: ~[R],
                           mesh_ldims: ~[MeshCoord],
                           integration_rel_err: R,
-                          integration_abs_err: R) -> ~RectMesh<Mon> {
+                          integration_abs_err: R) -> RectMesh<Mon> {
 
   let space_dims = domain_space_dims::<Mon>();
   assert!(min_bounds.len() == space_dims);
@@ -138,7 +138,7 @@ fn new_impl<Mon:Monomial>(min_bounds: ~[R],
 
   let rect_diameter = sqrt(fe_side_lens.iter().fold(0 as R, |sum_sq_lens, &len| sum_sq_lens + len*len));
 
-  ~RectMesh {
+  RectMesh {
     space_dims: space_dims,
     min_bounds: min_bounds,
     max_bounds: max_bounds,
@@ -169,7 +169,7 @@ impl<Mon:Monomial> RectMesh<Mon> {
   /// Construct a new rectangle mesh with default numerical integration error tolerances. 
   pub fn new(min_bounds: ~[R],
              max_bounds: ~[R],
-             mesh_ldims: ~[MeshCoord]) -> ~RectMesh<Mon> {
+             mesh_ldims: ~[MeshCoord]) -> RectMesh<Mon> {
     new_impl(min_bounds, max_bounds, mesh_ldims,
              DEFAULT_INTEGRATION_REL_ERR, DEFAULT_INTEGRATION_ABS_ERR)
   }
@@ -179,7 +179,7 @@ impl<Mon:Monomial> RectMesh<Mon> {
                             max_bounds: ~[R],
                             mesh_ldims: ~[MeshCoord],
                             integration_rel_err: R,
-                            integration_abs_err: R) -> ~RectMesh<Mon> {
+                            integration_abs_err: R) -> RectMesh<Mon> {
       new_impl(min_bounds, max_bounds, mesh_ldims,
                integration_rel_err, integration_abs_err)
   }

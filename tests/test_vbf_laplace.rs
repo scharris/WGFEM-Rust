@@ -11,7 +11,7 @@ use std::num::{sqrt};
 
 #[test]
 fn test_is_symmetric() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
  
   let m = DenseMatrix::from_fn(2,2, |r,c| { if r != c { 1. } else { 0. } });
@@ -24,7 +24,7 @@ fn test_is_symmetric() {
 
 #[test]
 fn test_int_vs_int_sym() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
   
   // Our interior mons will be xy and y^2, which have face numbers of 5 and 2 in the
@@ -59,7 +59,7 @@ fn test_int_vs_int_sym() {
 
 #[test]
 fn test_int_vs_int_asym() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
   
   // Our interior mons will be xy and y^2, which have face numbers of 5 and 2 in the
@@ -97,7 +97,7 @@ fn test_int_vs_int_asym() {
 
 #[test]
 fn test_top_side_vs_int() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
  
   // Our monomials will be x on the top side and xy on the interior.
@@ -134,7 +134,7 @@ fn test_top_side_vs_int() {
 
 #[test]
 fn test_bottom_side_vs_int() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
  
   // Our monomials will be x on the bottom side and xy on the interior.
@@ -166,7 +166,7 @@ fn test_bottom_side_vs_int() {
 
 #[test]
 fn test_int_vs_right_side() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
  
   // Our monomials will be xy on the interior and y^2 on the right side.
@@ -203,7 +203,7 @@ fn test_int_vs_right_side() {
 
 #[test]
 fn test_int_vs_left_side() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
  
   // Our monomials will be xy on the interior and y^2 on the left side.
@@ -235,7 +235,7 @@ fn test_int_vs_left_side() {
 
 #[test]
 fn test_right_side_vs_left_side() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
  
   // Our monomials will be y on the right side and y^2 on the left side.
@@ -267,7 +267,7 @@ fn test_right_side_vs_left_side() {
 
 #[test]
 fn test_bottom_side_vs_left_side() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
  
   // Our monomials will be x on the bottom side and y^2 on the left side.
@@ -300,7 +300,7 @@ fn test_bottom_side_vs_left_side() {
 
 #[test]
 fn test_right_side_vs_right_side() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
  
   // Our monomials will be y on the right side and y^2 on the right side.
@@ -336,7 +336,7 @@ fn test_right_side_vs_right_side() {
 
 #[test]
 fn test_bottom_side_vs_bottom_side() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
  
   // Our monomials will be x on the bottom side and x^2 on the bottom side.

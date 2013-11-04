@@ -21,7 +21,7 @@ use monomial::{Mon2d, MaxMonDeg};
 
 #[test]
 fn test_int_mons_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
 
   let one = Mon2d { exps: [Deg(0), Deg(0)] };
@@ -36,7 +36,7 @@ fn test_int_mons_3x2_deg2() {
 
 #[test]
 fn test_side_mons_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   let one = Mon2d { exps: [Deg(0), Deg(0)] };
@@ -57,7 +57,7 @@ fn test_side_mons_3x2_deg2() {
 
 #[test]
 fn test_is_int_supp_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   assert!(basis.is_int_supported(BasisElNum(0)));
@@ -67,7 +67,7 @@ fn test_is_int_supp_3x2_deg2() {
 
 #[test]
 fn test_first_nb_side_beln_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   assert_eq!(basis.first_nb_side_beln, BasisElNum(36));
@@ -75,7 +75,7 @@ fn test_first_nb_side_beln_3x2_deg2() {
 
 #[test]
 fn test_nb_side_num_blocks_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
 
   assert_eq!(basis.mesh.perp_axis_for_nb_side(basis.support_nb_side_num(BasisElNum(36))), Dim(0));
@@ -87,7 +87,7 @@ fn test_nb_side_num_blocks_3x2_deg2() {
 #[test]
 #[should_fail]
 fn test_bad_nb_side_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   basis.mesh.perp_axis_for_nb_side(basis.support_nb_side_num(BasisElNum(50)));
 }
@@ -95,7 +95,7 @@ fn test_bad_nb_side_3x2_deg2() {
 // The first section of basis elements are monomials which are assigned to interiors in blocks of 6.
 #[test]
 fn test_int_support_fes_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
 
   assert_eq!(basis.support_int_fe_num(BasisElNum(0)), FENum(0));
@@ -111,7 +111,7 @@ fn test_int_support_fes_3x2_deg2() {
 // The next section of basis elements consists of those non-boundary sides perpendicular to the x axis.
 #[test]
 fn test_vert_nb_side_fe_incls_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
 
   let left_face = SideFace(0);
@@ -177,7 +177,7 @@ fn test_vert_nb_side_fe_incls_3x2_deg2() {
 // The final section of basis elements contains the horizontal side monomials. 
 #[test]
 fn test_horiz_nb_side_fe_incls_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
 
   let bottom_face = SideFace(2);
@@ -230,7 +230,7 @@ fn test_horiz_nb_side_fe_incls_3x2_deg2() {
 
 #[test]
 fn test_fe0_int_mon_retrieval_by_beln_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   let one = Mon2d { exps: [Deg(0), Deg(0)] };
@@ -247,7 +247,7 @@ fn test_fe0_int_mon_retrieval_by_beln_3x2_deg2() {
 
 #[test]
 fn test_fe0_int_rel_mon_num_retrieval_by_beln_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   assert_eq!(basis.int_rel_mon_num(BasisElNum(0)), FaceMonNum(0));
@@ -261,7 +261,7 @@ fn test_fe0_int_rel_mon_num_retrieval_by_beln_3x2_deg2() {
 
 #[test]
 fn test_fe0_int_mon_beln_by_fe_and_face_mon_num_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   assert_eq!(basis.int_mon_el_num(FENum(0), FaceMonNum(0)), BasisElNum(0));
@@ -276,7 +276,7 @@ fn test_fe0_int_mon_beln_by_fe_and_face_mon_num_3x2_deg2() {
 
 #[test]
 fn test_fe1_int_mon_retrieval_by_beln_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   let one = Mon2d { exps: [Deg(0), Deg(0)] };
@@ -293,7 +293,7 @@ fn test_fe1_int_mon_retrieval_by_beln_3x2_deg2() {
 
 #[test]
 fn test_fe1_int_rel_mon_num_retrieval_by_beln_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   assert_eq!(basis.int_rel_mon_num(BasisElNum(6)), FaceMonNum(0));
@@ -307,7 +307,7 @@ fn test_fe1_int_rel_mon_num_retrieval_by_beln_3x2_deg2() {
 
 #[test]
 fn test_fe1_int_mon_beln_by_fe_and_face_mon_num_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   assert_eq!(basis.int_mon_el_num(FENum(1), FaceMonNum(0)), BasisElNum(6));
@@ -322,7 +322,7 @@ fn test_fe1_int_mon_beln_by_fe_and_face_mon_num_3x2_deg2() {
 
 #[test]
 fn test_fe5_int_mon_retrieval_by_beln_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   let one = Mon2d { exps: [Deg(0), Deg(0)] };
@@ -339,7 +339,7 @@ fn test_fe5_int_mon_retrieval_by_beln_3x2_deg2() {
 
 #[test]
 fn test_fe5_int_rel_mon_num_retrieval_by_beln_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   assert_eq!(basis.int_rel_mon_num(BasisElNum(30)), FaceMonNum(0));
@@ -353,7 +353,7 @@ fn test_fe5_int_rel_mon_num_retrieval_by_beln_3x2_deg2() {
 
 #[test]
 fn test_fe5_int_mon_beln_by_fe_and_face_mon_num_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   assert_eq!(basis.int_mon_el_num(FENum(5), FaceMonNum(0)), BasisElNum(30));
@@ -368,7 +368,7 @@ fn test_fe5_int_mon_beln_by_fe_and_face_mon_num_3x2_deg2() {
 
 #[test]
 fn test_side_mons_seq_between_fe0_and_fe1_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   let left_face = SideFace(0);
@@ -386,7 +386,7 @@ fn test_side_mons_seq_between_fe0_and_fe1_3x2_deg2() {
 
 #[test]
 fn test_side_mon_beln_between_fe0_and_fe1_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   let left_face = SideFace(0);
@@ -401,7 +401,7 @@ fn test_side_mon_beln_between_fe0_and_fe1_3x2_deg2() {
 
 #[test]
 fn test_side_rel_mon_nums_by_beln_between_fe0_and_fe1_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   assert_eq!(basis.side_rel_mon_num(BasisElNum(36)), FaceMonNum(0));
@@ -410,7 +410,7 @@ fn test_side_rel_mon_nums_by_beln_between_fe0_and_fe1_3x2_deg2() {
 
 #[test]
 fn test_side_mons_seq_between_fe1_and_fe2_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   let left_face = SideFace(0);
@@ -428,7 +428,7 @@ fn test_side_mons_seq_between_fe1_and_fe2_3x2_deg2() {
 
 #[test]
 fn test_side_mon_beln_between_fe1_and_fe2_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   let left_face = SideFace(0);
@@ -443,7 +443,7 @@ fn test_side_mon_beln_between_fe1_and_fe2_3x2_deg2() {
 
 #[test]
 fn test_side_rel_mon_nums_by_beln_between_fe1_and_fe2_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   assert_eq!(basis.side_rel_mon_num(BasisElNum(38)), FaceMonNum(0));
@@ -452,7 +452,7 @@ fn test_side_rel_mon_nums_by_beln_between_fe1_and_fe2_3x2_deg2() {
 
 #[test]
 fn test_side_mon_beln_between_fe4_and_fe5_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   let left_face = SideFace(0);
@@ -467,7 +467,7 @@ fn test_side_mon_beln_between_fe4_and_fe5_3x2_deg2() {
 
 #[test]
 fn test_side_rel_mon_nums_by_beln_between_fe4_and_fe5_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   assert_eq!(basis.side_rel_mon_num(BasisElNum(42)), FaceMonNum(0));
@@ -479,7 +479,7 @@ fn test_side_rel_mon_nums_by_beln_between_fe4_and_fe5_3x2_deg2() {
 
 #[test]
 fn test_side_mons_seq_between_fe0_and_fe3_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   let bottom_face = SideFace(2);
@@ -497,7 +497,7 @@ fn test_side_mons_seq_between_fe0_and_fe3_3x2_deg2() {
 
 #[test]
 fn test_side_mon_beln_between_fe0_and_fe3_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   let bottom_face = SideFace(2);
@@ -512,7 +512,7 @@ fn test_side_mon_beln_between_fe0_and_fe3_3x2_deg2() {
 
 #[test]
 fn test_side_rel_mon_nums_by_beln_between_fe0_and_fe3_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   assert_eq!(basis.side_rel_mon_num(BasisElNum(44)), FaceMonNum(0));
@@ -521,7 +521,7 @@ fn test_side_rel_mon_nums_by_beln_between_fe0_and_fe3_3x2_deg2() {
 
 #[test]
 fn test_wgrads_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
 
   let xy_on_int_wgrad = basis.int_mon_wgrad(FaceMonNum(4), OShape(0));
@@ -539,7 +539,7 @@ fn test_wgrads_3x2_deg2() {
 
 #[test]
 fn test_int_mons_3x2_deg3() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
 
@@ -554,7 +554,7 @@ fn test_int_mons_3x2_deg3() {
 
 #[test]
 fn test_side_mons_3x2_deg3() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
   
@@ -576,7 +576,7 @@ fn test_side_mons_3x2_deg3() {
 
 #[test]
 fn test_interacting_els_est_3x2_deg3() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
 
   let mut int_int_inters = 0u;
@@ -629,7 +629,7 @@ fn test_interacting_els_est_3x2_deg3() {
 
 #[test]
 fn test_interacting_els_est_5x6_deg4() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(5),MeshCoord(6)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(5),MeshCoord(6)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(4), MaxMonDeg(3));
 
   let mut int_int_inters = 0u;
@@ -691,7 +691,7 @@ fn test_interacting_els_est_5x6_deg4() {
 
 #[test]
 fn test_int_L2_inner_products_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   let int_ips = basis.ips_int_mons_for_oshape(OShape(0));
@@ -705,7 +705,7 @@ fn test_int_L2_inner_products_3x2_deg2() {
 
 #[test]
 fn test_side_L2_inner_products_3x2_deg2() {
-  let rmesh: ~RectMesh<Mon2d> = RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
+  let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[3.,2.], ~[MeshCoord(3),MeshCoord(2)]);
   let basis = WGBasis::new(rmesh, MaxMonDeg(2), MaxMonDeg(1));
   
   let right_ips = basis.ips_side_mons_for_oshape_side(OShape(0), SideFace(3));

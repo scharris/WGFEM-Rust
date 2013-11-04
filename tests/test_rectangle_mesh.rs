@@ -25,7 +25,7 @@ fn test_3x4_constr() -> () {
   let mesh_min_coords = ~[1f64, 2.];
   let mesh_max_coords = ~[2f64, 3.];
   let mesh_ldims = ~[MeshCoord(3), MeshCoord(4)];
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new_with_intg_tols(mesh_min_coords.clone(), mesh_max_coords.clone(), mesh_ldims.clone(), 1e-4, 1e-5);
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new_with_intg_tols(mesh_min_coords.clone(), mesh_max_coords.clone(), mesh_ldims.clone(), 1e-4, 1e-5);
 
   assert_eq!(rmesh3x4.space_dims, 2);
   assert_eq!(&rmesh3x4.min_bounds, &mesh_min_coords);
@@ -56,7 +56,7 @@ fn test_3x4x5_constr() -> () {
   let mesh_min_coords = ~[1f64, 2., 3.];
   let mesh_max_coords = ~[2f64, 3., 4.];
   let mesh_ldims = ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)];
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(mesh_min_coords.clone(), mesh_max_coords.clone(), mesh_ldims.clone());
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(mesh_min_coords.clone(), mesh_max_coords.clone(), mesh_ldims.clone());
 
   assert_eq!(rmesh3x4x5.space_dims, 3);
   assert_eq!(&rmesh3x4x5.min_bounds, &mesh_min_coords);
@@ -88,7 +88,7 @@ fn test_3x4x5x6_constr() -> () {
   let mesh_min_coords = ~[1f64, 2., 3., 4.];
   let mesh_max_coords = ~[2f64, 3., 4., 5.];
   let mesh_ldims = ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)];
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(mesh_min_coords.clone(), mesh_max_coords.clone(), mesh_ldims.clone());
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(mesh_min_coords.clone(), mesh_max_coords.clone(), mesh_ldims.clone());
 
   assert_eq!(rmesh3x4x5x6.space_dims, 4);
   assert_eq!(&rmesh3x4x5x6.min_bounds, &mesh_min_coords);
@@ -122,9 +122,9 @@ fn test_3x4x5x6_constr() -> () {
 
 #[test]
 fn test_3x4_mesh_coords() -> () {
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
-                                                 ~[2f64, 3.],
-                                                 ~[MeshCoord(3), MeshCoord(4)]);
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
+                                                  ~[2f64, 3.],
+                                                  ~[MeshCoord(3), MeshCoord(4)]);
   assert_eq!(rmesh3x4.fe_mesh_coord(Dim(0), FENum(0)), MeshCoord(0));
   assert_eq!(rmesh3x4.fe_mesh_coord(Dim(1), FENum(0)), MeshCoord(0));
   
@@ -152,9 +152,9 @@ fn test_3x4_mesh_coords() -> () {
 
 #[test]
 fn test_3x4x5_mesh_coords() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
-                                                   ~[2f64, 3., 4.],
-                                                   ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
+                                                    ~[2f64, 3., 4.],
+                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
 
   assert_eq!(rmesh3x4x5.fe_mesh_coord(Dim(0), FENum(0)), MeshCoord(0));
   assert_eq!(rmesh3x4x5.fe_mesh_coord(Dim(1), FENum(0)), MeshCoord(0));
@@ -226,9 +226,9 @@ fn test_3x4x5_mesh_coords() -> () {
 
 #[test]
 fn test_3x4x5x6_mesh_coords() -> () {
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
-                                                     ~[2f64, 3., 4., 5.],
-                                                     ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(~[1f64, 2., 3., 4.],
+                                                      ~[2f64, 3., 4., 5.],
+                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
 
   assert_eq!(rmesh3x4x5x6.fe_mesh_coord(Dim(0), FENum(0)), MeshCoord(0));
   assert_eq!(rmesh3x4x5x6.fe_mesh_coord(Dim(1), FENum(0)), MeshCoord(0));
@@ -328,35 +328,35 @@ fn test_3x4x5x6_mesh_coords() -> () {
 #[test]
 #[should_fail]
 fn test_3x4_bad_mesh_coords() -> () {
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
-                                                 ~[2f64, 3.],
-                                                 ~[MeshCoord(3), MeshCoord(4)]);
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
+                                                  ~[2f64, 3.],
+                                                  ~[MeshCoord(3), MeshCoord(4)]);
   rmesh3x4.fe_mesh_coord(Dim(0), FENum(3*4));
 }
 
 #[test]
 #[should_fail]
 fn test_3x4x5_bad_mesh_coords() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
-                                                   ~[2f64, 3., 4.],
-                                                   ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
+                                                    ~[2f64, 3., 4.],
+                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   rmesh3x4x5.fe_mesh_coord(Dim(0), FENum(3*4*5));
 }
 
 #[test]
 #[should_fail]
 fn test_3x4x5x6_bad_mesh_coords() -> () {
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
-                                                     ~[2f64, 3., 4., 5.],
-                                                     ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(~[1f64, 2., 3., 4.],
+                                                      ~[2f64, 3., 4., 5.],
+                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   rmesh3x4x5x6.fe_mesh_coord(Dim(0), FENum(3*4*5*6));
 }
 
 #[test]
 fn test_1x3_boundary_side_fes() -> () {
-  let rmesh1x3: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
-                                                 ~[2f64, 3.],
-                                                 ~[MeshCoord(1), MeshCoord(3)]);
+  let rmesh1x3: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
+                                                  ~[2f64, 3.],
+                                                  ~[MeshCoord(1), MeshCoord(3)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
   let right_side = greater_side_face_perp_to_axis(Dim(0));
   let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
@@ -376,9 +376,9 @@ fn test_1x3_boundary_side_fes() -> () {
 
 #[test]
 fn test_2x3_boundary_side_fes() -> () {
-  let rmesh2x3: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
-                                                 ~[2f64, 3.],
-                                                 ~[MeshCoord(2), MeshCoord(3)]);
+  let rmesh2x3: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
+                                                  ~[2f64, 3.],
+                                                  ~[MeshCoord(2), MeshCoord(3)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
   let right_side = greater_side_face_perp_to_axis(Dim(0));
   let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
@@ -398,9 +398,9 @@ fn test_2x3_boundary_side_fes() -> () {
 
 #[test]
 fn test_2x3x2_boundary_side_fes() -> () {
-  let rmesh2x3x2: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
-                                                   ~[2f64, 3., 4.],
-                                                   ~[MeshCoord(2), MeshCoord(3), MeshCoord(2)]);
+  let rmesh2x3x2: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
+                                                    ~[2f64, 3., 4.],
+                                                    ~[MeshCoord(2), MeshCoord(3), MeshCoord(2)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
   let right_side = greater_side_face_perp_to_axis(Dim(0));
   let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
@@ -424,9 +424,9 @@ fn test_2x3x2_boundary_side_fes() -> () {
 
 #[test]
 fn test_3x4_boundary_side_determ() -> () {
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
-                                                 ~[2f64, 3.],
-                                                 ~[MeshCoord(3), MeshCoord(4)]);
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
+                                                  ~[2f64, 3.],
+                                                  ~[MeshCoord(3), MeshCoord(4)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
   let right_side = greater_side_face_perp_to_axis(Dim(0));
   let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
@@ -464,9 +464,9 @@ fn test_3x4_boundary_side_determ() -> () {
 
 #[test]
 fn test_3x4x5_boundary_side_determ() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
-                                                   ~[2f64, 3., 4.],
-                                                   ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
+                                                    ~[2f64, 3., 4.],
+                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
   let right_side = greater_side_face_perp_to_axis(Dim(0));
   let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
@@ -526,9 +526,9 @@ fn test_3x4x5_boundary_side_determ() -> () {
 
 #[test]
 fn test_3x4x5x6_boundary_side_determ() -> () {
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
-                                                     ~[2f64, 3., 4., 5.],
-                                                     ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(~[1f64, 2., 3., 4.],
+                                                      ~[2f64, 3., 4., 5.],
+                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
   let right_side = greater_side_face_perp_to_axis(Dim(0));
   let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
@@ -623,9 +623,9 @@ fn test_3x4x5x6_boundary_side_determ() -> () {
 #[test]
 #[should_fail]
 fn test_3x4_bad_is_boundary_side_fenum() -> () {
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
-                                                 ~[2f64, 3.],
-                                                 ~[MeshCoord(3), MeshCoord(4)]);
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
+                                                  ~[2f64, 3.],
+                                                  ~[MeshCoord(3), MeshCoord(4)]);
   let top_side = greater_side_face_perp_to_axis(Dim(1));
   rmesh3x4.is_boundary_side(FENum(12), top_side);
 }
@@ -633,9 +633,9 @@ fn test_3x4_bad_is_boundary_side_fenum() -> () {
 #[test]
 #[should_fail]
 fn test_3x4x5_bad_is_boundary_side_fenum() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
-                                                   ~[2f64, 3., 4.],
-                                                   ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
+                                                    ~[2f64, 3., 4.],
+                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let front_side = greater_side_face_perp_to_axis(Dim(2));
   rmesh3x4x5.is_boundary_side(FENum(5*12), front_side);
 }
@@ -643,9 +643,9 @@ fn test_3x4x5_bad_is_boundary_side_fenum() -> () {
 #[test]
 #[should_fail]
 fn test_3x4x5x6_bad_is_boundary_side_fenum() -> () {
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3.],
-                                                     ~[2f64, 3., 4.],
-                                                     ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(~[1f64, 2., 3.],
+                                                      ~[2f64, 3., 4.],
+                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let front_side = greater_side_face_perp_to_axis(Dim(2));
   rmesh3x4x5x6.is_boundary_side(FENum(3*4*5*6), front_side);
 }
@@ -653,9 +653,9 @@ fn test_3x4x5x6_bad_is_boundary_side_fenum() -> () {
 // Test the non-boundary sides perpendicular to axis 0 for 2d mesh.
 #[test]
 fn test_3x4_nonboundary_side_coords_axis0() -> () {
-  let mut rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
-                                                     ~[2f64, 3.],
-                                                     ~[MeshCoord(3), MeshCoord(4)]);
+  let mut rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
+                                                      ~[2f64, 3.],
+                                                      ~[MeshCoord(3), MeshCoord(4)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
   let right_side = greater_side_face_perp_to_axis(Dim(0));
 
@@ -714,9 +714,9 @@ fn test_3x4_nonboundary_side_coords_axis0() -> () {
 // Test the non-boundary sides perpendicular to axis 0 for 3d mesh.
 #[test]
 fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
-  let mut rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
-                                                       ~[2f64, 3., 4.],
-                                                       ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
+  let mut rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
+                                                        ~[2f64, 3., 4.],
+                                                        ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
   let right_side = greater_side_face_perp_to_axis(Dim(0));
 
@@ -810,9 +810,9 @@ fn test_3x4x5_nonboundary_side_coords_axis0() -> () {
 // Test the non-boundary sides perpendicular to axis 0 for 4d mesh.
 #[test]
 fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
-  let mut rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
-                                                         ~[2f64, 3., 4., 5.],
-                                                         ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
+  let mut rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(~[1f64, 2., 3., 4.],
+                                                          ~[2f64, 3., 4., 5.],
+                                                          ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
   let right_side = greater_side_face_perp_to_axis(Dim(0));
 
@@ -942,9 +942,9 @@ fn test_3x4x5x6_nonboundary_side_coords_axis0() -> () {
 // Test the non-boundary sides perpendicular to axis 1 (3d mesh).
 #[test]
 fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
-  let mut rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
-                                                       ~[2f64, 3., 4.],
-                                                       ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
+  let mut rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
+                                                        ~[2f64, 3., 4.],
+                                                        ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let bottom_side = lesser_side_face_perp_to_axis(Dim(1));
   let top_side = greater_side_face_perp_to_axis(Dim(1));
 
@@ -1042,7 +1042,7 @@ fn test_3x4x5_nonboundary_side_coords_axis1() -> () {
 // Test the non-boundary sides perpendicular to axis 2 (3d mesh).
 #[test]
 fn test_3x4x5_nonboundary_side_coords_axis2() -> () {
-  let mut rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let mut rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                        ~[2f64, 3., 4.],
                                                        ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let front_side = lesser_side_face_perp_to_axis(Dim(2));
@@ -1134,7 +1134,7 @@ fn test_3x4x5_nonboundary_side_coords_axis2() -> () {
 #[test]
 #[should_fail]
 fn test_3x4x5_nonboundary_bad_side_coords_axis2() -> () {
-  let mut rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let mut rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                        ~[2f64, 3., 4.],
                                                        ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let first_axis2 = 2*4*5 + 3*3*5;
@@ -1144,7 +1144,7 @@ fn test_3x4x5_nonboundary_bad_side_coords_axis2() -> () {
 
 #[test]
 fn test_3x4_conv_fe_coords_to_fenum() -> () {
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
                                                  ~[2f64, 3.],
                                                  ~[MeshCoord(3), MeshCoord(4)]);
   assert_eq!(rmesh3x4.fe_with_mesh_coords([MeshCoord(0), MeshCoord(0)]), FENum(0));
@@ -1155,7 +1155,7 @@ fn test_3x4_conv_fe_coords_to_fenum() -> () {
 
 #[test]
 fn test_3x4x5_conv_fe_coords_to_fenum() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   assert_eq!(rmesh3x4x5.fe_with_mesh_coords([MeshCoord(0), MeshCoord(0), MeshCoord(0)]), FENum(0));
@@ -1168,7 +1168,7 @@ fn test_3x4x5_conv_fe_coords_to_fenum() -> () {
 
 #[test]
 fn test_3x4x5x6_conv_fe_coords_to_fenum() -> () {
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(~[1f64, 2., 3., 4.],
                                                    ~[2f64, 3., 4., 5.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   assert_eq!(rmesh3x4x5x6.fe_with_mesh_coords([MeshCoord(0), MeshCoord(0), MeshCoord(0), MeshCoord(0)]), FENum(0));
@@ -1225,7 +1225,7 @@ fn test_intg_mon4d() {
 
 #[test]
 fn test_intg_const_facerel_mons_2d() -> () {
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
                                                  ~[2f64, 3.],
                                                  ~[MeshCoord(3), MeshCoord(4)]);
   let one = Mon2d { exps: [Deg(0), Deg(0)] };
@@ -1249,7 +1249,7 @@ fn test_intg_const_facerel_mons_2d() -> () {
 
 #[test]
 fn test_intg_const_facerel_mons_3d() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let one = Mon3d { exps: [Deg(0), Deg(0), Deg(0)] };
@@ -1279,7 +1279,7 @@ fn test_intg_const_facerel_mons_3d() -> () {
 
 #[test]
 fn test_intg_const_facerel_mons_4d() -> () {
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(~[1f64, 2., 3., 4.],
                                                      ~[2f64, 3., 4., 5.],
                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let one = Mon4d { exps: [Deg(0), Deg(0), Deg(0), Deg(0)] };
@@ -1316,7 +1316,7 @@ fn test_intg_const_facerel_mons_4d() -> () {
 #[test]
 fn test_intg_global_fn_on_fe_int_2d() -> () {
   let mins = ~[1f64, 2.];
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(mins.clone(),
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(mins.clone(),
                                                  ~[2f64, 3.],
                                                  ~[MeshCoord(3), MeshCoord(4)]);
   let x3_y4 = |x:&[R]| -> R {
@@ -1330,7 +1330,7 @@ fn test_intg_global_fn_on_fe_int_2d() -> () {
 #[test]
 fn test_intg_global_fn_on_fe_int_3d() -> () {
   let mins = ~[1f64, 2., 3.];
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(mins.clone(),
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(mins.clone(),
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let x3_y4_z = |x:&[R]| -> R {
@@ -1344,7 +1344,7 @@ fn test_intg_global_fn_on_fe_int_3d() -> () {
 #[test]
 fn test_intg_global_fn_on_fe_int_4d() -> () {
   let mins = ~[1f64, 2., 3., 4.];
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(mins.clone(),
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(mins.clone(),
                                                    ~[2f64, 3., 4., 5.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let x3_y4_z2_t = |x:&[R]| -> R {
@@ -1358,7 +1358,7 @@ fn test_intg_global_fn_on_fe_int_4d() -> () {
 #[test]
 fn test_intg_global_fn_x_facerel_mon_on_fe0_int_2d() -> () {
   let mins = ~[1f64, 2.];
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(mins.clone(),
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(mins.clone(),
                                                    ~[2f64, 3.],
                                                    ~[MeshCoord(3), MeshCoord(4)]);
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
@@ -1375,7 +1375,7 @@ fn test_intg_global_fn_x_facerel_mon_on_fe0_int_2d() -> () {
 #[test]
 fn test_intg_global_fn_x_facerel_mon_on_fe0_int_3d() -> () {
   let mins = ~[1f64, 2., 3.];
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(mins.clone(),
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(mins.clone(),
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
@@ -1393,7 +1393,7 @@ fn test_intg_global_fn_x_facerel_mon_on_fe0_int_3d() -> () {
 #[test]
 fn test_intg_global_fn_x_facerel_mon_on_fe0_int_4d() -> () {
   let mins = ~[1f64, 2., 3., 4.];
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(mins.clone(),
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(mins.clone(),
                                                      ~[2f64, 3., 4., 5.],
                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let x = Mon4d { exps: [Deg(1), Deg(0), Deg(0), Deg(0)] };
@@ -1411,7 +1411,7 @@ fn test_intg_global_fn_x_facerel_mon_on_fe0_int_4d() -> () {
 
 #[test]
 fn test_intg_global_fn_x_facerel_mon_on_fe4_int_2d() -> () {
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
                                                  ~[2f64, 3.],
                                                  ~[MeshCoord(3), MeshCoord(4)]);
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
@@ -1429,7 +1429,7 @@ fn test_intg_global_fn_x_facerel_mon_on_fe4_int_2d() -> () {
 
 #[test]
 fn test_intg_global_fn_x_facerel_mon_on_fe16_int_3d() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
@@ -1448,7 +1448,7 @@ fn test_intg_global_fn_x_facerel_mon_on_fe16_int_3d() -> () {
 
 #[test]
 fn test_intg_global_fn_x_facerel_mon_on_fe16_int_4d() -> () {
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(~[1f64, 2., 3., 4.],
                                                      ~[2f64, 3., 4., 5.],
                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let y = Mon4d { exps: [Deg(0), Deg(1), Deg(0), Deg(0)] };
@@ -1468,7 +1468,7 @@ fn test_intg_global_fn_x_facerel_mon_on_fe16_int_4d() -> () {
 // TODO >>>
 #[test]
 fn test_intg_mixed_global_and_facerel_fn_on_fe4_int_2d() {
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
                                                  ~[2f64, 3.],
                                                  ~[MeshCoord(3), MeshCoord(4)]);
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
@@ -1487,7 +1487,7 @@ fn test_intg_mixed_global_and_facerel_fn_on_fe4_int_2d() {
 
 #[test]
 fn test_intg_mixed_global_and_facerel_fn_on_fe16_int_3d() {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
@@ -1508,7 +1508,7 @@ fn test_intg_mixed_global_and_facerel_fn_on_fe16_int_3d() {
 
 #[test]
 fn test_intg_mixed_global_and_facerel_fn_on_fe16_int_4d() {
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(~[1f64, 2., 3., 4.],
                                                      ~[2f64, 3., 4., 5.],
                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let y = Mon4d { exps: [Deg(0), Deg(1), Deg(0), Deg(0)] };
@@ -1529,7 +1529,7 @@ fn test_intg_mixed_global_and_facerel_fn_on_fe16_int_4d() {
 
 #[test]
 fn test_intg_facerel_poly_on_oshape_int_2d() -> () {
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
                                                  ~[2f64, 3.],
                                                  ~[MeshCoord(3), MeshCoord(4)]);
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
@@ -1547,7 +1547,7 @@ fn test_intg_facerel_poly_on_oshape_int_2d() -> () {
 
 #[test]
 fn test_intg_facerel_poly_on_oshape_int_3d() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
@@ -1566,7 +1566,7 @@ fn test_intg_facerel_poly_on_oshape_int_3d() -> () {
 
 #[test]
 fn test_intg_facerel_poly_on_oshape_int_4d() -> () {
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(~[1f64, 2., 3., 4.],
                                                      ~[2f64, 3., 4., 5.],
                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let x = Mon4d { exps: [Deg(1), Deg(0), Deg(0), Deg(0)] };
@@ -1586,7 +1586,7 @@ fn test_intg_facerel_poly_on_oshape_int_4d() -> () {
 
 #[test]
 fn test_intg_facerel_poly_x_facerel_poly_on_oshape_int_2d() -> () {
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
                                                    ~[2f64, 3.],
                                                    ~[MeshCoord(3), MeshCoord(4)]);
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
@@ -1602,7 +1602,7 @@ fn test_intg_facerel_poly_x_facerel_poly_on_oshape_int_2d() -> () {
 
 #[test]
 fn test_intg_facerel_poly_x_facerel_poly_on_oshape_int_3d() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
@@ -1619,7 +1619,7 @@ fn test_intg_facerel_poly_x_facerel_poly_on_oshape_int_3d() -> () {
 
 #[test]
 fn test_intg_facerel_poly_x_facerel_poly_on_oshape_int_4d() -> () {
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(~[1f64, 2., 3., 4.],
                                                      ~[2f64, 3., 4., 5.],
                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let x = Mon4d { exps: [Deg(1), Deg(0), Deg(0), Deg(0)] };
@@ -1636,7 +1636,7 @@ fn test_intg_facerel_poly_x_facerel_poly_on_oshape_int_4d() -> () {
 
 #[test]
 fn test_intg_facerel_poly_x_facerel_poly_on_oshape_side_2d() -> () {
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
                                                  ~[2f64, 3.],
                                                  ~[MeshCoord(3), MeshCoord(4)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -1684,7 +1684,7 @@ fn test_intg_facerel_poly_x_facerel_poly_on_oshape_side_2d() -> () {
 
 #[test]
 fn test_intg_facerel_poly_x_facerel_poly_on_oshape_side_3d() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -1749,7 +1749,7 @@ fn test_intg_facerel_poly_x_facerel_poly_on_oshape_side_3d() -> () {
 
 #[test]
 fn test_intg_facerel_poly_x_facerel_poly_on_oshape_side_4d() -> () {
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(~[1f64, 2., 3., 4.],
                                                      ~[2f64, 3., 4., 5.],
                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -1840,7 +1840,7 @@ fn test_intg_facerel_poly_x_facerel_poly_on_oshape_side_4d() -> () {
 
 #[test]
 fn test_intg_facerel_mon_on_oshape_int_2d() -> () {
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
                                                  ~[2f64, 3.],
                                                  ~[MeshCoord(3), MeshCoord(4)]);
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
@@ -1853,7 +1853,7 @@ fn test_intg_facerel_mon_on_oshape_int_2d() -> () {
 
 #[test]
 fn test_intg_facerel_mon_on_oshape_int_3d() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
@@ -1866,7 +1866,7 @@ fn test_intg_facerel_mon_on_oshape_int_3d() -> () {
 
 #[test]
 fn test_intg_facerel_mon_on_oshape_int_4d() -> () {
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(~[1f64, 2., 3., 4.],
                                                      ~[2f64, 3., 4., 5.],
                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let x = Mon4d { exps: [Deg(1), Deg(0), Deg(0), Deg(0)] };
@@ -1880,7 +1880,7 @@ fn test_intg_facerel_mon_on_oshape_int_4d() -> () {
 
 #[test]
 fn test_intg_global_x_facerel_mon_on_fe4_sides_2d() -> () {
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
                                                  ~[2f64, 3.],
                                                  ~[MeshCoord(3), MeshCoord(4)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -1912,7 +1912,7 @@ fn test_intg_global_x_facerel_mon_on_fe4_sides_2d() -> () {
 
 #[test]
 fn test_intg_global_x_facerel_mon_on_fe4_sides_3d() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -1954,7 +1954,7 @@ fn test_intg_global_x_facerel_mon_on_fe4_sides_3d() -> () {
 
 #[test]
 fn test_intg_global_x_facerel_mon_on_fe4_sides_4d() -> () {
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(~[1f64, 2., 3., 4.],
                                                      ~[2f64, 3., 4., 5.],
                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -2008,7 +2008,7 @@ fn test_intg_global_x_facerel_mon_on_fe4_sides_4d() -> () {
 
 #[test]
 fn test_intg_facerel_mon_on_oshape_side_2d() -> () {
-  let rmesh3x4: ~RectMesh<Mon2d> = RectMesh::new(~[1f64, 2.],
+  let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
                                                  ~[2f64, 3.],
                                                  ~[MeshCoord(3), MeshCoord(4)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -2042,7 +2042,7 @@ fn test_intg_facerel_mon_on_oshape_side_2d() -> () {
 
 #[test]
 fn test_intg_facerel_mon_on_oshape_side_3d() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -2086,7 +2086,7 @@ fn test_intg_facerel_mon_on_oshape_side_3d() -> () {
 
 #[test]
 fn test_intg_facerel_mon_on_oshape_side_4d() -> () {
-  let rmesh3x4x5x6: ~RectMesh<Mon4d> = RectMesh::new(~[1f64, 2., 3., 4.],
+  let rmesh3x4x5x6: ~RectMesh<Mon4d> = ~RectMesh::new(~[1f64, 2., 3., 4.],
                                                      ~[2f64, 3., 4., 5.],
                                                      ~[MeshCoord(3), MeshCoord(4), MeshCoord(5), MeshCoord(6)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -2137,7 +2137,7 @@ fn test_intg_facerel_mon_on_oshape_side_4d() -> () {
 
 #[test]
 fn test_intg_facerel_mon_x_facerel_poly_on_oshape_int() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let x = Mon3d { exps: [Deg(1), Deg(0), Deg(0)] };
@@ -2157,7 +2157,7 @@ fn test_intg_facerel_mon_x_facerel_poly_on_oshape_int() -> () {
 
 #[test]
 fn test_intg_facerel_mon_x_facerel_poly_on_oshape_side() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -2207,7 +2207,7 @@ fn test_intg_facerel_mon_x_facerel_poly_on_oshape_side() -> () {
 
 #[test]
 fn test_intg_intrel_mon_x_siderel_mon_on_oshape_side() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -2242,7 +2242,7 @@ fn test_intg_intrel_mon_x_siderel_mon_on_oshape_side() -> () {
 
 #[test]
 fn test_intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side_dim0() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -2300,7 +2300,7 @@ fn test_intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side_dim0() -> () {
 
 #[test]
 fn test_intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side_dim1() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -2347,7 +2347,7 @@ fn test_intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side_dim1() -> () {
 
 #[test]
 fn test_intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side_dim2() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -2393,7 +2393,7 @@ fn test_intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side_dim2() -> () {
 
 #[test]
 fn test_intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side_dim0() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -2446,7 +2446,7 @@ fn test_intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side_dim0() -> () {
 
 #[test]
 fn test_intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side_dim1() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
@@ -2496,7 +2496,7 @@ fn test_intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side_dim1() -> () {
 
 #[test]
 fn test_intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side_dim2() -> () {
-  let rmesh3x4x5: ~RectMesh<Mon3d> = RectMesh::new(~[1f64, 2., 3.],
+  let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
                                                    ~[2f64, 3., 4.],
                                                    ~[MeshCoord(3), MeshCoord(4), MeshCoord(5)]);
   let left_side = lesser_side_face_perp_to_axis(Dim(0));
