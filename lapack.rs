@@ -22,6 +22,7 @@ pub fn init() {
 #[inline(never)]
 pub fn solve_sparse_structurally_symmetric(sys: &SparseMatrix, rhs: &DenseMatrix, sym: bool) -> ~[R] {
   let n = sys.num_rows();
+
   unsafe {
     let (a, ia, ja) = sys.csr3_ptrs();  
     let mut sol = vec::from_elem(n, 0 as R);
@@ -48,7 +49,7 @@ pub fn solve_sparse_structurally_symmetric(sys: &SparseMatrix, rhs: &DenseMatrix
   }
 }
 
-#[link_args = "-Llib/mkl lib/lapack.o -lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -lmkl_core -lmkl_intel_thread -lmkl_core -liomp5"]
+#[link_args = "-Llib/mkl lib/lapack.o -lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -lmkl_core -lmkl_intel_thread -lmkl_core -liomp5 -lpthread"]
 extern {
 
   pub fn init_allocator(malloc_fn: *c_void, calloc_fn: *c_void, realloc_fn: *c_void, free_fn: *c_void);
