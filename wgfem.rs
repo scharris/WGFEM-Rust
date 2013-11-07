@@ -1,9 +1,9 @@
 #[link(name = "wgfem",
-  vers = "0.1",
+  vers = "0.8",
   url = "https://github.com/scharris/WGFEM-Rust")];
 
 #[license = "MIT"];
-#[crate_type = "lib"];
+#[crate_type = "exe"];
 #[feature(globs)];
 #[feature(macro_rules)];
 
@@ -28,6 +28,7 @@ pub mod vbf_laplace;
 pub mod wg_solution;
 pub mod wg_solver;
 pub mod wg_error_estimates;
+pub mod main;
 
 #[cfg(test)]
 mod tests {
