@@ -6,6 +6,13 @@ lib/
 scratch.rs
 *.o
 scratch*.rs
-
 wgfem
 test_output
+doc/*.log
+doc/*.aux
+doc/*.nav
+doc/*.out
+doc/*.pdf
+doc/*.snm
+doc/*.toc
+
