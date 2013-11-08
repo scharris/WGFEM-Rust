@@ -1,16 +1,17 @@
 \documentclass{beamer}
 \let\Tiny=\tiny % Gets rid of font warning.
-%\usepackage[latin1]{inputenc}
-%\usepackage{beamerthemesplit}
-\usepackage{listings}
-%\usetheme{Malmoe} % Simple, nice looking, small bar at bottom
-\usetheme{Malmoe}
+\usepackage{lmodern,amsmath,amssymb,listings}
+\usepackage{spot}
+\usepackage[latin1]{inputenc}
+\usetheme{Warsaw}
+\setbeamertemplate{navigation symbols}{} % turn off slide navigation buttons at the bottom
 
 \title[Implementing WGFEM]{Implementing the Weak Galerkin F.E.M.}
-\subtitle{With Focus on Generality}
+\subtitle{With a Focus on Generality}
 
 \author{Stephen Harris \\ \texttt{scharris@ualr.edu}}
-\date{Nov. 5, 2013}
+\date{Nov. 7, 2013}
+
 \begin{document}
 
 \begin{frame}
@@ -22,22 +23,83 @@
   \tableofcontents[pausesections]
 \end{frame}
 
-\section{Motivation}
-\subsection{The Need for a General Approach}
+\section{Generality Goal}
+\subsection{Generality Defined}
 
 \begin{frame}
-  \frametitle{The Actors}
-  \begin{block}{General Approach}
-    Some stuff about the need for a general approach.
+  \frametitle{What is Meant by Generality Here?}
+  \pause
+  The ability to most easily solve the widest variety of problems
+    \begin{align*}
+      \spot<7>{\mathfrak{a}}(u_h,v) & = (\spot<4>{f},v)\quad\quad\quad \forall{v} \in \spot<6>{V_{h0}} \\
+      u_h & = \spot<4>{g} \text{ on } \partial\spot<5>{\Omega}
+    \end{align*}
+    for solution $u_h$ in piecewise polynomial approximation space $V_h$ on mesh \spot<5>{$M_h$} of \spot<5>{$\Omega$}.
+  \pause
+
+  \begin{block}{Method Should Allow ``Mix and Match'' of Parts}
+    Should allow the ``actors'' above to easily be varied independently:
+    \pause
+    \begin{enumerate}[<+->]
+      \item functions $f$ and $g$
+      \item mesh $M_h$ on which $V_h$ members are piecewise polynomial
+      \item approximation space, by choice of degree constraints on polynomial pieces of $V_h$ members -- by monomial degree or maximum variable degree
+      \item bilinear form $\mathfrak{a}: V_h \times V_h \rightarrow \mathbb{R}$
+    \end{enumerate}
   \end{block}
+
 \end{frame}
 
-\subsection{Abstraction and Modularity}
+% We want to be able to easily vary:
+%   Functions f and g.
+%   Bilinear form a (with a couple of additional assumptions).
+%   Space V_h
+%     Any degrees on interior and sides (separately), and even choose meaning of degree constraint (per-monomial or per-variable).
+%     Mesh over which the elements of V_h are defined as piecewise polynomials.
+% All of these should be *independently* variable, easily mixed.
+% Why?
+%   To solve problems quickly, with little or no new code.
+%   Enable exploration.
 
+% Then next frame is the below, describing how this generality is achieved in practice.
 \begin{frame}
-  \frametitle{The Actors}
-Some stuff about abstraction, and modularity.
+  \frametitle{TODO: How General is the Implementation?}
+  \[
+    \int_{-\infty}^\infty e^{-x^2} \, dx = \sqrt{\pi}
+  \]
+  \begin{itemize}
+    \item Many problems solvable without code additions or changes.
+      \begin{itemize}
+        \item Accept triangle meshes from mesh generator (Gmsh).
+        \item $\ldots$ Or rectangle meshes for any number of space dimensions.
+        \item Support polynomials of any degree
+        \item $\ldots$ With choice of degree constraint type.
+        \item Allow arbitrary functions for $f$ and $g$.
+        \item Laplace bilinear form provided. 
+      \end{itemize}
+    \item Extensible in areas expected to frequently need changes.
+      \begin{itemize}
+        \item New problems solved by plugging in new code at \emph{plugin points}.
+        \item Major plugin points are for the variational bilinear form and the mesh.
+        \item Only \emph{new} aspects should have to be coded for, thought about, and tested.  
+      \end{itemize}
+  \end{itemize}
 \end{frame}
 
+% TODO: Show small usage example here (main.rs), or maybe after the next section.
+
+\subsection{Abstraction and Modularity are the Means}
+\begin{frame}
+  Modularity and Abstraction are how generality is achieved.
+  Method itself should be fixed and tested independently of new parts being explored (e.g. new vbf's).
+  This requires modularity.
+  System should be divided into abstract components that have clear, limited roles.
+  One component should never depend on *internal* details of another component, rather
+  should depend on a set of abstract functions with names and documentation describing
+  the gauranteed behavior, or ``contract''.  Contract based programming.
+  Once a component is complete, it should not have to be revisited.
+  "Black box".
+
+\end{frame}
 \end{document}
 
