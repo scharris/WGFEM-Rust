@@ -142,9 +142,9 @@
 \begin{frame}[fragile]{Bringing Components Together -- Example Run}
   \tcbset{colback =red!5!white, colframe =red!75!black, left=0mm,right=0mm,bottom=0mm,top=0mm, tcbox raise base}
   \begin{Verbatim}[gobble=4, commandchars=\\\{\}, fontsize=\small, fontfamily=tt]
-    fn u(x: &[R]) -> R  \{ cos(x[0]) + sin(x[1]) \} \textcolor{gray}{// exact sol.}
-    fn f(x: &[R]) -> R  \{ cos(x[0]) + sin(x[1]) \}
-    fn g(x: &[R]) -> R  \{ u(x) \}
+    fn u(x: &[R]) -> R  \{ cos(x[0]) + sin(x[1]) \} \textcolor{gray}{// exact solution}
+    fn f(x: &[R]) -> R  \{ cos(x[0]) + sin(x[1]) \} \textcolor{gray}{// var form rhs}
+    fn g(x: &[R]) -> R  \{ u(x) \} \textcolor{gray}{                 // boundary cond}
 
     let \textcolor{green!50!black}{mesh} = \spot{~RectMesh}::new(~[0.,0.], ~[2*pi,2*pi], ~[500, 500]);
 
