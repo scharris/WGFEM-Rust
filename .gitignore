@@ -15,4 +15,5 @@ doc/*.out
 doc/*.pdf
 doc/*.snm
 doc/*.toc
+doc/*.vrb
 
