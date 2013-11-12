@@ -10,6 +10,7 @@
 \usepackage[T1]{fontenc}
 \usetheme{Warsaw}
 \setbeamertemplate{navigation symbols}{} % turn off slide navigation buttons at the bottom
+\setbeamersize{text margin left=6mm, text margin right=6mm} 
 
 \title[Implementing WGFEM]{Implementing the Weak Galerkin F.E.M.}
 \subtitle{With a Focus on Generality}
@@ -131,7 +132,7 @@
     \raisebox{2mm}{\fbox{Linear Algebra}}
   \end{block}
   \pause
-  \raisebox{-2mm}{\shadowbox{Shadowed}} components represent \emph{types}, with custom ops.
+  \raisebox{-2mm}{\shadowbox{Shadowed}} components represent \emph{types}, with custom ops.\\
   \pause
   \raisebox{-2mm}{\tcbox{Enclosed}} types represent abstract
   types, or \emph{contracts}, as a set of operations which actual ``plugged in'' types must implement.
@@ -161,8 +162,119 @@
     \textcolor{gray}{// The types are only manipulated via contract-guaranteed operations within\\
       // the method -- black boxes with contract ops being the external controls.}
   }
-
 \end{frame}
+
+\section{Concepts}
+
+\subsection{Mesh Elements}
+
+\subsubsection{Oriented Shapes}
+
+\begin{frame}
+  \frametitle{Oriented Shapes}
+  \begin{columns}
+    \column{.50\textwidth}
+      \frame{\includegraphics[width=6cm, height=4cm]{two_fes.pdf}}
+    \column{.50\textwidth}
+      \pause
+      \begin{itemize}[<+->]
+        \item Elements may have, \emph{independently} of each other, any \textbf{shape} and \textbf{orientation}.
+        \item Two elements are of the same \textbf{\emph{oriented shape}} iff some translation takes one's points into and onto the other's.
+      \end{itemize}
+  \end{columns}
+  
+  \begin{itemize}[<+->]
+    \item Is an abstraction of a finite element ignoring its position.
+    \item Many calculations can be done on an oriented shape just once instead of individually on all finite elements of the shape.
+    \item Mesh must assign an oriented shape for \emph{each} finite element. 
+    \item Mesh will identify oriented shapes by enumerating them in some order of its choosing.
+      Enumeration makes iteration and use as an array index easy. Mesh internally can store more information.
+  \end{itemize}
+\end{frame}
+
+\subsubsection{Identifying Finite Elements and Non-Boundary Sides}
+
+\begin{frame}
+  \frametitle{Identifying Finite Elements and Non-Boundary Sides}
+  \begin{columns}
+    \column{.50\textwidth}
+      \begin{itemize}[<+->]
+        \item Mesh will need to provide identifiers for the \emph{\textbf{support faces}} for the basis shape functions.
+        \item Only interiors and non-boundary sides will host shape functions.
+      \end{itemize}
+    \column{.50\textwidth}
+      \alt<-2> {\frame{\includegraphics[width=6cm, height=4cm]{two_fes.pdf}}}
+               {\frame{\includegraphics[width=6cm, height=4cm]{two_fes_enum_supp_faces.pdf}}}
+  \end{columns}
+  \begin{itemize}[<+->]
+    \item Mesh will enumerate finite elements (equiv., \emph{interiors}) and non-boundary sides separately, in any order it chooses for each.
+    \item Separate enumerations allow sides or fes/interiors to be dealt with separately by other components.
+    \item To other components, the interior and nb side numbers are just opaque identifiers -- must ask the mesh for interpretation.
+  \end{itemize}
+\end{frame}
+ 
+\subsubsection{Side Faces -- Shape Relative Side Identifiers}
+
+\begin{frame}
+  \frametitle{Side Faces -- Shape Relative Side Identifiers}
+  \begin{columns}
+    \column{.50\textwidth}
+      \begin{itemize}[<+->]
+        \item Side identifiers discussed so far are \emph{global}, and do not tell the \emph{\textbf{role}} that the side plays
+          in the context of a \emph{\textbf{single oriented shape}}.
+        \item The shape-relative side identifier is the \emph{\textbf{side face}}.
+      \end{itemize}
+    \column{.50\textwidth}
+      \alt<-1> {\frame{\includegraphics[width=6cm, height=4cm]{two_fes_enum_nb_side_nums_greyed.pdf}}}
+               {\frame{\includegraphics[width=6cm, height=4cm]{two_fes_enum_side_faces_nb_side_nums_greyed.pdf}}}
+  \end{columns}
+  \begin{itemize}[<+->]
+    \item The sides may be numbered in any order by the mesh, each oriented shape having its own numbering.
+    \item A finite element inherits side face numbers from the corresponding sides of its oriented shape.
+    \item The side faces are necessary to represent sides in computations involving geometry (e.g. integrals)
+      on oriented shapes and finite elements.
+  \end{itemize}
+\end{frame}
+ 
+\subsubsection{FE/Side Faces Including a Non-Boundary Side}
+
+\begin{frame}
+  \frametitle{FE/Side Faces Including a Non-Boundary Side}
+  \begin{columns}
+    \column{.50\textwidth}
+      \begin{itemize}[<+->]
+        \item Mesh will need to provide identifiers for the \emph{\textbf{support faces}} for the basis shape functions.
+        \item Only interiors and non-boundary sides will host shape functions.
+      \end{itemize}
+    \column{.50\textwidth}
+      \alt<-2> {\frame{\includegraphics[width=6cm, height=4cm]{two_fes_enum_supp_faces.pdf}}}
+               {\frame{\includegraphics[width=6cm, height=4cm]{two_fes_enum_supp_faces.pdf}}}
+  \end{columns}
+  \begin{itemize}[<+->]
+    \item Mesh will enumerate finite elements (equiv., \emph{interiors}) and non-boundary sides separately, in any order it chooses for each.
+    \item Separate enumerations allow sides or fes/interiors to be dealt with separately by other components.
+    \item To other components, the interior and nb side numbers are just opaque identifiers -- must ask the mesh for interpretation.
+  \end{itemize}
+\end{frame}
+
+
+%We'll require of our meshes that any non-boundary side is included (ie is a subset of) in exactly two finite elments,
+%and has no significant intersection with any other (the intersection has no measure in d-1 dimensional space).
+
+%Too Restrictive?  What About Hanging Nodes?
+%(Add diagram: of hanging node) If we need more refinement on one side than the other, leaving hanging nodes, we'll just define each piece
+%to be a side (which meet at a straight angle), so these cases are easily handled with this assumption.
+
+%Now we are able to introduce the idea of the Non-Boundary Side Inclusions (or "Inclusions" for short) of a non-boundary side.
+%Def: The Non-Boundary Side Inclusions of a given non-boundary side are the pair of (fe, side-face) pairs of the two finite elements
+     %which include the side.
+  %(Structure)
+    %fe1
+    %side_face_in_fe1
+    %fe2 identifier
+    %side_face_in_fe2
+%Note use of fe-local side-face identifiers.
+
 
 \end{document}
 
