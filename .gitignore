@@ -12,7 +12,7 @@ doc/*.log
 doc/*.aux
 doc/*.nav
 doc/*.out
-doc/*.pdf
+doc/wgfem.pdf
 doc/*.snm
 doc/*.toc
 doc/*.vrb
