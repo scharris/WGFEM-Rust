@@ -46,30 +46,30 @@ use std::vec;
  * Overview of Module Functions
  * ----------------------------
  * The main job of the module is to translate back and forth between "local" basis element
- * identifiers on the one hand, defined in terms of finite elements or shapes, their interior
- * or side faces, and a locally defined monomial or monomial number, on the one hand, and the
+ * identifiers on the one hand, defined in terms of finite elements, their interior or
+ * side faces, and a locally defined monomial or monomial number, on the one hand, and the
  * flat global enumeration of all basis elements on the other hand.
  * The following are the detailed functions of the module:
- *  - Retrieve the reference interior monomials sequence, used to define the basis elements
- *    supported on any interior.
- *  - Retrieve the reference side monomials sequence for any side of a finite element or
- *    oriented shape.
- *  - Determine the supporting finite element interior or non-boundary side for a given
- *    basis element number.
- *  - Determine the monomial used to define a given enumerated basis element, or likewise
- *    determine its face-relative monomial number.
- *  - Retrieve the basis element number given one of:
- *    -- a finite element interior and interior-relative monomial number
- *    -- a finite element side and side-relative monomial number
- *  - Retrieve the polynomial representing the full solution's restriction to a given finite
- *    element interior or side, given the full sequence of solution coefficients.
- *  - Retrieve the weak gradient of the basis element defined by a given monomial on the interior
- *    of a given oriented shape.
- *  - Retrieve the weak gradient of the basis element defined by a given side monomial on a given
- *    oriented shape side.
- *  - Retrieve the matrix of inner products between basis elements supported on any given finite
- *    element interior or side.
- *  - Provide an estimate and upper bound for the number of interacting basis element pairs.
+ *   These are core functions, parts of global -> local rep translation.
+ *   - Determine the supporting finite element interior or non-boundary side for a given basis element number.
+ *   - Determine the monomial, or face-relative monomial number, used to define a given enumerated basis element.
+ *
+ *   Core functions, local -> global translation.
+ *   - Retrieve the basis element number given one of:
+ *    - a finite element interior and interior-relative monomial number
+ *    - a finite element side and side-relative monomial number
+ *
+ *   Reference Monomial Sequences
+ *   - Retrieve the reference interior monomials sequence, used to define the basis elements supported on any interior.
+ *   - Retrieve the reference side monomials sequence for any side of a finite element or oriented shape.
+ * 
+ *   Etc
+ *   - Retrieve the polynomial representing the full solution's restriction to a given finite element interior or side, given
+ *     the full sequence of solution coefficients.
+ *   - Retrieve the weak gradient of the basis element defined by a given monomial on the interior of a given oriented shape.
+ *   - Retrieve the weak gradient of the basis element defined by a given side monomial on a given oriented shape side.
+ *   - Retrieve the matrix of inner products between basis elements supported on any given finite element interior or side.
+ *   - Provide an estimate and upper bound for the number of interacting basis element pairs.
  */
 
 #[deriving(Eq,TotalEq,Ord,TotalOrd,Clone)]
