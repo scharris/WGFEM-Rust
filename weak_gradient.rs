@@ -11,17 +11,17 @@ use lapack::lapack_int;
 use std::vec;
 
 /*
- * For a weak function v on a finite element T, the weak gradient of degree r
- * of v on T is defined to be the polynomial vector function wgrad(v) in
- * [P_r(T)]^d, such that:
+ * For a function v on a finite element T, the weak gradient of degree r of v on T
+ * is defined to be the polynomial vector function wgrad(v) in [P_r(T_0)]^d, such that:
  *
  * [WGRAD_DEF]
- *   (wgrad(v), q)_T = -(v_0, div q)_T + <v_b, q.n>_bnd(T), for all q in [P_r(T)]^d
+ *   (wgrad(v), q)_{T_0} = -(v, div q)_{T_0} + <v, q.n>_bnd(T), for all q in [P_r(T)]^d
  *
  * By linearity of both sides in the right sides of the inner products, the above
- * holds iff the same equation holds with the q's further restricted to be
- * vector monomials on T (which are a monomial in one range component and 0 for
- * all other components), which functions form a basis {b_i}_i for [P_r(T)]^d.
+ * holds iff the same equation holds with the q's further restricted to a basis 
+ * of [P_r(T)]^d. For this basis we will use a sequence of vector monomials on T, each
+ * of which is a monomial of degree not exceeding r in one range component, and 0 for
+ * other components.
  *
  * Letting q = b_i, and writing wgrad(v) = sum_j eta_j b_j, we obtain a linear
  * system from WGRAD_DEF which we can solve for the unkowns eta_j, with
@@ -31,6 +31,11 @@ use std::vec;
  * We will only actually need weak gradients of weak functions which are monomials
  * on a single face (interior or side) of a finite element and 0 elsewhere. These
  * are given by the functions int_mon_wgrad and side_mon_wgrad.
+ *
+ * For functions of wider domain than a single finite element, such as WG approximation
+ * functions, we can define the weak gradient element-wise in the obvious way, but only
+ * at interior points of the elements, otherwise we would have conflicting definitions
+ * at side points contained in two finite elements.
  */
 
 pub struct WeakGrad {
