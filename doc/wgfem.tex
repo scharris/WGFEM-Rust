@@ -1,4 +1,16 @@
 \documentclass[compress]{beamer}
+
+% TODO: Add slide about monomial representation, as an example intro to object oriented programming.
+
+% define binary div operator
+\makeatletter
+\newcommand*{\bdiv}{%
+  \nonscript\mskip-\medmuskip\mkern5mu%
+  \mathbin{\operator@font div}\penalty900\mkern5mu%
+  \nonscript\mskip-\medmuskip
+}
+\makeatother
+
 \let\Tiny=\tiny % Gets rid of font warning.
 \usepackage{lmodern,amsmath,amssymb,listings}
 \usepackage{spot}
@@ -193,8 +205,6 @@
 
 \subsubsection{Oriented Shapes}
 
-% TODO: Not enough room on this slide! Split into two slides.  Then can go into a little more detail about how the division into sides
-% is included in the idea of oriented shape.
 \begin{frame}
   \frametitle{Oriented Shapes}
   \begin{columns}
@@ -204,17 +214,16 @@
       \pause
       \begin{itemize}[<+->]
         \item Elements may have, \emph{independently} of each other, any \textbf{shape}, \textbf{orientation}, and \textbf{number of sides}.
-        \item Two elements are of the same \textbf{\emph{oriented shape}} iff some translation takes each side of one onto
-          a matching side of the other.
+        \item An \textbf{\emph{oriented shape}} is an abstraction of a finite element, ignoring its position, but including its division into
+          enumerated sides.
       \end{itemize}
   \end{columns}
   
   \begin{itemize}[<+->]
-    \item Is an abstraction of a finite element, ignoring its position, but including its division into sides (for ``hanging nodes'').
-%    \item Many calculations can be done on an oriented shape instead of individual on elements.
+    \item Formally, two elements are of the same \textbf{\emph{oriented shape}} iff the sides can be put into a one-to-one correspondence and
+       there is some translation taking each side of one onto the matching side of the other.
     \item Mesh must assign an oriented shape for \emph{each} finite element. 
     \item Mesh will identify oriented shapes by enumerating them in some order of its choosing. Are just \emph{opaque} identifiers to other comps.
-%      Enumeration makes iteration and use as an array index easy. Mesh internally can store more information.
   \end{itemize}
 \end{frame}
 
@@ -371,8 +380,8 @@
     \column{.50\textwidth}
       \pause
       \begin{itemize}[<+->]
-        \item Interior supported shape functions are linearly independent by the fundamental theorem of algebra.
-          Otherwise we would have a polynomial with a non-zero coefficient and an infinite number of roots.
+        \item Interior supported shape functions are linearly independent, by induction on the space dimension $d$ and
+          the fundamental theorem of algebra.
       \end{itemize}
   \end{columns}
   \uncover<+-> {
@@ -412,7 +421,8 @@
     \frame{\includegraphics[width=12cm, height=4cm]{img/side_dep_dims_2d.pdf}}
     \begin{itemize}[<+->]
       \item Dependent dimensions must be chosen by the mesh for \emph{each} side, so the basis can choose shape functions to support on the sides.
-        Commonly a side has multiple dependent dimensions, from which the mesh must choose one.
+        Thus to the mesh contract we we add a new function,
+        {\small \texttt{\textcolor{blue}{mesh.\textbf{\textcolor{orange}{dependent\_dim\_for\_oshape\_side}(oshape, sf)}}}}.
       \item Choice should be based on intrinsic geometric properties of the side, not its representation in finite elements
         (which precludes oshape ops) or in oriented shapes (representation not unique).
     \end{itemize}
@@ -424,18 +434,29 @@
   \begin{itemize}[<+->]
     \item To form a linearly independent set of shape functions supported on a side, we will \emph{\textbf{omit the shape functions
       having any non-zero power of the dependent dimension variable}}.
-    \item The reduced set of shape functions spans the same space as the full set, because with dependent dimension of $j$,
+    \item The reduced set of shape functions spans the same space as the full set, because with a dependent of dimension $j$,
       any monomial of the full set can be expressed as
        $$x_1^{k_1} \dots x_j^{k_j} \dots x_d^{k_d}
            \;\; = \;\; x_1^{k_1} \dots (a_0 + \sum_{i \ne j} a_i x_{i})^{k_j} \dots x_d^{k_d}\text{,}$$
       which expands to a polynomial which is free of $x_j$. Additionally, the right side's maximum monomial degree will not exceed
       that of the left.  For constraints on the maximum variable degree, if $a_i = 0$ for $i \ge 1$,
       as is the case with rectangle meshes, then we again have the right hand side satisfying any max variable degree constraint
-      that the left side does. In either case, the right hand side is a linear combination of monomials in the reduced set, proving
-      that our reduced set spans the full space.
-    \item That they are linearly independent needs to be proved (TODO).
+      that the left side does. In either case, the original monomial has been expressed as a linear combination of monomials in the reduced set.
+    \item TODO: Proof of independence.
   \end{itemize}
 \end{frame}
+
+
+\begin{frame}
+  \frametitle{Side Dependent Dimension -- What Do I Do?}
+  \pause
+  Start with all monomials satisfying side degree constraints, e.g. to degree $k-1$, then drop some monomials as follows:
+  \pause
+  \frame{\includegraphics[width=12cm, height=2.59cm]{img/side_dep_dims_visual_summary_2d.pdf}}
+  \pause
+  \frame{\includegraphics[width=12cm, height=4cm]{img/side_dep_dims_visual_summary_3d.pdf}}
+\end{frame}
+
 
 \subsection{Variational Bilinear Form}
 
@@ -501,21 +522,132 @@
 
 \subsection{The Basis}
 
+\subsubsection{Responsibilities}
+
 \begin{frame}
-  \frametitle{Creating the Basis}
-  The main job of the basis module is to translate back and forth between a flat, \emph{\textbf{global}} enumeration of all basis elements and 
-    \emph{\textbf{local}} basis element representations.\\
+  \frametitle{The Basis -- Responsibilities}
+  \begin{columns}
+    \column{.65\textwidth}
+      \frame{\includegraphics[width=7.16cm, height=4cm]{img/basis_local_global_mapping.pdf}}
+    \column{.35\textwidth}
+    The main job of the basis module is to translate back and forth between a flat, \emph{\textbf{global}} enumeration
+    of all basis elements, and \emph{\textbf{local}} basis element representations suitable for computation.
+  \end{columns}
   \pause
+  \begin{block}{Basis Element Local Representation}
     A local representation of a basis element is the combination of:
     \begin{itemize}[<+->]
       \item a finite element
-      \item the relative face of the finite element on which the basis element is supported: either the interior or a side face
-      \item a shape function identifier: either a monomial or face-relative monomial number.
+      \item the relative face in the finite element on which the basis element is supported: either the interior or relative side face
+      \item a monomial or face-relative monomial number
     \end{itemize}
+  \end{block}
+\end{frame}
 
-    
+\subsubsection{Enumeration Method}
 
-    
+\begin{frame}
+  \frametitle{The Basis -- Enumeration Method}
+  Basis elements are arranged with interior-supported elements first, followed by those on non-boundary sides.
+  The mesh provides relevant counts and any needed information such as side dependent dimensions.
+  \frame{\includegraphics[width=12cm, height=2cm]{img/basis_layout_overall.pdf}}
+  \pause
+  \frame{\includegraphics[width=12cm, height=2.2cm]{img/basis_layout_ints.pdf}}
+  \pause
+  \frame{\includegraphics[width=12cm, height=2.2cm]{img/basis_layout_nbsides.pdf}}
+\end{frame}
+
+\subsubsection{Implementing Basis Methods}
+
+\begin{frame}
+  \frametitle{Implementing the Basis -- Face Monomials}
+  \frame{\includegraphics[width=12cm, height=.73cm]{img/basis_layout_overall_thin.pdf}}
+      \texttt{\textcolor{blue}{ref\_int\_mons()}},\\ 
+      \texttt{\textcolor{blue}{side\_mons\_for\_fe\_side(fe, side\_face)}}, \\
+      \texttt{\textcolor{blue}{side\_mons\_for\_oshape\_side(oshape, side\_face)}}\\
+      \small
+      \begin{itemize}[<+->]
+      \item
+      When a basis object is being constructed, we create and store in the new object the reference sequence of
+      monomials supported on any one interior. We also store reference side monomials, but since these sequences
+      vary by side orientation, we create one such sequence for each possible dependent dimension (i.e. for each space dim).
+      These functions return those stored sequences. The first function just returns the interior sequence directly.
+      \item 
+      For the last two functions, we need to find the side's dependent dimension to lookup the proper monomials sequence.
+      For the first of the two, we find the oriented shape via 
+        {\scriptsize \texttt{\textcolor{blue}{mesh.\textbf{\textcolor{orange}{oriented\_shape\_for\_fe}(fe)}}}}, 
+      then defer to the last function.  For the latter, obtain the side dependent dimension via
+      {\scriptsize \texttt{\textcolor{blue}{mesh.\textbf{\textcolor{orange}{dependent\_dim\_for\_oshape\_side}(oshape, sf)}}}},
+      and return the appropriate sequence of side monomials for it created at construction.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Implementing the Basis - Counts and Interior/Side Det.}
+  \begin{columns}
+    \column{.5\textwidth}
+      \frame{\includegraphics[width=6cm, height=2.44cm]{img/basis_layout_overall_ni_ns_s0.pdf}}
+    \column{.5\textwidth}
+      \small
+      Let \textcolor{blue}{\large $n_i$} and \textcolor{blue}{\large $n_s$} be the count of monomials per interior and side.
+      {\scriptsize We assume that the counts do not vary between sides, which is always true for any WG method using
+      $P_k$ style polynomials, or for $Q_k$ polynomials over rectangle meshes.}
+  \end{columns}
+  \begin{itemize}[<+->]
+    \item {\texttt{\textcolor{blue}{is\_int\_supported(i)\\ is\_side\_supported(i)}}}\\
+      The first side-supported basis element is at index\\
+      $\quad s_0 = $ {\texttt{\textcolor{blue}{ mesh.\textbf{\textcolor{orange}{num\_fes}()}}} * $n_i\quad$}\textcolor{gray}{(using 0-based indexing)},\\
+      so if $i < s_0$ then element $i$ is interior supported, else side supported.
+    \item {\texttt{\textcolor{blue}{num\_els()}}}: The total number of basis elements is\\
+        $\quad s_0 \;+ $ {\texttt{\textcolor{blue}{ mesh.\textbf{\textcolor{orange}{num\_nb\_sides}()}}} * $n_s$}.
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Implementing the Basis -- Global to Local Translation}
+  \frame{\includegraphics[width=12cm, height=.73cm]{img/basis_layout_overall_thin.pdf}}
+  \pause
+  After querying using {\small \texttt{\textcolor{blue}{is\_int\_supported(i), is\_side\_supported(i)}}}, we can then use the following
+   functions to translate from the global basis element number to the supporting interior or non-boundary side number, and shape function monomial: 
+  \pause
+  \begin{align*}
+    \text{\texttt{\textcolor{blue}{support\_int\_fe\_num(i)}}} &= i \bdiv n_i \\
+    \text{{\texttt{\textcolor{blue}{int\_rel\_mon\_num(i)}}}}   &= i \bmod n_i \\
+    \text{\texttt{\textcolor{blue}{support\_nb\_side\_num(i)}}} &= (i - s_0) \bdiv n_s \\
+    \text{\texttt{\textcolor{blue}{side\_rel\_mon\_num(i)}}} &= (i - s_0) \bmod n_s
+  \end{align*}
+  \pause
+  \uncover<+-> {
+    \small  
+      The non-boundary side number $\textcolor{blue}{n} = \text{\scriptsize \textcolor{blue}{support\_nb\_side\_num(i)}}$ can be translated
+      to two finite element/side face pairs via
+      {\scriptsize \texttt{\textcolor{blue}{mesh.\textcolor{orange}{fe\_inclusions\_of\_nb\_side}(n)}}}.
+    \uncover<+-> {
+      Next we take either of these fe/sf pairs, obtain the oriented shape {\scriptsize \textcolor{blue}{oshape} =}
+      {\scriptsize \texttt{\textcolor{blue}{mesh.\textbf{\textcolor{orange}{oriented\_shape\_for\_fe}(fe)}}}}, and then the side's
+      dependent dimension via 
+      {\scriptsize \texttt{\textcolor{blue}{mesh.\textbf{\textcolor{orange}{dependent\_dim\_for\_oshape\_side}(oshape, sf)}}}},
+      which determines the sequence of monomials to index into for the actual monomial (one of our pre-calc seqs).
+    }
+  }
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Implementing the Basis -- Local to Global Translation}
+  \frame{\includegraphics[width=12cm, height=.73cm]{img/basis_layout_overall_thin.pdf}}
+  \pause
+  Now we perform the ``inverse'' operations to the $\bdiv$/$\bmod$ calculations above, so we can convert from local representations back to
+  to the global basis element numbers.
+  \pause
+  \begin{align*}
+    \text{\texttt{\textcolor{blue}{int\_mon\_el\_num({fe, monn})}}} &= fe \cdot n_i + monn \\
+    \text{\textcolor{blue}{nb\_side\_mon\_el\_num({n, monn})}} &= s_0 + n \cdot n_s + monn\\
+    \text{\texttt{\textcolor{blue}{fe\_side\_mon\_el\_num({fe, side\_face, monn})}}} &= s_0 + n \cdot n_s + monn\\
+      \text{\scriptsize where } \text{\scriptsize \textcolor{blue}{n}} = 
+      \text{\scriptsize \textcolor{blue}{mesh.\textcolor{orange}{nb\_side\_num\_for\_fe\_side}(fe, side\_face) }} & \text{\scriptsize in the latter}.
+  \end{align*}
 \end{frame}
 
 
@@ -523,8 +655,16 @@
 \begin{frame}
   \frametitle{TODO - Sketch of Remainder}
   \begin{itemize}[<+->]
-    \item Basis impl.
     \item weak gradient solver -- basic ideas, basis of vector monomials, basic howto.
+      Weak Gradient
+        Discuss vector monomial basis spanning space of vector polynomials of deg k-1.
+        Include discussion from wgrad module.
+        Efficiency
+          Can reduce the work to only one system solve per oshape, because the vector monomial basis vs basis matrix is the same so long as we
+          stay on the same oshape, so we can stack multiple rhs's together into the same solve.  Each rhs is a face monomial to have its weak
+          gradient solved for. (Show that solving matrix * matrix = matrix is equiv to multiple solves of matrix * vector = vector).
+            wgrads_on_oshape<MESHT:Mesh<Mon>>(&mut self, int_mons: &[Mon], side_mons_by_side: &[&[Mon]],
+                                                         oshape: OShape, mesh: &MESHT) -> (~[WeakGrad], ~[~[WeakGrad]])
     \item projection -- basic howto
     \item Analysis of method, starting from variational form, gathering module requirements
     \item Building system matrix, in detail.  Illustrate each form of interaction of elements.
