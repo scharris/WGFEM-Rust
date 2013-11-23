@@ -30,9 +30,9 @@
      showgrid="false"
      units="cm"
      inkscape:window-width="1366"
-     inkscape:window-height="757"
+     inkscape:window-height="730"
      inkscape:window-x="0"
-     inkscape:window-y="0"
+     inkscape:window-y="27"
      inkscape:window-maximized="1" />
   <defs
      id="defs4">
@@ -58,10 +58,10 @@
        sodipodi:type="inkscape:persp3d" />
     <inkscape:perspective
        id="perspective2985"
-       inkscape:persp3d-origin="237.09939 : -44.741649 : 1"
-       inkscape:vp_z="629.8315 : -26.284599 : 1"
+       inkscape:persp3d-origin="188.61206 : -44.741649 : 1"
+       inkscape:vp_z="581.34417 : -26.284599 : 1"
        inkscape:vp_y="0 : 781.34847 : 0"
-       inkscape:vp_x="73.166829 : -28.304904 : 1"
+       inkscape:vp_x="24.679507 : -28.304904 : 1"
        sodipodi:type="inkscape:persp3d" />
     <marker
        style="overflow:visible"
@@ -100,7 +100,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -161,37 +161,37 @@
        style="fill:#c50000;fill-opacity:1;stroke:#000077;stroke-width:1.39999998;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
        sodipodi:type="inkscape:box3d">
       <path
-         d="m 281.84897,950.16605 11.88002,-7.42927 0,42.32283 -11.88002,5.14965 z"
+         d="m 233.36165,950.16605 11.88001,-7.42927 0,42.32283 -11.88001,5.14965 z"
          inkscape:box3dsidetype="11"
          style="fill:#e9e9ff;fill-rule:evenodd;stroke:none"
          id="path3041"
          sodipodi:type="inkscape:box3dside" />
       <path
-         d="m 209.49985,923.45358 0,48.36861 72.34912,18.38707 0,-40.04321 z"
+         d="m 161.01252,923.45358 0,48.36861 72.34913,18.38707 0,-40.04321 z"
          inkscape:box3dsidetype="6"
          style="fill:#353564;fill-rule:evenodd;stroke:none"
          id="path3031"
          sodipodi:type="inkscape:box3dside" />
       <path
-         d="m 209.49985,923.45358 9.48721,-10.94024 74.74193,30.22344 -11.88002,7.42927 z"
+         d="m 161.01252,923.45358 9.48721,-10.94024 74.74193,30.22344 -11.88001,7.42927 z"
          inkscape:box3dsidetype="5"
          style="fill:#4d4d9f;fill-rule:evenodd;stroke:none"
          id="path3033"
          sodipodi:type="inkscape:box3dside" />
       <path
-         d="m 209.49985,971.82219 9.48721,-7.57435 74.74193,20.81177 -11.88002,5.14965 z"
+         d="m 161.01252,971.82219 9.48721,-7.57435 74.74193,20.81177 -11.88001,5.14965 z"
          inkscape:box3dsidetype="13"
          style="fill:#afafde;fill-rule:evenodd;stroke:none"
          id="path3039"
          sodipodi:type="inkscape:box3dside" />
       <path
-         d="m 218.98706,912.51334 0,51.7345 74.74193,20.81177 0,-42.32283 z"
+         d="m 170.49973,912.51334 0,51.7345 74.74193,20.81177 0,-42.32283 z"
          inkscape:box3dsidetype="14"
          style="fill:#d7d7ff;fill-rule:evenodd;stroke:none"
          id="path3037"
          sodipodi:type="inkscape:box3dside" />
       <path
-         d="m 209.49985,923.45358 9.48721,-10.94024 0,51.7345 -9.48721,7.57435 z"
+         d="m 161.01252,923.45358 9.48721,-10.94024 0,51.7345 -9.48721,7.57435 z"
          inkscape:box3dsidetype="3"
          style="fill:#8686bf;fill-rule:evenodd;stroke:none"
          id="path3035"
@@ -200,7 +200,7 @@
     <path
        inkscape:connector-curvature="0"
        id="path4037"
-       d="m 176.12524,929.58469 37.19937,11.23401"
+       d="m 127.63791,929.58469 37.19937,11.23401"
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow2Mstart)" />
     <path
        inkscape:connector-curvature="0"
@@ -665,25 +665,25 @@
          sodipodi:role="line"
          id="tspan5611"
          x="47.142857"
-         y="1006.6479">normal closest to z-axis,</tspan><tspan
+         y="1006.6479">Normal is closest to z-axis:</tspan><tspan
          sodipodi:role="line"
          x="47.142857"
          y="1024.1479"
-         id="tspan5613">  drop mons with z factors</tspan></text>
+         id="tspan5613">drop all monomials with z factors.</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:14px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="221.62025"
-       y="930.09283"
+       x="173.638"
+       y="932.61823"
        id="text5609-5"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan5611-6"
-         x="221.62025"
-         y="930.09283">normal closest to (-) x-axis,</tspan><tspan
+         x="173.638"
+         y="932.61823">Normal is closest to (minus) x-axis:</tspan><tspan
          sodipodi:role="line"
-         x="221.62025"
-         y="947.59283"
-         id="tspan5613-6">  drop mons with x factors</tspan></text>
+         x="173.638"
+         y="950.11823"
+         id="tspan3471">drop all monomials with x factors.</tspan></text>
   </g>
 </svg>

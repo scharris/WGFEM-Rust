@@ -1,6 +1,7 @@
 \documentclass[compress]{beamer}
 
 % TODO: Add slide about monomial representation, as an example intro to object oriented programming.
+% TODO: In the vbf concepts section, show laplace vbf as an example.
 
 % define binary div operator
 \makeatletter
@@ -186,8 +187,8 @@
       type are normally denoted \textcolor{blue}{\small \texttt{someObject.\textbf{\textcolor{orange}{someFunction}}(arg1,\dots,argN)}}.
 
     \item We saw this above, where objects representing a mesh, a basis, and a vbf were created. It should be apparent
-      that the operations must come along with these objects, because the WG method only receives these objects to its solve function, and yet
-      somehow also must be getting the operations for the specific mesh and VBF.
+      that the operations must come along with these objects, because the WG method only receives these objects to its solve function,
+      and yet somehow also must be getting the operations for the specific mesh and VBF.
       \tcbset{colback =red!5!white, colframe =red!75!black, left=0mm,right=0mm,bottom=0mm,top=0mm, tcbox raise base}
       \begin{Verbatim}[gobble=6, commandchars=\\\{\}, fontsize=\scriptsize, fontfamily=tt]
         let \textcolor{green!50!black}{mesh} = ~RectMesh::new(~[0.,0.], ~[2*pi,2*pi], ~[500, 500]);
@@ -198,6 +199,14 @@
   \end{itemize}
 \end{frame}
 
+% TODO: Describe here how creating a new type for bundling functions and data together can be better than just calling a normal
+% function with the data as first argument. The crux is that the function must either know about *all* types of data that it may
+% receive (not generally possible, they may not have been written yet, ideally!), or the function itself must be passed around
+% separately with the data. Which would be necessary for EACH function associated with the type, which obviously is not practical.
+%\begin{frame}[fragile]
+  %\frametitle{Usefulness of Types}
+  %\begin{itemize}[<+->]
+%\end{frame}
 
 \section{Concepts}
 
@@ -550,7 +559,7 @@
   \frametitle{The Basis -- Enumeration Method}
   Basis elements are arranged with interior-supported elements first, followed by those on non-boundary sides.
   The mesh provides relevant counts and any needed information such as side dependent dimensions.
-  \frame{\includegraphics[width=12cm, height=2cm]{img/basis_layout_overall.pdf}}
+  \frame{\includegraphics[width=12cm, height=1.49cm]{img/basis_layout_overall.pdf}}
   \pause
   \frame{\includegraphics[width=12cm, height=2.2cm]{img/basis_layout_ints.pdf}}
   \pause
@@ -606,10 +615,11 @@
 
 \begin{frame}
   \frametitle{Implementing the Basis -- Global to Local Translation}
-  \frame{\includegraphics[width=12cm, height=.73cm]{img/basis_layout_overall_thin.pdf}}
+  \frame{\includegraphics[width=7.3cm, height=.73cm]{img/basis_layout_overall_ni_ns_s0_thin.pdf}}
   \pause
-  After querying using {\small \texttt{\textcolor{blue}{is\_int\_supported(i), is\_side\_supported(i)}}}, we can then use the following
-   functions to translate from the global basis element number to the supporting interior or non-boundary side number, and shape function monomial: 
+  After using {\small \texttt{\textcolor{blue}{is\_int\_supported(i), is\_side\_supported(i)}}}, we can then use the following
+    functions to translate from the global basis element number to the supporting interior or non-boundary side number,
+    and shape function monomial: 
   \pause
   \begin{align*}
     \text{\texttt{\textcolor{blue}{support\_int\_fe\_num(i)}}} &= i \bdiv n_i \\
@@ -636,7 +646,7 @@
 
 \begin{frame}
   \frametitle{Implementing the Basis -- Local to Global Translation}
-  \frame{\includegraphics[width=12cm, height=.73cm]{img/basis_layout_overall_thin.pdf}}
+  \frame{\includegraphics[width=12cm, height=1.2cm]{img/basis_layout_overall_ni_ns_s0_thin.pdf}}
   \pause
   Now we perform the ``inverse'' operations to the $\bdiv$/$\bmod$ calculations above, so we can convert from local representations back to
   to the global basis element numbers.
@@ -645,26 +655,179 @@
     \text{\texttt{\textcolor{blue}{int\_mon\_el\_num({fe, monn})}}} &= fe \cdot n_i + monn \\
     \text{\textcolor{blue}{nb\_side\_mon\_el\_num({n, monn})}} &= s_0 + n \cdot n_s + monn\\
     \text{\texttt{\textcolor{blue}{fe\_side\_mon\_el\_num({fe, side\_face, monn})}}} &= s_0 + n \cdot n_s + monn\\
-      \text{\scriptsize where } \text{\scriptsize \textcolor{blue}{n}} = 
-      \text{\scriptsize \textcolor{blue}{mesh.\textcolor{orange}{nb\_side\_num\_for\_fe\_side}(fe, side\_face) }} & \text{\scriptsize in the latter}.
+      \text{where } \text{\textcolor{blue}{n}} = 
+      \text{\textcolor{blue}{mesh.\textcolor{orange}{nb\_side\_num\_for\_fe\_side}(fe, side\_}}&\text{\textcolor{blue}{face) }}
+        \text{in the latter}.
   \end{align*}
 \end{frame}
 
+\subsection{Computing Weak Gradients}
+
+\subsubsection{WGRAD Definitions}
+
+\begin{frame}
+  \frametitle{Computing Weak Gradients -- WGRAD Definitons}
+  If $v$ is a function on a finite element $T$, then its weak gradient of degree $r$ on $T$
+  is defined to be the $\nabla_w v$ in $[P_r(T_0)]^d$ satisfying:\\
+  \vspace{-0.25cm}
+  \begin{equation*}
+    (\nabla_w v, q)_{T_0} = -(v, \nabla \cdot q)_{T_0} + \langle v, q \cdot n \rangle_{\partial T}, \;\; \forall q \in [P_r(T)]^d
+    \;\text{\scriptsize (\textbf{WGRAD-DEF})}
+  \end{equation*}
+  \pause
+  
+  If $B=\{b_i\}_i$ is a basis for $[P_r(T)]^d$, then we can use instead the equivalent definition:
+  \begin{equation*}
+    (\nabla_w v, b)_{T_0} = -(v, \nabla \cdot b)_{T_0} + \langle v, b \cdot n \rangle_{\partial T}, \;\; \forall b \in B 
+    \;\quad\quad \text{\scriptsize (\textbf{WGRAD-DEF-B})}
+  \end{equation*}
+  \pause
+  \begin{block}{Proof of Equivalence}
+    \small
+    That {\scriptsize \textbf{WGRAD-DEF}} implies {\scriptsize \textbf{WGRAD-DEF-B}} is obvious. Now let $q \in [P_r(T)]^d$ be
+    arbitrary, and assume that {\scriptsize \textbf{WGRAD-DEF-B}} holds. Then $q = \sum_i {a_i b_i}$ for some $a_i$. If we take
+    the same ${a_i}$-linear combination of the {\scriptsize \textbf{WGRAD-DEF-B}} equations with the $b_i$ in place of $b$,
+    and then use the linearity of the right side of each inner product involving the $b_i$'s, we obtain the 
+    {\scriptsize \textbf{WGRAD-DEF}} equation.
+  \end{block}
+\end{frame}
+
+\subsubsection{The Linear System}
+
+\begin{frame}
+  \frametitle{Computing Weak Gradients -- The Linear System}
+  \begin{equation*}
+    (\nabla_w v, b)_{T_0} = -(v, \nabla \cdot b)_{T_0} + \langle v, b \cdot n \rangle_{\partial T}, \;\; \forall b \in B 
+    \;\quad\quad \text{\scriptsize (\textbf{WGRAD-DEF-B})}
+  \end{equation*}
+  \pause
+  \begin{itemize}[<+->]
+    \item Since $\{b_i\}_i$ are a basis for $[P_r(T)]^d$ and $\nabla_w v \in [P_r(T_0)]^d$, we must have
+      $\nabla_w v = \sum_j {\eta_j b_j}$ on $T_0$ for some uknowns $\eta_j$.
+      Putting the latter expression for $\nabla_w v$ and also each $b_i$ in place of $b$ in turn into
+      {\scriptsize \textbf{WGRAD-DEF-B}}, we obtain a system of linear equations, which we can solve for
+      the unknown coefficients $\eta_j$ of our vector monomials. 
+    \item The system matrix at $(i,j)$ is given by\\ $M_{i,j} = (b_j, b_i)_{T_0}$
+    \item The $i^{\text{th}}$ component of the right hand side vector is 
+      $r_i = -(v, \nabla \cdot b_i)_{T_0} + \langle v, b_i \cdot n \rangle_{\partial T}$
+  \end{itemize}
+\end{frame}
+
+\subsubsection{System Basis}
+
+\begin{frame}
+  \frametitle{Computing Weak Gradients -- System Basis}
+  We now need to choose a specific basis $B=\{b_i\}$ for $[P_r(T)]^d$ so we can form our linear system as described above.\\
+  \pause
+  Let $m_1,\dots,m_m$ be the interior-relative monomials of degree $\le r$ on $T$. Then we choose our basis,
+  among many possibilities, to be the following sequence of \emph{\textbf{vector monomials}} on $T$:
+  \begin{align*}
+    &(m_1,0,0,0,\dots,0), (m_2,0,0,0,\dots,0), \dots, (m_m,0,0,0,\dots,0),\\
+    &(0,m_1,0,0,\dots,0), (0,m_2,0,0,\dots,0), \dots, (0,m_m,0,0,\dots,0),\\
+    &(0,0,m_1,0,\dots,0), (0,0,m_2,0,\dots,0), \dots, (0,0,m_m,0,\dots,0),\\
+    &\dots\\
+    &(0,\dots,0,m_1), (0,\dots,0,m_2), \dots, (0,\dots,0,m_m)
+  \end{align*}
+  \pause
+  Each of these vector monomials has a $T$-interior-relative monomial in one component, and the constantly $0$ function in
+  every other component.  The vector monomials are ordered so that reassembling a solution into a composite vector polynomial
+  will be easy. 
+\end{frame}
+
+\subsubsection{Inputs}
+ 
+\begin{frame}
+  \frametitle{Computing Weak Gradients -- Inputs}
+  \begin{equation*}
+    (\nabla_w v, b)_{T_0} = -(v, \nabla \cdot b)_{T_0} + \langle v, b \cdot n \rangle_{\partial T}, \;\; \forall b \in B 
+    \;\quad\quad \text{\scriptsize (\textbf{WGRAD-DEF-B})}
+  \end{equation*}
+  \pause
+  \begin{itemize}[<+->]
+    \item  We compute weak gradients \emph{\textbf{only for main basis shape functions}}.
+    \item We lose no generality by doing this, because:
+      \begin{enumerate}[<+->]
+        \item Any WG approximation function is a linear combination of the main basis shape functions.
+        \item It's clear from {\scriptsize \textbf{WGRAD-DEF-B}} that the solution for a linear combination $v = \sum_i a_i v_i$
+          is the same linear combination of the individual solutions, $\nabla_w v = \sum_i a_i \nabla_w v_i$.
+          Which is to say that the weak gradient operator is linear.
+      \end{enumerate}
+    \item Also since both a shape function and our vector monomial basis use coordinate systems defined relative to faces of the finite
+      element, the actual position of the finite element does not matter in the calculation.
+      So \emph{\textbf{all computations can be done on an oriented shape}} instead of the individual elements having the shape.
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Computing Weak Gradients -- Input Batching}
+  If a set of shape functions are supported on the faces of the same oriented shape, then all of their weak gradients
+  can be computed by solving a \emph{\textbf{single linear system}}. This is because:
+  \pause
+  \begin{itemize}[<+->]
+    \item The system matrix $M_{i,j} = (b_j, b_i)_{T_0}$ used to compute each weak gradient is the same, only depending
+      on the shape of interior $T_0$ and the fixed basis of vector monomials.
+    \item Solving multiple systems $M\,x_j = r_j$ {\scriptsize $(j=1,\dots,q)$} for column vectors $x_j$ and $r_j$
+      is equivalent to solving a single system $M\,X = R$ for \emph{matrices}
+      $X = (x_1|x_2|\dots|x_q)$, and $R = (r_1|r_2|\dots|r_q)$.
+  \end{itemize}
+  \uncover<+-> {
+    \frame{\includegraphics[width=12cm, height=2.5cm]{img/matrix_matrix_sys.pdf}}
+    \uncover<+-> {
+      By stacking right hand sides for the shape functions as the columns of $R$, we can solve for all the shape functions at once on 
+      the shape.
+    }
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Computing Weak Gradients -- Final Interface}
+  The final interface to our our weak gradient solver consists of a constructor function and a solver function:\\ 
+  \pause
+  \begin{itemize}[<+->]
+    \item  \textcolor{blue}{new}(\textcolor{blue}{comp\_mons\_deg\_lim}, \textcolor{blue}{mesh}) $\; \rightarrow$ {\small WeakGradSolver}\\
+      For the ``optimal combination'' WG method the degree limit should be $k-1$.
+      The mesh is also provided to this constructor function so the solver object can pre-compute and store the vector monomial
+      inner products matrices (system matrices) for each oriented shape of the mesh.
+    \item The actual weak gradient computation function:\\
+      \textcolor{blue}{wgrads\_on\_oshape}(\\
+      \hspace{.5cm} \textcolor{blue}{int\_mons}: [Mon],\\
+      \hspace{.5cm} \textcolor{blue}{side\_mons\_by\_sideface}: [[Mon]], \textcolor{gray}{\scriptsize // mon seq for side face s at index s}\\
+      \hspace{.5cm} \textcolor{blue}{oshape},\\
+      \hspace{.5cm} \textcolor{blue}{mesh}\\
+      ) $\rightarrow$ {\scriptsize ([WeakGrad], [[WeakGrad]])} \textcolor{gray}{\scriptsize // int mon wgrads, side mon wgrads by side face}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Computing Weak Gradients -- Reqs on Other Modules}
+  \vspace{-.75cm}
+  \begin{equation*}
+    (\nabla_w v, b)_{T_0} = -(v, \nabla \cdot b)_{T_0} + \langle v, b \cdot n \rangle_{\partial T}, \;\; \forall b \in B 
+    \;\quad\quad \text{\scriptsize (\textbf{WGRAD-DEF-B})}
+  \end{equation*}
+  \pause
+  \textbf{Additional Mesh Functions}
+  \begin{itemize}[<+->]
+    \item Our system equation requires several inner products defined by integrals which only the mesh could possibly do, because they
+      involve the geometry of the elements in a non-trivial way.
+    \item For system matrix inner products $M_{i,j} = (b_j, b_i)_{T_0}$, we need\\
+      {\small \texttt{\textcolor{blue}{mesh.\textbf{\textcolor{orange}{intg\_facerel\_mon\_on\_oshape\_int}(mon, oshape)}}}},\\
+      mon being the dot product of vector monomials $b_j$ and $b_i$.
+    \item For the first term of the RHS (interior supported shape function), we use also use the above new function with mon being
+      the monomial part of $v \;\nabla \cdot q$ (missing scalar applied separately).
+    \item For the second term of the RHS (side supported shape function):
+      {\small \texttt{\textcolor{blue}{mesh.\textbf{\textcolor{orange}{intg\_siderel\_mon\_x\_intrel\_vmon\_dot\_normal\_on\_oshape\_side}\\
+      \hspace{0.5cm}(v, q, oshape, side\_face)}}}}
+    \item We've also used divergence operator on vector monomials, and multiplication of monomials, both easily implemented.
+  \end{itemize}
+\end{frame}
+ 
 
 \subsection{TODO}
 \begin{frame}
   \frametitle{TODO - Sketch of Remainder}
   \begin{itemize}[<+->]
-    \item weak gradient solver -- basic ideas, basis of vector monomials, basic howto.
-      Weak Gradient
-        Discuss vector monomial basis spanning space of vector polynomials of deg k-1.
-        Include discussion from wgrad module.
-        Efficiency
-          Can reduce the work to only one system solve per oshape, because the vector monomial basis vs basis matrix is the same so long as we
-          stay on the same oshape, so we can stack multiple rhs's together into the same solve.  Each rhs is a face monomial to have its weak
-          gradient solved for. (Show that solving matrix * matrix = matrix is equiv to multiple solves of matrix * vector = vector).
-            wgrads_on_oshape<MESHT:Mesh<Mon>>(&mut self, int_mons: &[Mon], side_mons_by_side: &[&[Mon]],
-                                                         oshape: OShape, mesh: &MESHT) -> (~[WeakGrad], ~[~[WeakGrad]])
     \item projection -- basic howto
     \item Analysis of method, starting from variational form, gathering module requirements
     \item Building system matrix, in detail.  Illustrate each form of interaction of elements.
