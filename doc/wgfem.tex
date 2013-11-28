@@ -1,7 +1,8 @@
 \documentclass[compress]{beamer}
 
 % TODO: Add slide about monomial representation, as an example intro to object oriented programming.
-% TODO: In the vbf concepts section, show laplace vbf as an example.
+% TODO: Add slide describing that the basis pre-computes weak gradients and inner products for its
+%       elements on each oriented shape face.
 
 % define binary div operator
 \makeatletter
@@ -52,7 +53,7 @@
   The ability to most easily solve the widest variety of problems
     \begin{align*}
       \spot<7>{\mathfrak{a}}(u_h,v) & = (\spot<4>{f},v)\quad\quad\quad \forall{v} \in \spot<6>{V_{h0}} \\
-      u_h & = \spot<4>{g} \text{ on } \partial\spot<5>{\Omega}
+      u_h & = \spot<4>{Q_b g} \text{ on } \partial\spot<5>{\Omega}
     \end{align*}
     for solution $u_h$ in piecewise polynomial approximation space $V_h$ on mesh \spot<5>{$M_h$} of \spot<5>{$\Omega$}.
   \pause
@@ -490,20 +491,36 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}
+  \frametitle{Example Variational Bilinear Form}
+  $$\mathfrak a_s(v,w) = \sum_{T \in M} \left\{ (a \nabla_w v,\nabla_w w)_{\scriptscriptstyle T_0} \;+\;
+    h_T^{-1}\langle Q_b v_{\scriptscriptstyle T_0} - v,Q_b w_{\scriptscriptstyle T_0} - w \rangle_{\partial T} \right\}$$
+  \pause
+  \begin{itemize}[<+->]
+    \item $\mathfrak a_s$ is a sum of contributions from the behavior of the input functions considered
+      separately on individual finite elements.
+    \item When computing the contribution from a given element, values of the input functions outside the element cannot effect the
+      element's contribution.
+    \item The contribution does not depend on the location of the element:  If we were to ``move'' the input functions by
+      pre-composing with a translation, and move the element in the same way, we would obtain the same contribution.
+    \item The per-element contribution function is itself a bilinear function of the input functions over the element.
+  \end{itemize}
+\end{frame}
+
 \subsubsection{Element Summability}
 
 \begin{frame}
   \frametitle{Variational Bilinear Form -- Element Summability}
   \begin{block}{Element Summability}
     The vbf is the sum of contributions of a fixed \emph{local} bilinear form applied over individual elements
-    \begin{center}$\mathfrak{a}(u,v) = \sum_T { \phi(u|_T,v|_T) }$\end{center}
+    \begin{center}$\mathfrak{a}(v,w) = \sum_T { \phi(v|_T,w|_T) }$\end{center}
       where $u$ and $v$ are piecewise polynomials on the mesh, and $\phi$ is a bilinear form which is independent of the mesh elements $T$.
   \end{block}
   \pause
   \begin{itemize}[<+->]
     \item This allows us to compute element-at-a-time with the vbf.
     \item It implies the \emph{\textbf{locality property}} -- that if there is no finite element that intersects the supports of \emph{both}
-      of $u$ and $v$, then $\mathfrak{a}(u,v) = 0$.
+      of $v$ and $w$, then $\mathfrak{a}(v,w) = 0$.
         \footnote{We'll also assume that $\phi$ is not sensitive to differences in the functions on sets of no measure in $\mathbb{R}^{d-1}$,
                   so that an element containing only a lesser edge (e.g. vertex) of the support of $u$ or $v$ can be ignored.}
       This greatly reduces the possible non-null interactions between basis elements under the vbf.
@@ -780,6 +797,8 @@
   }
 \end{frame}
 
+\subsubsection{Final Interface}
+
 \begin{frame}
   \frametitle{Computing Weak Gradients -- Final Interface}
   The final interface to our our weak gradient solver consists of a constructor function and a solver function:\\ 
@@ -798,6 +817,8 @@
       ) $\rightarrow$ {\scriptsize ([WeakGrad], [[WeakGrad]])} \textcolor{gray}{\scriptsize // int mon wgrads, side mon wgrads by side face}
   \end{itemize}
 \end{frame}
+
+\subsubsection{Requirements on Other Modules}
 
 \begin{frame}
   \frametitle{Computing Weak Gradients -- Reqs on Other Modules}
@@ -822,13 +843,363 @@
     \item We've also used divergence operator on vector monomials, and multiplication of monomials, both easily implemented.
   \end{itemize}
 \end{frame}
+
+\begin{frame}
+  \frametitle{Computing Weak Gradients -- More Reqs on Other Mods}
+  \begin{itemize}[<+->]
+    \item Weak gradients can be pre-computed for each oriented shape, and stored by the triplet of oriented shape, face,
+      and face-relative monomial number.
+    \item The basis is a natural place to store the weak gradients, since they are about (derived from) basis functions.
+    \item The mesh is consulted to get the number of oriented shapes, and number of sides for each oriented shape. The basis
+      provides shape function monomial sequences for each of these shape faces, and asks the weak gradient module to compute the
+      values, which values are then stored in the basis object.
+    \item The pre-computed values are then made available to other modules via functions\\
+      -- {\small \texttt{\textcolor{blue}{basis.\textbf{\textcolor{orange}{int\_mon\_wgrad}(monn, oshape)}}}}\\
+      -- {\small \texttt{\textcolor{blue}{basis.\textbf{\textcolor{orange}{side\_mon\_wgrad}(monn, oshape, side\_face)}}}}
+  \end{itemize}
+\end{frame}
  
+\subsection{Computing Projections}
+
+\subsubsection{The System}
+
+\begin{frame}
+  \frametitle{Computing Projections -- The System}
+  \begin{columns}
+    \column{.45\textwidth}
+      \includegraphics[width=5cm, height=3.33cm]{img/projection.pdf}
+    \column{.55\textwidth}
+      To project a vector $g$ onto a subspace S with basis $\{e_i\}_{i=1,\dots,m}$, we require that the projection
+      $P\,g$ satisfies
+      $$\langle P\,g, e_i \rangle = \langle g, e_i \rangle$$ for $i=1,\dots,m$.
+  \end{columns}
+  \pause
+
+  Since $P g = \sum_j{ a_j e_j }$ for some $a_1,\dots,a_m$, this gives us a linear system, with system matrix
+  $M_{i,j} = \langle e_j, e_i \rangle$, and right hand side column vector $r$ with value
+  $r_i = \langle g, e_i \rangle$ at row $i$.
+  \pause
+ 
+  For our cases, $S$ will be the space of shape functions supported on a fe face, the i.p. is integration of the product
+  of its input functions on the face, and the basis $\{e_i\}_i$ for $S$ is given by one of the basis functions:
+  \pause
+  \begin{itemize}[<+->]
+    \item \texttt{\textcolor{blue}{basis.\textcolor{orange}{ref\_int\_mons}()}} 
+    \item \texttt{\textcolor{blue}{basis.\textcolor{orange}{side\_mons\_for\_fe\_side}(fe, side\_face)}}
+    \item \texttt{\textcolor{blue}{basis.\textcolor{orange}{side\_mons\_for\_oshape\_side}(oshape, side\_face)}}
+  \end{itemize}
+\end{frame}
+
+\subsubsection{Projecting Global Functions onto Side Spaces}
+
+\begin{frame}
+  \frametitle{Projecting Global Functions onto Side Spaces}
+  {\small \texttt{\textcolor{blue}{projs\_to\_span\_fes\_side\_supp\_basis\_els({\scriptsize g, fes, oshape, side\_face $\sigma$})}}}\\
+  \hspace{0.5cm} $\rightarrow$ [Polynomial]\\
+  \pause
+  \begin{itemize}[<+->]
+    \item This function performs projections of a global function \textcolor{blue}{$g$} separately onto the spaces of shape functions
+      supported on the given relative side face \textcolor{blue}{$\sigma$} of the passed finite elements, which all must be of the
+      same indicated oriented shape.  A projection result polynomial is returned for each of the passed finite elements.
+    \item The system matrix for each of these projections is the same, given by
+      $M_{i,j} = \langle e_j, e_i \rangle_{\text{oshape},\sigma}$, for which we need a new mesh function,\\
+      \texttt{\small \textcolor{blue}{\textcolor{orange}{intg\_facerel\_mon\_on\_oshape\_side}(mon, oshape, side\_face)}}\\
+      for the integration. Here for \texttt{\textcolor{blue}{mon}} we pass the product $e_j e_i$.
+    \item The right hand sides may be stacked so that all projections are found via a single linear solve.
+      Column $j$ of the combined rhs represents the projection for \texttt{\textcolor{blue}{fes(j)}}, given by
+      $R_{i,j} = \langle g, e_i\rangle_{fes(j),\sigma}$, for which we need another new mesh integration function,
+      $\texttt{\small \textcolor{blue}{\textcolor{orange}{intg\_global\_fn\_x\_facerel\_mon\_on\_fe\_side}(g, mon, fe, side\_face)}}$.
+  \end{itemize} 
+\end{frame}
+
+\subsubsection{Projecting Interior Monomials onto Side Spaces}
+
+\begin{frame}
+  \frametitle{Projecting Interior Monomials onto Side Spaces}
+  {\small \texttt{\textcolor{blue}{proj\_int\_mons\_to\_span\_oshape\_side\_supp\_basis\_els\\
+    \hspace{0.5cm}(int\_mons, oshape, side\_face $\sigma$)}}} $\rightarrow$ [Polynomial]\\
+  \pause
+  \begin{itemize}[<+->]
+    \item Need this projection in the stabilization term of $\mathfrak a_s$.
+    \item Implementation is much like the previous, except we are projecting multiple functions on a single
+      shape side, and the functions to be projected are defined relative to the local interior origin.
+    \item The system matrix is defined just as before.
+    \item We can find projections for all interior monomials with a single linear system solve, with combined right hand side
+      matrix given by $R_{i,j} = \langle m_j, e_i\rangle_{\text{oshape},\sigma}$, where $m_j$ is interior monomial $j$. For this we
+      need another new mesh function,
+      \texttt{\scriptsize \textcolor{blue}{\textcolor{orange}{intg\_intrel\_mon\_x\_siderel\_mon\_on\_oshape\_side}(imon,smon,oshape,side\_face)}}.
+    \item The right hand side integrals are done completely on the oriented shape instead of individual finite elements, which is
+      possible because the monomials to be projected are defined relative to the interior origin.
+  \end{itemize} 
+\end{frame}
+
+\subsection{The Main WG System}
+
+\subsubsection{Introduction}
+
+\begin{frame}
+  \frametitle{The Main WG System -- Introduction}
+    We seek approximate solution $u_h$ in the piecewise polynomial approximation space $V_h(\Omega)$ over a mesh $M$ 
+    of region $\Omega$, which satisfies
+    \begin{align*}
+      \mathfrak{a}(u_h,v) & = (f,v)_{M_0}\quad\quad \forall{v} \in V_h^0(\Omega) \\
+      u_h & = Q_b\,g \text{ on } \partial\Omega
+    \end{align*}
+    Here 
+    \begin{itemize}[<+->]
+      \item $\mathfrak{a}$ is a bilinear form which satisfies our additional \emph{\textbf{locality}} and
+        \emph{\textbf{element-summability}} requirements discussed previously.
+      \item The polynomials of $V_h(\Omega)$ satisfy a pair of degree constraints for the interior and side polynomial pieces. 
+      \item The inner product $(f,v)_{M_0}$ is integration of the product of its operands over the union of all mesh element
+        interiors, $M_0$.
+      \item $Q_b\,g$ is the function which is equal on each outside boundary element side $e \subset \partial\Omega$ to the 
+        $L_2$ projection of $g$ onto the subspace of $V_h(\Omega)$ supported on $e$, and which is $0$ everywhere else.
+    \end{itemize}
+\end{frame}
+    
+\subsubsection{Deriving the System}
+
+\begin{frame}
+  \frametitle{The Main WG System -- Deriving the System}
+  Let $\{e_i\}_{i=1,\dots,m}$ be a basis for the 0-boundary subspace of our approximation space, $V_h^0(\Omega)$.
+  Then our original system is equivalent to
+  \begin{align*}
+    \mathfrak{a}(u_h,v) & = (f,e_i)_{M_0}\quad\quad i=1,\dots,m \\
+    u_h & = Q_b\,g \text{ on } \partial\Omega
+  \end{align*}
+  \pause
+  Since $Q_b g$ is $0$ outside of $\partial \Omega$, and $\{e_j\}_{j=1,\dots,m}$ is a basis for $V_h^0(\Omega)$, we must have
+  $$u_h = \sum_j{\eta_j e_j} + Q_b g$$
+  for some unknowns $\eta_1,\dots,\eta_m.$  
+  \pause
+  Thus our system becomes
+  $$\mathfrak{a}(\sum_j{\eta_j e_j} + Q_b g, e_i) = (f, e_i)_{M_0} \quad i=1,\dots,m$$
+  which we can rearrange to \dots
+\end{frame}
+
+\subsubsection{System Final Form}
+
+\begin{frame}
+  \frametitle{The Main WG System -- System Final Form}
+  \begin{block}{WG Main Linear System}
+    \begin{align*}
+      \sum_{j=1}^m{\mathfrak{a}(e_j, e_i) \,\eta_j} &= (f, e_i)_{M_0} - \mathfrak{a}(Q_b g, e_i), \quad i=1,\dots,m\\
+      u_h &= \sum_{j=1}^m{\eta_j e_j} + Q_b g
+    \end{align*}
+
+  \end{block}  
+  \pause
+  This is a linear system with matrix $M$ given by $M_{i,j} = \mathfrak{a}(e_j, e_i)$, which we can solve for the unknowns
+  $\eta_j$ defining $u_h$.  Note $M$ is the \emph{\textbf{transpose}} of the basis-vs-basis $\mathfrak{a}$-values matrix.\\
+  \pause
+  It remains to discuss:
+  \begin{itemize}[<+->]
+    \item the interface (set of functions) through which $\mathfrak{a}$ values are calculated,
+      the vbf being another ``contract'' plugin point
+    \item details of how the right hand side is calculated
+    \item details of how the system matrix is built
+  \end{itemize}
+
+\end{frame}
+
+\subsection{Implementing VBFs}
+
+\subsubsection{The VBF Interface}
+
+\begin{frame}
+  \frametitle{Implementing VBFs - The VBF Interface}
+  \vspace{-.40cm}
+  \begin{align*}
+    \mathfrak{a}(v,w) &= \sum_T { \spot<2->{\phi}(v|_T,w|_T) }\\
+    \text{\scriptsize (\textbf{WG-SYS})} \quad \sum_{j=1}^m{\mathfrak{a}(e_j, e_i) \,\eta_j} &= (f, e_i)_{M_0} - \mathfrak{a}(Q_b g, e_i),
+      \quad i=1,\dots,m
+  \end{align*}
+  \pause
+  \begin{itemize}[<+->]
+    \item VBF's will be implemented by supplying only the per-element contribution function \spot<2->{$\phi$}.
+    \item From {\scriptsize WG-SYS}, we only need to implement $\phi$ for basis shape function inputs. We can use linearity
+      to evaluate polynomial inputs.
+    \item Translatability will allow us to compute on oriented shapes.
+    \item Final VBF ($\phi$) interface will be\\
+      \begin{itemize}[<+->]
+        \item \texttt{\small \textcolor{blue}{int\_mon\_vs\_int\_mon(oshape, imonn1, imonn2)}}
+        \item \texttt{\small \textcolor{blue}{int\_mon\_vs\_side\_mon(oshape, imonn, smonn, side\_face)}}
+        \item \texttt{\small \textcolor{blue}{side\_mon\_vs\_int\_mon(oshape, smonn, side\_face, imonn)}}
+        \item \texttt{\small \textcolor{blue}{side\_mon\_vs\_side\_mon(oshape, smonn1, sf1, smonn2, sf2)}}
+        \item \texttt{\small \textcolor{blue}{is\_symmetric() }}
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+% TODO: Move this to the end, with the mesh implementations, too distracting here.
+\begin{frame}
+  \frametitle{Implementing VBFs -- Laplace on Interior/Interior Mons}
+  \vspace{-.56cm}
+  \begin{align*}
+    \mathfrak \phi(v,w) = \spot<2->{(a \nabla_w v,\nabla_w w)_{\scriptscriptstyle T_0}} \;+\;
+    h_T^{-1}\langle Q_b v_{\scriptscriptstyle T_0} - v,Q_b w_{\scriptscriptstyle T_0} - w \rangle_{\partial T}
+  \end{align*}
+  \texttt{\textcolor{blue}{int\_mon\_vs\_int\_mon(oshape, imonn1, imonn2)}}\\
+  \pause
+  \vspace{.35cm}
+  \uncover<+-> {
+  -- Ask the \texttt{\textcolor{blue}{basis}} for the weak gradients of the interior monomials, using
+  function {\small \texttt{\textcolor{blue}{basis.\textbf{\textcolor{orange}{int\_mon\_wgrad}(monn, oshape)}}}}.
+      
+  \vspace{.1cm}
+  \uncover<+-> {
+  -- Form product $a \nabla_w m_1 \cdot \nabla_w m_2$, which is a polynomial. Polynomials can be represented as a sequence
+  of $(\mathbb{R}, Monomial)$ pairs. See functions \emph{dot} and \emph{mdot} in the weak gradient source code
+  \footnote{https://raw.github.com/scharris/WGFEM-Rust/master/weak\_gradient.rs} for implementation details.
+       
+  \vspace{.1cm}
+  \uncover<+-> {
+  -- Integrate the dot product polynomial over the shape's interior, using another new function for the mesh contract,\\
+  \texttt{\small \textcolor{blue}{mesh.\textcolor{orange}{intg\_facerel\_poly\_on\_oshape\_int}(poly, oshape)}}.\\
+
+  \vspace{0.4cm}
+  This takes care of the first term.
+  }}}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Implementing VBFs -- Laplace Interior/Interior Contd}
+  \vspace{-.5cm}
+  \begin{align*}
+   \mathfrak \phi(v,w) = (a \nabla_w v,\nabla_w w)_{\scriptscriptstyle T_0} \;+\; 
+   \spot<1->{h_T^{-1}\langle Q_b v_{\scriptscriptstyle T_0} - v,Q_b w_{\scriptscriptstyle T_0} - w \rangle_{\partial T}}
+  \end{align*}
+
+  \uncover<+-> {
+  -- Introduce new mesh function for maximum element diameter,
+     $\quad h_T = \texttt{\small \textcolor{blue}{mesh.\textcolor{orange}{max\_fe\_diameter}()}}$.
+  
+  \uncover<+-> {
+  -- Our shape functions $v$ and $w$ are $0$ on the boundary, leaving only 
+  \begin{align*}
+    s(v,w) &= h_T^{-1} \langle Q_b v_{\scriptscriptstyle T_0}, Q_b w_{\scriptscriptstyle T_0} \rangle_{\partial T}\\
+           &= h_T^{-1} \sum_{s \in sides(T)} \langle Q_b v_{\scriptscriptstyle T_0}, Q_b w_{\scriptscriptstyle T_0} \rangle_{s}
+  \end{align*}
+  
+  \uncover<+-> {
+  -- Here the $Q_b$ projections of the interior monomials are computed as described in the projection section.
+  
+  \uncover<+-> {
+  -- We compute inner products to be summed using new mesh function\\
+  \texttt{\small \textcolor{blue}{mesh.\textcolor{orange}{intg\_facerel\_poly\_x\_facerel\_poly\_on\_oshape\_side}\\
+  \hspace{0.75cm}(poly1, poly2, oshape, side\_face)}}, and to iterate sides in the sum we use mesh function
+  \texttt{\small \textcolor{blue}{mesh.\textcolor{orange}{num\_side\_faces\_for\_shape}(oshape)}}.
+  }}}}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Implementing VBFs -- Laplace on Interior/Side Mons}
+  \vspace{-1.38cm}
+  \begin{align*}
+    \mathfrak \phi(v,w) = \spot<2->{(a \nabla_w v,\nabla_w w)_{\scriptscriptstyle T_0}} \;+\;
+    h_T^{-1}\langle Q_b v_{\scriptscriptstyle T_0} - v,Q_b w_{\scriptscriptstyle T_0} - w \rangle_{\partial T}
+  \end{align*}
+  
+  \texttt{\small \textcolor{blue}{int\_mon\_vs\_side\_mon(oshape, imonn, smonn, side\_face)}}\\
+  \vspace{.3cm}
+  
+  \pause
+  \uncover<+-> {
+  -- Again we ask the \texttt{\textcolor{blue}{basis}} for the weak gradients,
+     via functions {\small \texttt{\textcolor{blue}{basis.\textbf{\textcolor{orange}{int\_mon\_wgrad}(monn, oshape)}}}} and
+     {\small \texttt{\textcolor{blue}{basis.\textbf{\textcolor{orange}{side\_mon\_wgrad}(monn, oshape, side\_face)}}}}.\\
+  -- We use the mesh for the integration as before via
+     \texttt{\small \textcolor{blue}{mesh.\textcolor{orange}{intg\_facerel\_poly\_on\_oshape\_int}(poly, oshape)}}.\\
+  
+  \vspace{.3cm}
+  \uncover<+-> {
+  -- Note: Though the integration in the first term is over the interior, that does \emph{\textbf{not}} mean that the result
+  is 0 just because one of the shape functions is 0 throughout the interior. Side supported elements often have weak gradients
+  which are non-zero on the interior of the element.
+  }}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Implementing VBFs -- Laplace Interior/Side Mons (Contd)}
+  \vspace{-.5cm}
+  \begin{align*}
+    \mathfrak \phi(v,w) = (a \nabla_w v,\nabla_w w)_{\scriptscriptstyle T_0} \;+\;
+    \spot<1->{h_T^{-1}\langle Q_b v_{\scriptscriptstyle T_0} - v,Q_b w_{\scriptscriptstyle T_0} - w \rangle_{\partial T}}
+  \end{align*}
+
+  \uncover<2-> {
+    With $v$ being our interior supported basis element and $w$ the side supported element, the stabilization term is
+    \begin{align*}
+      s(v,w) &= h_T^{-1} \langle Q_b v_{\scriptscriptstyle T_0}, -w \rangle_{\partial T}\\
+             &= h_T^{-1} \langle Q_b v_{\scriptscriptstyle T_0}, -w \rangle_{s}, \; \text{ where s is the supporting side of w,}
+    \end{align*}
+   because $v$ is $0$ on each side, and $w$'s interior polynomial is $0$ and hence its projection $Q_b\,w$ onto the side spaces
+   is also $0$.\\
+
+  \vspace{0.1cm}
+  \uncover<3-> {
+  -- We obtain the projection $Q_b v_{\scriptscriptstyle T_0}$ of the interior monomial as described previously in the projection section.
+
+  \vspace{0.1cm}
+  \uncover<4-> {
+  -- The inner product is computed via the new mesh integration function 
+  \texttt{\small \textcolor{blue}{mesh.\textcolor{orange}{intg\_facerel\_mon\_x\_facerel\_poly\_on\_oshape\_side}\\
+  \vspace{-.1cm}\hspace{1cm}(side\_mon, int\_proj, oshape, side\_face)}}.
+
+  \vspace{0.1cm}
+  \uncover<5-> {
+  -- The side vs. interior function is implemented in the same way.
+  }}}}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Implementing VBFs -- Laplace on Side/Side Mons}
+  \vspace{-0.5cm}
+  \begin{align*}
+    \mathfrak \phi(v,w) = \spot<2>{(a \nabla_w v,\nabla_w w)_{\scriptscriptstyle T_0}} \;+\;
+    \spot<3>{h_T^{-1}\langle Q_b v_{\scriptscriptstyle T_0} - v,Q_b w_{\scriptscriptstyle T_0} - w \rangle_{\partial T}}
+  \end{align*}
+  
+  \texttt{\small \textcolor{blue}{side\_mon\_vs\_side\_mon(oshape, smonn1, sf1, smonn2, sf2)}}\\
+  \vspace{.3cm}
+  
+  \pause
+  \uncover<+-> {
+  -- The first term is computed as before, using basis function 
+     {\small \texttt{\textcolor{blue}{basis.\textbf{\textcolor{orange}{side\_mon\_wgrad}(monn, oshape, side\_face)}}}}\\
+     to obtain the weak gradients and the same mesh function as before to perform the integration.\\
+ 
+  \vspace{.2cm}
+  \uncover<+-> {
+  -- For the stabilization term, the interior pieces to be projected are 0, so the $Q_b$ values vanish, leaving
+    \begin{align*}
+      s(v,w) &= h_T^{-1} \langle -v, -w \rangle_{\partial T} = h_T^{-1} \sum_{s \in sides(T)} \langle v, w \rangle_s\\
+             &= 
+            \begin{cases}
+              h_T^{-1} \langle v, w \rangle_s \quad &\mbox{ if $v$ and $w$ have common support side $s$}\\
+              0, &\mbox{ otherwise}
+            \end{cases}
+    \end{align*}
+  }}
+\end{frame}
+
+
+%TODO: side vs side
+%TODO: is_symmetric
+%\item \texttt{\small \textcolor{blue}{is\_symmetric() }}
+%      Yes if \textbf{$a$} matrix is provided, else no.  Always OK to answer no, though yes answer enables more efficient algorithms.
+% laplace vbf contd
+% int\_mon\_vs\_int\_mon contd
+%  Second term:
+%    Introduce new mesh function to fetch maximum element diameter, $h_T$.
+%    etc
+%  $$\mathfrak a_s(v,w) = \sum_{T \in M} \left\{ (a \nabla_w v,\nabla_w w)_{\scriptscriptstyle T_0} \;+\;
+%    h_T^{-1}\langle Q_b v_{\scriptscriptstyle T_0} - v,Q_b w_{\scriptscriptstyle T_0} - w \rangle_{\partial T} \right\}$$
 
 \subsection{TODO}
 \begin{frame}
   \frametitle{TODO - Sketch of Remainder}
   \begin{itemize}[<+->]
-    \item projection -- basic howto
     \item Analysis of method, starting from variational form, gathering module requirements
     \item Building system matrix, in detail.  Illustrate each form of interaction of elements.
     \item In depth look at two mesh implementations, triangle mesh from mesh generator, rectangle mesh.
