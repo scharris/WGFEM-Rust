@@ -1165,42 +1165,91 @@
   
   \pause
   \uncover<+-> {
-  -- The first term is computed as before, using basis function 
-     {\small \texttt{\textcolor{blue}{basis.\textbf{\textcolor{orange}{side\_mon\_wgrad}(monn, oshape, side\_face)}}}}\\
-     to obtain the weak gradients and the same mesh function as before to perform the integration.\\
- 
-  \vspace{.2cm}
+  -- The first term is computed much as before, using  
+     {\small \texttt{\textcolor{blue}{basis.\textbf{\textcolor{orange}{side\_mon\_wgrad}(monn, oshape, side\_face)}}}} and \\
+     \texttt{\small \textcolor{blue}{mesh.\textcolor{orange}{intg\_facerel\_poly\_on\_oshape\_int}(poly, oshape)}}.\\
+  
+  \vspace{.1cm}
   \uncover<+-> {
-  -- For the stabilization term, the interior pieces to be projected are 0, so the $Q_b$ values vanish, leaving
-    \begin{align*}
-      s(v,w) &= h_T^{-1} \langle -v, -w \rangle_{\partial T} = h_T^{-1} \sum_{s \in sides(T)} \langle v, w \rangle_s\\
-             &= 
-            \begin{cases}
-              h_T^{-1} \langle v, w \rangle_s \quad &\mbox{ if $v$ and $w$ have common support side $s$}\\
-              0, &\mbox{ otherwise}
-            \end{cases}
-    \end{align*}
-  }}
+  -- For the stabilization term, the interior pieces to be projected are 0, so 
+  \begin{align*}
+    s(v,w) &= h_T^{-1} \langle -v, -w \rangle_{\partial T} = h_T^{-1} \sum_{s \in sides(T)} \langle v, w \rangle_s\\
+           &= 
+        \begin{cases}
+          h_T^{-1} \langle v, w \rangle_s, &\mbox{\small if $v$ and $w$ have common support side $s=sf1=sf2$}\\
+          0, &\mbox{ otherwise}
+        \end{cases}
+  \end{align*}
+  
+  \vspace{.1cm}
+  \uncover<+-> {
+    Thus if the shape functions are supported on the same side, we use
+    \texttt{\scriptsize \textcolor{blue}{mesh.\textcolor{orange}{intg\_facerel\_mon\_on\_oshape\_side}(smonn, oshape, side\_face)}}
+    for the integration, where \texttt{\small \textcolor{blue}{smonn}} is the product of the side monomials, else $0$.
+  }}}
 \end{frame}
 
+% TODO: Highlight calls to mesh and basis.  Emphasise that this module does not know the geometry at all, just defers to others,
+% even for side iterations (use example which sums over sides instead of side-vs-side).
+\begin{frame}
+  \frametitle{Implementing VBFs -- Symmetry}
+  \begin{align*}
+    \mathfrak \phi(v,w) = (\spot<2->{a} \nabla_w v,\nabla_w w)_{\scriptscriptstyle T_0} \;+\;
+    h_T^{-1}\langle Q_b v_{\scriptscriptstyle T_0} - v,Q_b w_{\scriptscriptstyle T_0} - w \rangle_{\partial T}
+  \end{align*}
+  
+  \texttt{\small \textcolor{blue}{is\_symmetric()}}\\
+ 
+  \pause
+  \uncover<+-> {
+  \vspace{0.5cm}
+  Yes if the matrix \spot<2->{$a$} is provided, else no.
+ 
+  \uncover<+-> {
+  \vspace{0.3cm}
+  -- It is always OK to answer no.
+  
+  \uncover<+-> {
+  \vspace{0.3cm}
+  -- Yes answer enables more efficient algorithms.
+  }}}
+\end{frame}
 
-%TODO: side vs side
-%TODO: is_symmetric
-%\item \texttt{\small \textcolor{blue}{is\_symmetric() }}
-%      Yes if \textbf{$a$} matrix is provided, else no.  Always OK to answer no, though yes answer enables more efficient algorithms.
-% laplace vbf contd
-% int\_mon\_vs\_int\_mon contd
-%  Second term:
-%    Introduce new mesh function to fetch maximum element diameter, $h_T$.
-%    etc
-%  $$\mathfrak a_s(v,w) = \sum_{T \in M} \left\{ (a \nabla_w v,\nabla_w w)_{\scriptscriptstyle T_0} \;+\;
-%    h_T^{-1}\langle Q_b v_{\scriptscriptstyle T_0} - v,Q_b w_{\scriptscriptstyle T_0} - w \rangle_{\partial T} \right\}$$
+\begin{frame}[fragile]
+  \frametitle{Implementing VBFs -- Summary}
+  \uncover<+-> {
+  Alternate equations are relatively easy to support. Only four non-trivial vbf contract functions need to be written (bottom),
+  which are relatively simple and also similar to each other.\\
+  }
+  \begin{Verbatim}[gobble=2, commandchars=\\\{\}, fontsize=\tiny, fontfamily=tt]
+  fn \textcolor{green!40!black}{ip_wgrads_term}(&self, wgrad_1: &WeakGrad, wgrad_2: &WeakGrad, oshape: OShape) -> R \{
+    let wgrads_prod = unsafe \{
+      match self.left_wgrad_multiplier \{
+        Some(ref m) => cast::transmute_mut(self).weak_grad_ops.mdot(m, wgrad_1, wgrad_2),
+        None => cast::transmute_mut(self).weak_grad_ops.dot(wgrad_1, wgrad_2)
+      \}
+    \};
+    self.basis.\textcolor{blue}{mesh}().\textcolor{orange}{intg_facerel_poly_on_oshape_int}(&wgrads_prod, oshape)
+  \}
+
+  fn \textcolor{blue}{int_mon_vs_int_mon}(&self, oshape: OShape, monn_1: FaceMonNum, monn_2: FaceMonNum) -> R \{
+    let (basis, mesh) = (self.basis(), self.basis().mesh());
+    let ip_wgrads_term = self.\textcolor{green!40!black}{ip_wgrads_term}(basis.int_mon_wgrad(monn_1, oshape), basis.int_mon_wgrad(monn_2, oshape), oshape);
+    let h_inv = \textcolor{blue}{mesh}.\textcolor{orange}{shape_diameter_inv}(oshape);
+    let stab_term = h_inv * range(0, \textcolor{blue}{mesh}.\textcolor{orange}{num_side_faces_for_shape}(oshape)).map(|sf| \{
+      let projs = &self.int_mon_side_projs[*oshape][sf];
+      \textcolor{blue}{mesh}.\textcolor{orange}{intg_facerel_poly_x_facerel_poly_on_oshape_side}(&projs[*monn_1], &projs[*monn_2], oshape, SideFace(sf))
+    \}).sum();
+    ip_wgrads_term + stab_term
+  \}
+  \end{Verbatim}
+\end{frame}
+
 
 \subsection{TODO}
 \begin{frame}
   \frametitle{TODO - Sketch of Remainder}
   \begin{itemize}[<+->]
-    \item Analysis of method, starting from variational form, gathering module requirements
     \item Building system matrix, in detail.  Illustrate each form of interaction of elements.
     \item In depth look at two mesh implementations, triangle mesh from mesh generator, rectangle mesh.
       Esp. integration examples using mixed coordinate systems between interior and side.
