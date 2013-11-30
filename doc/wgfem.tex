@@ -1304,9 +1304,9 @@
 
 \begin{frame}
   \frametitle{Evaluating the System RHS Contd}
-  \vspace{-.32cm}
+  \vspace{-.15cm}
   \textbf{RHS Second Term, Contd}
-  \vspace{-.335cm}
+  \vspace{-.20cm}
   \begin{align*}
     \sum_{j=1}^m{\mathfrak{a}(e_j, e_i) \,\eta_j} &= (f, e_i)_{M_0} - \spot<1->{\mathfrak{a}(Q_b g, e_i)}, \quad i=1,\dots,m
   \end{align*}
@@ -1326,8 +1326,9 @@
 
   \vspace{.1cm}
   \uncover<+-> {
-  So the method for computing the vbf value will be to sum $\mathfrak{a}(p_j, e_i)$ for all boundary side projections
-  $p_j$ on the boundary sides of the supporting finite element of $e_i$.
+  So the method for computing the vbf value will be to sum $\mathfrak{a}(p, e_i)$ over all boundary side space projections
+  $p$ on the boundary sides of the supporting finite element of $e_i$, using linearity of $\mathfrak{a}$, or its per-element
+  form, $\phi$.
   }}}
 \end{frame}
 
@@ -1355,6 +1356,13 @@
   $\sum_j {a_j}$ * \textcolor{blue}{vbf.\textcolor{orange}{side\_mon\_vs\_int\_mon}(oshape, $m_j$, $s$, $e_i$\_monn)}.
   Here we've used linearity of the vbf over the terms of the side polynomial.
   }
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Evaluating the System RHS Contd}
+  \frame{\includegraphics[width=11.5cm, height=6.84cm]{img/int_bel_bside_interaction.pdf}}
+  {\scriptsize RHS second term: Boundary projection polynomial vs interior supported basis element.}
 \end{frame}
 
 \begin{frame}
@@ -1404,6 +1412,12 @@
   \footnote{Note that this method will never double-count a boundary side's contribution, because a boundary side can only belong
    to a single finite element.}
 
+\end{frame}
+
+\begin{frame}
+  \frametitle{Evaluating the System RHS Contd}
+  \frame{\includegraphics[width=11.5cm, height=5.24cm]{img/side_bel_bsides_interaction.pdf}}
+  {\scriptsize RHS second term: Boundary projection polynomials vs side supported basis element.}
 \end{frame}
 
 \subsection{TODO}
