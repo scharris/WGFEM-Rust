@@ -53,7 +53,7 @@
   The ability to most easily solve the widest variety of problems
     \begin{align*}
       \spot<7>{\mathfrak{a}}(u_h,v) & = (\spot<4>{f},v)\quad\quad\quad \forall{v} \in \spot<6>{V_{h0}} \\
-      u_h & = \spot<4>{Q_b g} \text{ on } \partial\spot<5>{\Omega}
+      u_h & = Q_b \spot<4>{g} \text{ on } \partial\spot<5>{\Omega}
     \end{align*}
     for solution $u_h$ in piecewise polynomial approximation space $V_h$ on mesh \spot<5>{$M_h$} of \spot<5>{$\Omega$}.
   \pause
@@ -1021,13 +1021,17 @@
       to evaluate polynomial inputs.
     \item Translatability will allow us to compute on oriented shapes.
     \item Final VBF ($\phi$) interface will be\\
-      \begin{itemize}[<+->]
-        \item \texttt{\small \textcolor{blue}{int\_mon\_vs\_int\_mon(oshape, imonn1, imonn2)}}
-        \item \texttt{\small \textcolor{blue}{int\_mon\_vs\_side\_mon(oshape, imonn, smonn, side\_face)}}
-        \item \texttt{\small \textcolor{blue}{side\_mon\_vs\_int\_mon(oshape, smonn, side\_face, imonn)}}
-        \item \texttt{\small \textcolor{blue}{side\_mon\_vs\_side\_mon\_fe\_contr(oshape, smonn1, sf1, smonn2, sf2)}}
-        \item \texttt{\small \textcolor{blue}{is\_symmetric() }}
-      \end{itemize}
+    \uncover<+-> {
+    \texttt{\small \textcolor{blue}{int\_mon\_vs\_int\_mon(oshape, imonn1, imonn2)}}\\
+    \uncover<+-> {
+    \texttt{\small \textcolor{blue}{int\_mon\_vs\_side\_mon(oshape, imonn, smonn, side\_face)}}\\
+    \uncover<+-> {
+    \texttt{\small \textcolor{blue}{side\_mon\_vs\_int\_mon(oshape, smonn, side\_face, imonn)}}\\
+    \uncover<+-> {
+    \texttt{\small \textcolor{blue}{side\_mon\_vs\_side\_mon\_fe\_contr({\scriptsize oshape, smonn1, sf1, smonn2, sf2})}}\\
+    \uncover<+-> {
+    \texttt{\small \textcolor{blue}{is\_symmetric() }}
+    }}}}}
   \end{itemize}
 \end{frame}
 
@@ -1160,7 +1164,7 @@
     \spot<3>{h_T^{-1}\langle Q_b v_{\scriptscriptstyle T_0} - v,Q_b w_{\scriptscriptstyle T_0} - w \rangle_{\partial T}}
   \end{align*}
   
-  \texttt{\small \textcolor{blue}{side\_mon\_vs\_side\_mon\_fe\_contr(oshape, smonn1, sf1, smonn2, sf2)}}\\
+  \texttt{\small \textcolor{blue}{side\_mon\_vs\_side\_mon\_fe\_contr(oshape, smonn1,sf1, smonn2,sf2)}}\\
   \vspace{.3cm}
   
   \pause
@@ -1336,7 +1340,7 @@
   \frametitle{Evaluating the System RHS Contd}
   \vspace{-.07cm}
   \textbf{RHS Second Term, $e_i$ Interior Supported, Contd}
-  \vspace{-.36cm}
+  \vspace{-.30cm}
   \begin{align*}
     \sum_{j=1}^m{\mathfrak{a}(e_j, e_i) \,\eta_j} &= (f, e_i)_{M_0} - \spot<1->{\mathfrak{a}(Q_b g, e_i)}, \quad i=1,\dots,m
   \end{align*}
@@ -1347,15 +1351,19 @@
   \hspace{.2cm} {\small \texttt{\textcolor{blue}{oshape \textcolor{black}= mesh.\textcolor{orange}{oriented\_shape\_for\_fe}(fe)}}}\\
   \hspace{.2cm} {\small \texttt{\textcolor{blue}{$e_i$\_monn \textcolor{black}= basis.\textcolor{orange}{int\_rel\_mon\_num}(i)}}}
 
+  \uncover<+-> {
   \vspace{.2cm}
   Then our second term is the sum of contributions to the vbf value from each side face
   $s = 1,\dots, $ \textcolor{blue}{\small mesh.\textcolor{orange}{num\_side\_faces\_for\_shape}(oshape)}.
   
+  \uncover<+-> {
   The contribution from side face $s$ is $0$ if (fe,s) is not in the projections map, because then (fe,s) is not
-  a boundary side.  Else if $p=\sum_j a_j m_j$ is the projection polynomial onto boundary side $s$, then $s$'s contribution is
+  a boundary side.
+  \uncover<+-> {
+  Else if $p=\sum_j a_j m_j$ is the projection polynomial onto boundary side $s$, then $s$'s contribution is
   $\sum_j {a_j}$ * \textcolor{blue}{vbf.\textcolor{orange}{side\_mon\_vs\_int\_mon}(oshape, $m_j$, $s$, $e_i$\_monn)}.
   Here we've used linearity of the vbf over the terms of the side polynomial.
-  }
+  }}}}
 \end{frame}
 
 
@@ -1416,8 +1424,10 @@
 
 \begin{frame}
   \frametitle{Evaluating the System RHS Contd}
-  \frame{\includegraphics[width=11.5cm, height=5.24cm]{img/side_bel_bsides_interaction.pdf}}
+  \alt<-1> {\frame{\includegraphics[width=11.5cm, height=5.24cm]{img/side_bel_bsides_interaction_left_only.pdf}}}
+           {\frame{\includegraphics[width=11.5cm, height=5.24cm]{img/side_bel_bsides_interaction.pdf}}}
   {\scriptsize RHS second term: Boundary projection polynomials vs side supported basis element.}
+  \pause 
 \end{frame}
 
 \subsection{TODO}
