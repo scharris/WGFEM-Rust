@@ -29,8 +29,7 @@ use std::vec;
  * of WGRAD_DEF defining the right hand side column vector for the system.
  *
  * We will only actually need weak gradients of weak functions which are monomials
- * on a single face (interior or side) of a finite element and 0 elsewhere. These
- * are given by the functions int_mon_wgrad and side_mon_wgrad.
+ * on a single face (interior or side) of a finite element and 0 elsewhere.
  *
  * For functions of wider domain than a single finite element, such as WG approximation
  * functions, we can define the weak gradient element-wise in the obvious way, but only

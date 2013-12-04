@@ -105,6 +105,12 @@ pub trait VariationalBilinearForm<'self,Mon:Monomial,MeshT:Mesh<Mon>> {
     for nbs in range(0, mesh.num_nb_sides()) { let nbs = NBSideNum(nbs);
       // Get the representations of our nbs as the side faces of finite elements.
       let nbs_incls = mesh.fe_inclusions_of_nb_side(nbs);
+
+      let nbs_filter = if sym { |nbs_2: NBSideNum| nbs_2 >= nbs } else { |_nbs_2| true };
+      let nb_side_interactions = asc_nb_sides_interactions(&nbs_incls,
+                                                           nbs_filter,
+                                                           mesh,
+                                                           fe_nb_sides_buf, nb_side_interactions_buf);
   
       for monn_1 in range(0, num_side_mons) { let monn_1 = FaceMonNum(monn_1);
         let r = *basis.nb_side_mon_el_num(nbs, monn_1);
@@ -127,11 +133,7 @@ pub trait VariationalBilinearForm<'self,Mon:Monomial,MeshT:Mesh<Mon>> {
         // Iterate element pairs with our side supported element vs side supported elements.
        
         // Loop over the non-boundary side interactions with our first side, nbs.
-        let nbs_filter = if sym { |nbs_2: NBSideNum| nbs_2 >= nbs } else { |_nbs_2| true };
-        for nb_sides_interaction in asc_nb_sides_interactions(&nbs_incls,
-                                                              nbs_filter,
-                                                              mesh,
-                                                              fe_nb_sides_buf, nb_side_interactions_buf).iter() {
+        for nb_sides_interaction in nb_side_interactions.iter() {
           match nb_sides_interaction {
             &OneFESideSideInter(_, nbs_2, fe, nbs_sf_in_fe, nbs_2_sf_in_fe) => {
               let fe_oshape = mesh.oriented_shape_for_fe(fe);
