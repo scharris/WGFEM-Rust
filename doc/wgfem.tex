@@ -846,17 +846,28 @@
 
 \begin{frame}
   \frametitle{Computing Weak Gradients -- More Reqs on Other Mods}
-  \begin{itemize}[<+->]
-    \item Weak gradients can be pre-computed for each oriented shape, and stored by the triplet of oriented shape, face,
-      and face-relative monomial number.
-    \item The basis is a natural place to store the weak gradients, since they are about (derived from) basis functions.
-    \item The mesh is consulted to get the number of oriented shapes, and number of sides for each oriented shape. The basis
-      provides shape function monomial sequences for each of these shape faces, and asks the weak gradient module to compute the
-      values, which values are then stored in the basis object.
-    \item The pre-computed values are then made available to other modules via functions\\
-      -- {\small \texttt{\textcolor{blue}{basis.\textbf{\textcolor{orange}{int\_mon\_wgrad}(monn, oshape)}}}}\\
-      -- {\small \texttt{\textcolor{blue}{basis.\textbf{\textcolor{orange}{side\_mon\_wgrad}(monn, oshape, side\_face)}}}}
-  \end{itemize}
+ 
+  \vspace{-.4cm}
+  \textbf{Pre-computing Weak Gradients}
+  \vspace{.2cm}
+
+  Weak gradients can be pre-computed and stored in the basis by the triplet of oriented shape, face,
+    and face-relative monomial number.
+
+  \pause
+  \uncover<+-> {
+  \vspace{.2cm}
+  \textbf{Method:}
+    The mesh is consulted to get the number of oriented shapes, and number of sides for each oriented shape. The basis
+    provides shape function monomial sequences for each of these shape faces, and asks the weak gradient module to compute the
+    values, which values are then stored in the basis object.
+ 
+  \vspace{.15cm}
+  \uncover<+-> {
+  The pre-computed values are then made available to other modules via functions\\
+    -- {\small \texttt{\textcolor{blue}{basis.\textbf{\textcolor{orange}{int\_mon\_wgrad}(monn, oshape)}}}}\\
+    -- {\small \texttt{\textcolor{blue}{basis.\textbf{\textcolor{orange}{side\_mon\_wgrad}(monn, oshape, side\_face)}}}}
+  }}
 \end{frame}
  
 \subsection{Computing Projections}
@@ -1002,12 +1013,11 @@
 
 \end{frame}
 
-\subsection{Implementing VBFs}
 
 \subsubsection{The VBF Interface}
 
 \begin{frame}
-  \frametitle{Implementing VBFs - The VBF Interface}
+  \frametitle{The VBF Interface}
   \vspace{-.40cm}
   \begin{align*}
     \mathfrak{a}(v,w) &= \sum_T { \spot<2->{\phi}(v|_T,w|_T) }\\
@@ -1016,9 +1026,8 @@
   \end{align*}
   \pause
   \begin{itemize}[<+->]
-    \item VBF's will be implemented by supplying only the per-element contribution function \spot<2->{$\phi$}.
-    \item From {\scriptsize WG-SYS}, we only need to implement $\phi$ for basis shape function inputs. We can use linearity
-      to evaluate polynomial inputs.
+    \item From {\scriptsize WG-SYS}, we can see that we only need to implement \spot<2->{$\phi$}, and only for basis shape function inputs.
+      We can use linearity to evaluate polynomial inputs.
     \item Translatability will allow us to compute on oriented shapes.
     \item Final VBF ($\phi$) interface will be\\
     \uncover<+-> {
@@ -1035,7 +1044,392 @@
   \end{itemize}
 \end{frame}
 
-% TODO: Move this to the end, with the mesh implementations, too distracting here.
+
+\subsubsection{Evaluating the System RHS}
+
+\begin{frame}
+  \frametitle{Evaluating the System RHS}
+  \vspace{-1.15cm}
+  \begin{align*}
+    \sum_{j=1}^m{\mathfrak{a}(e_j, e_i) \,\eta_j} &= \spot<2->{(f, e_i)_{M_0}} - \mathfrak{a}(Q_b g, e_i), \quad i=1,\dots,m
+  \end{align*}
+  
+  \pause
+  \uncover<+-> {
+  \textbf{RHS First Term}
+  \vspace{.3cm}
+
+  \uncover<+-> {
+  If basis element $i$ is not interior supported according to 
+  {\small \texttt{\textcolor{blue}{basis.\textcolor{orange}{is\_int\_supported}(i)}}}, then the inner product is 0.\\
+  
+  \uncover<+-> {
+  \vspace{.3cm}
+  Else we can fetch the interior (fe) number and monomial for the basis element via
+  {\small \texttt{\textcolor{blue}{basis.\textcolor{orange}{support\_int\_fe\_num}(i)}}}
+  and {\small \texttt{\textcolor{blue}{basis.\textcolor{orange}{int\_mon}(i)}}}.
+  
+  \uncover<+-> {
+  \vspace{.3cm}
+  Then we perform the integration via new mesh function\\
+  {\small \texttt{\textcolor{blue}{mesh.\textcolor{orange}{intg\_global\_fn\_x\_facerel\_mon\_on\_fe\_int}(f, mon, fe)}}}.
+  }}}}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Evaluating the System RHS Contd}
+  \vspace{-.29cm}
+  \begin{align*}
+    \sum_{j=1}^m{\mathfrak{a}(e_j, e_i) \,\eta_j} &= (f, e_i)_{M_0} - \spot<2->{\mathfrak{a}(Q_b g, e_i)}, \quad i=1,\dots,m
+  \end{align*}
+  
+  \pause
+  \uncover<+-> {
+  \textbf{RHS Second Term}
+
+  \vspace{.2cm}
+  First we need to compute all projections of $g$ onto the approximation spaces over the boundary sides.
+  We use a new mesh function to report boundary sides,
+  {\small \texttt{\textcolor{blue}{mesh.\textcolor{orange}{boundary\_fes\_by\_oshape\_side}()}} $\rightarrow$ [[[FENum]]]}
+
+  \uncover<+-> {
+    We group the boundary sides by the side faces of the oriented shapes on which they occur, because in these groups the projections
+    can be performed by solving a single linear system, via the projection module function discussed previously,\\
+    {\small \texttt{\textcolor{blue}{\textcolor{orange}{projs\_to\_span\_fes\_side\_supp\_basis\_els}({\small{g,fes,oshape,side\_face}})}}}
+
+  \uncover<+-> {
+  \vspace{.1cm}
+  Finally we collect the boundary projections into a \emph{map} collection by their (fe, side face) pairs, 
+  allowing fast lookup by (fe, side\_face).
+  }}}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Evaluating the System RHS Contd}
+  \vspace{-.15cm}
+  \textbf{RHS Second Term, Contd}
+  \vspace{-.20cm}
+  \begin{align*}
+    \sum_{j=1}^m{\mathfrak{a}(e_j, e_i) \,\eta_j} &= (f, e_i)_{M_0} - \spot<1->{\mathfrak{a}(Q_b g, e_i)}, \quad i=1,\dots,m
+  \end{align*}
+  
+  \uncover<+-> {
+  Now we can proceed to evaluate the second term.
+  There are two cases to consider, depending on whether $e_i$ is interior supported according to the mesh, via
+  {\small \texttt{\textcolor{blue}{basis.\textcolor{orange}{is\_int\_supported}(i)}}}.
+  
+  \uncover<+-> {
+  \vspace{.1cm}
+  \textbf{Case 1: Basis element $e_i$ is Interior Supported}
+  \vspace{.1cm}
+  
+  Only boundary sides which are included in the basis element's single supporting finite element can contribute to the vbf value, by the 
+  \emph{\textbf{locality}} property of the variational form.
+
+  \vspace{.1cm}
+  \uncover<+-> {
+  So the method for computing the vbf value will be to sum $\mathfrak{a}(p, e_i)$ over all boundary side space projections
+  $p$ on the boundary sides of the supporting finite element of $e_i$, using linearity of $\mathfrak{a}$, or its per-element
+  form, $\phi$.
+  }}}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Evaluating the System RHS Contd}
+  \vspace{-.15cm}
+  \textbf{RHS Second Term, $e_i$ Interior Supported, Contd}
+  \vspace{-.32cm}
+  \begin{align*}
+    \sum_{j=1}^m{\mathfrak{a}(e_j, e_i) \,\eta_j} &= (f, e_i)_{M_0} - \spot<1->{\mathfrak{a}(Q_b g, e_i)}, \quad i=1,\dots,m
+  \end{align*}
+  
+  \uncover<+-> {
+  Retrieve the local representation of the basis element $e_i$:\\
+  \hspace{.2cm} {\small \texttt{\textcolor{blue}{fe \textcolor{black}= basis.\textcolor{orange}{support\_int\_fe\_num}(i)}}}\\
+  \hspace{.2cm} {\small \texttt{\textcolor{blue}{oshape \textcolor{black}= mesh.\textcolor{orange}{oriented\_shape\_for\_fe}(fe)}}}\\
+  \hspace{.2cm} {\small \texttt{\textcolor{blue}{$e_i$\_monn \textcolor{black}= basis.\textcolor{orange}{int\_rel\_mon\_num}(i)}}}
+
+  \uncover<+-> {
+  \vspace{.2cm}
+  Then our second term is the sum of contributions to the vbf value from each side face
+  $s = 1,\dots, $ \textcolor{blue}{\small mesh.\textcolor{orange}{num\_side\_faces\_for\_shape}(oshape)}.
+  
+  \uncover<+-> {
+  The contribution from side face $s$ is $0$ if (fe,s) is not in the projections map, because then (fe,s) is not
+  a boundary side.
+  \uncover<+-> {
+  Else if $p=\sum_j a_j m_j$ is the projection polynomial onto boundary side $s$, then $s$'s contribution is
+  $\sum_j {a_j}$ * \textcolor{blue}{vbf.\textcolor{orange}{side\_mon\_vs\_int\_mon}(oshape, $m_j$, $s$, $e_i$\_monn)}.
+  Here we've used linearity of the vbf over the terms of the side polynomial.
+  }}}}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Evaluating the System RHS Contd}
+  \frame{\includegraphics[width=11.5cm, height=6.84cm]{img/int_bel_bside_interaction.pdf}}
+  {\scriptsize RHS second term: Boundary projection polynomial vs interior supported basis element.}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Evaluating the System RHS Contd}
+  \vspace{-.25cm}
+  \textbf{Case 2: Basis Element $e_i$ is Side Supported}
+  \vspace{-.22cm}
+  \begin{align*}
+    \sum_{j=1}^m{\mathfrak{a}(e_j, e_i) \,\eta_j} &= (f, e_i)_{M_0} - \spot<1->{\mathfrak{a}(Q_b g, e_i)}, \quad i=1,\dots,m
+  \end{align*}
+  \begin{columns}
+    \column{.5\textwidth}
+    Only projections onto boundary side spaces from one of the two fe's which include the basis element's support side can
+    possibly contribute to the vbf value, by the locality property. So let {\small (fe1, sf1), (fe2, sf2)} be the two local
+    representations of $e_i$'s support side, which we obtain from the basis, via the function
+    \column{.5\textwidth}
+    \frame{\includegraphics[width=6cm, height=4cm]{img/two_fes_side_bel_with_bsides.pdf}}
+  \end{columns}
+  {\small \texttt{\textcolor{blue}{basis.\textcolor{orange}{fe\_inclusions\_of\_side\_support}(i)}}}.
+  \footnote{
+   This is a new basis function which translates $i$ to a non-boundary side number and then defers to the mesh function
+   {\scriptsize \texttt{\textcolor{blue}{mesh.\textcolor{orange}{fe\_inclusions\_of\_nb\_side}(nb\_side\_num)}}}.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Evaluating the System RHS Contd}
+  %\vspace{-.25cm}
+  \textbf{Case 2: Basis Element $e_i$ Side Supported, Contd}
+  \vspace{-.15cm}
+  \begin{align*}
+    \sum_{j=1}^m{\mathfrak{a}(e_j, e_i) \,\eta_j} &= (f, e_i)_{M_0} - \spot<1->{\mathfrak{a}(Q_b g, e_i)}, \quad i=1,\dots,m
+  \end{align*}
+  Then for (fe, $e_i$\_sf) in \{(fe1, sf1), (fe2, sf2)\},
+  we sum the contributions from fe's boundary sides against basis element $e_i$ on side face $e_i$\_sf, and form the total
+  vbf value from the sum over the two finite elements.
+  
+  The contribution for a boundary side projection polynomial $p=\sum_j a_j m_j$ is itself the sum of its term contributions,\\ 
+  $a_j$ {\small \texttt{\textcolor{blue}{vbf.\textcolor{orange}{side\_mon\_vs\_side\_mon\_fe\_contr}(os,$m_j$,p\_sf,$e_i$\_monn,$e_i$\_sf)}}},
+  where p\_sf is the side face of $p$'s support in fe, 
+  \textcolor{blue}{\small $e_i$\_monn} = {\small \texttt{\textcolor{blue}{basis.\textcolor{orange}{side\_rel\_mon\_num}(i)}}} is
+  $e_i$'s face-relative monomial number, and 
+  \textcolor{blue}{\small os} = {\small \texttt{\textcolor{blue}{mesh.\textcolor{orange}{oriented\_shape\_for\_fe}(fe)}}} is the 
+  oriented shape for fe.
+
+  The total of all such contributions is the second term.
+  \footnote{Note that this method will never double-count a boundary side's contribution, because a boundary side can only belong
+   to a single finite element.}
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Evaluating the System RHS Contd}
+  \alt<-1> {\frame{\includegraphics[width=11.5cm, height=5.24cm]{img/side_bel_bsides_interaction_left_only.pdf}}}
+           {\frame{\includegraphics[width=11.5cm, height=5.24cm]{img/side_bel_bsides_interaction.pdf}}}
+  {\scriptsize RHS second term: Boundary projection polynomials vs side supported basis element.}
+  \pause 
+\end{frame}
+
+\subsubsection{The System Matrix}
+
+\begin{frame}
+  \frametitle{The System Matrix -- Approach}
+  \textbf{Naive Approach}
+
+  As seen previously, even among relatively small problems the number of \emph{pairings} of basis elements quickly becomes unmanageable.
+  
+  \pause
+  \vspace{.15cm}
+  \uncover<+-> {
+  For $k=3$ and an 85 $\times$ 85 rectangle mesh, there are 115,090 basis elements and \emph{13,245,708,100} pairings of elements.
+
+  \vspace{.15cm}
+  \uncover<+-> {
+    \begin{columns}
+      \column{.95\textwidth}
+        \frame{\includegraphics[width=11cm, height=2.92cm]{img/sysmatrix_basis_vs_basis_impractical.pdf}}
+      \column{.05\textwidth}
+        \textbf{\textcolor{red}{\Large{X}}}
+    \end{columns}
+  
+  \vspace{.15cm}
+  This rules out filling the matrix in the naive way of working backwards from each pair of basis element numbers to a pair of local
+  representations, and then calculating the vbf value from the local representations if they overlap at any finite elements.
+  }}
+\end{frame}
+
+\begin{frame}
+  \frametitle{The System Matrix -- Approach, Contd}
+  \textbf{More Scalable Approach}
+  \frame{\includegraphics[width=11cm, height=3.6666cm]{img/sysmatrix_local_basis_vs_basis_practical.pdf}}
+
+  \vspace{.15cm}
+  Instead, we traverse the local representations of the basis elements, and only compute vbf values for ``nearby'' basis  
+  elements according to their local representations.
+  
+  \pause
+  \vspace{.15cm}
+  When a calculation is done for a pair of local basis element representations, we can then translate the local representations
+  to the global numbering via the \texttt{\textcolor{blue}{basis}} object, to fill spots in the system matrix, which will be a
+  sparse matrix.
+\end{frame}
+
+\begin{frame}
+  \frametitle{The System Matrix -- Pre-Computing Interactions}
+  
+  Since our vbf is defined in terms of interactions on single oriented shapes, thanks to the \emph{locality} and
+  \emph{element-summability} assumptions, we can \emph{\textbf{pre-compute vbf values}} between shape functions on the same
+  oriented shape, for each oriented shape, before building the matrix.
+  
+  \pause
+  \vspace{.2cm}
+  \textbf{Oriented Shapes and their Shape Functions}
+ 
+  \vspace{.1cm}
+  We first must collect the basic information about each oriented shape and its shape functions, for each oriented shape number up to
+  \texttt{\small \textcolor{blue}{mesh.\textcolor{orange}{num\_oriented\_element\_shapes}()}}:
+  \vspace{.15cm}
+
+  \pause
+  -- From the basis, we get the per-interior shape function monomials,\\ 
+  \hspace{0.5cm}\texttt{\small \textcolor{blue}{basis.\textcolor{orange}{ref\_int\_mons}()}}
+    
+  \pause
+  -- From the mesh we get the number of side faces for the oriented shape,\\ 
+  \hspace{0.5cm}\texttt{\small \textcolor{blue}{mesh.\textcolor{orange}{num\_side\_faces\_for\_shape}(oshape)}}
+
+  \pause
+  -- For each side face of the shape, from the basis we fetch the sequence of shape function monomials supported on the shape side,\\
+  \hspace{0.5cm}\texttt{\small \textcolor{blue}{basis.\textcolor{orange}{side\_mons\_for\_oshape\_side}(oshape, side\_face)}}
+\end{frame}
+
+\begin{frame}
+  \frametitle{The System Matrix -- Pre-Computing Interactions (Contd)}
+  Now we can compute and store vbf values for each pair of shape functions on each oriented shape, prior to filling the system matrix.
+  
+  \pause
+  \frame{\includegraphics[width=11cm, height=3.1574cm]{img/sysmatrix_precomputed_interactions.pdf}}
+
+  \pause
+  \vspace{0.15cm}
+  In each case we use the matching vbf function for the types of shape functions being paired.  For example for
+  a side-supported vs interior-supported pairing (shown), we apply the vbf contract function\\
+  \texttt{\small \textcolor{blue}{vbf.\textcolor{orange}{side\_mon\_vs\_int\_mon}(oshape, side\_monn, sf, int\_monn)}}.
+
+  The pre-computed results are stored by oriented shape, side faces and monomial numbers.
+\end{frame}
+
+\begin{frame}
+  \frametitle{The System Matrix -- Interior Elements vs Interior Elements}
+  \vspace{-.2cm}
+  \texttt{\textbf{for} \textcolor{blue}{fe} \textbf{in} $\{1,\dots,$\textcolor{blue}{mesh.\textcolor{orange}{num\_fes}()}$\}$\\
+    \hspace{0.2cm} let \textcolor{blue}{oshape} = \textcolor{blue}{mesh.\textcolor{orange}{oriented\_shape\_for\_fe}(fe)}\\
+    \hspace{0.2cm} \textbf{for} \textcolor{blue}{monn\_1}, \textcolor{blue}{monn\_2} in
+                        $\{1,\dots,$\textcolor{blue}{basis.\textcolor{orange}{mons\_per\_fe\_int}()}$\}$\\
+    \hspace{0.6cm}  let \textcolor{blue}{i} = \textcolor{blue}{basis.\textcolor{orange}{int\_mon\_el\_num}(fe, monn\_1)}\\
+    \hspace{0.6cm}  let \textcolor{blue}{j} = \textcolor{blue}{basis.\textcolor{orange}{int\_mon\_el\_num}(fe, monn\_2)}\\
+    \hspace{0.6cm}  \textcolor{blue}{$M_{i,j}$} = \textcolor{blue}{int\_vs\_int\_vbf\_vals[oshape, monn\_2, monn\_1]}
+  }
+  \frame{\includegraphics[width=11.5cm, height=4.2295cm]{img/sysmatrix_int_vs_int.pdf}}
+  \pause
+  Here per-element vbf values are complete $\mathfrak{a}$ values by the locality prop.
+\end{frame}
+
+\begin{frame}
+  \frametitle{The System Matrix -- Side Elements vs Interior Elements}
+  \texttt{\textbf{for} \textcolor{blue}{fe} \textbf{in} $\{1,\dots,$\textcolor{blue}{mesh.\textcolor{orange}{num\_fes}()}$\}$\\
+    \hspace{0.2cm} let \textcolor{blue}{oshape} = \textcolor{blue}{mesh.\textcolor{orange}{oriented\_shape\_for\_fe}(fe)}\\
+    \hspace{0.2cm} \textbf{for} \textcolor{blue}{monn\_1} in 
+                     $\{1,\dots,$\textcolor{blue}{basis.\textcolor{orange}{mons\_per\_fe\_int}()}$\}$,\\
+    \hspace{1.0cm} \textcolor{blue}{sf} in $\{1,\dots,$\textcolor{blue}{mesh.\textcolor{orange}{num\_side\_faces\_for\_shape}(oshape)}$\}$,\\
+    \hspace{1.0cm} \textcolor{blue}{monn\_2} in 
+                     $\{1,\dots,$\textcolor{blue}{basis.\textcolor{orange}{mons\_per\_fe\_side}()}$\}$\\
+    \hspace{0.6cm}  let \textcolor{blue}{i} = \textcolor{blue}{basis.\textcolor{orange}{int\_mon\_el\_num}(fe, monn\_1)}\\
+    \hspace{0.6cm}  let \textcolor{blue}{j} = \textcolor{blue}{basis.\textcolor{orange}{fe\_side\_mon\_el\_num}(fe, sf, monn\_2)}\\
+    \hspace{0.6cm}  \textcolor{blue}{$M_{i,j}$} = \textcolor{blue}{side\_vs\_int\_vbf\_vals[oshape,sf,monn\_2,monn\_1]}
+  }
+  \frame{\includegraphics[width=11.5cm, height=3.4877cm]{img/sysmatrix_side_vs_int.pdf}}
+  \pause
+  Interior elements vs. side element entires are handled in a similar way.
+\end{frame}
+
+\begin{frame}
+  \frametitle{The System Matrix -- Side Elements vs Interior Elements}
+
+  All cases so far have yielded the total vbf $\mathfrak{a}$ value for a pair of shape functions by evaluating our per-element vbf
+  \texttt{\textcolor{blue}{vbf}} $\phi$ on only a single finite element. This is because when either argument to $\phi$ is an
+  interior supported shape function, then there can only be one finite element that includes both shape function supports.
+
+  \pause
+  \vspace{.15cm}
+  However at a pair of side supported basis elements, $\phi$ can yield non-zero contributions from \emph{two} finite elements, because
+  two finite elements can include both supports.
+
+  \pause
+  \vspace{.15cm}
+  (Diagram of possible side vs side cases)
+\end{frame}
+
+%// Iterate basis element pairs beginning with a side supported element.
+%for nbs in range(0, mesh.num_nb_sides()) {
+  %// Get the representations of our nbs as the side faces of finite elements.
+  %let nbs_incls = mesh.fe_inclusions_of_nb_side(nbs);
+
+  %for monn_1 in range(0, num_side_mons) { let monn_1 = FaceMonNum(monn_1);
+    %let r = *basis.nb_side_mon_el_num(nbs, monn_1);
+   
+    %// Iterate element pairs with our side supported element vs side supported elements.
+   
+    %// Loop over the non-boundary side interactions with our first side, nbs.
+    %let nbs_filter = if sym { |nbs_2: NBSideNum| nbs_2 >= nbs } else { |_nbs_2| true };
+    %for nb_sides_interaction in asc_nb_sides_interactions(&nbs_incls,
+                                                          %nbs_filter,
+                                                          %mesh,
+                                                          %fe_nb_sides_buf, nb_side_interactions_buf).iter() {
+      %match nb_sides_interaction {
+        %&OneFESideSideInter(_, nbs_2, fe, nbs_sf_in_fe, nbs_2_sf_in_fe) => {
+          %let fe_oshape = mesh.oriented_shape_for_fe(fe);
+          %let monn_range_lower = if sym && nbs_2 == nbs { *monn_1 } else { 0 };
+          %for monn_2 in range(monn_range_lower, num_side_mons) { let monn_2 = FaceMonNum(monn_2);
+             %let c = *basis.nb_side_mon_el_num(nbs_2, monn_2);
+             %let ip = self.get_side_vs_side_vbf_contr(fe_oshape, nbs_2_sf_in_fe, nbs_sf_in_fe, monn_2, monn_1,
+                                                      %&side_vs_side_vbf_fe_contrs);
+             %m.push(r, c, ip);
+          %}
+        %}
+        %&TwoFESideSideInter(_, nbs_2,
+                            %fe_a, nbs_sf_in_fe_a, nbs_2_sf_in_fe_a,
+                            %fe_b, nbs_sf_in_fe_b, nbs_2_sf_in_fe_b) => {
+          %let fe_a_oshape = mesh.oriented_shape_for_fe(fe_a);
+          %let fe_b_oshape = mesh.oriented_shape_for_fe(fe_b);
+          %let monn_range_lower = if sym && nbs_2 == nbs { *monn_1 } else { 0 };
+          %for monn_2 in range(monn_range_lower, num_side_mons) { let monn_2 = FaceMonNum(monn_2);
+            %let c = *basis.nb_side_mon_el_num(nbs_2, monn_2);
+            %let ip = self.get_side_vs_side_vbf_contr(fe_a_oshape, nbs_2_sf_in_fe_a, nbs_sf_in_fe_a, monn_2, monn_1,
+                                                     %&side_vs_side_vbf_fe_contrs) + 
+                     %self.get_side_vs_side_vbf_contr(fe_b_oshape, nbs_2_sf_in_fe_b, nbs_sf_in_fe_b, monn_2, monn_1,
+                                                     %&side_vs_side_vbf_fe_contrs);
+            %m.push(r, c, ip);
+          %}
+        %}
+      %}
+    %} // side-side interactions
+  %} // monn_1
+%} // nbs
+
+%m
+
+\subsection{TODO}
+\begin{frame}
+  \frametitle{TODO - Sketch of Remainder}
+  \begin{itemize}[<+->]
+    \item Building system matrix, in detail.  Illustrate each form of interaction of elements.
+    \item In depth look at two mesh implementations, triangle mesh from mesh generator, rectangle mesh.
+      Esp. integration examples using mixed coordinate systems between interior and side.
+  \end{itemize}
+\end{frame}
+
+\subsection{Implementing VBFs}
+
 \begin{frame}
   \frametitle{Implementing VBFs -- Laplace on Interior/Interior Mons}
   \vspace{-.56cm}
@@ -1246,200 +1640,6 @@
   \}
   \end{Verbatim}
 \end{frame}
-
-\subsubsection{Evaluating the System RHS}
-
-\begin{frame}
-  \frametitle{Evaluating the System RHS}
-  \vspace{-1.15cm}
-  \begin{align*}
-    \sum_{j=1}^m{\mathfrak{a}(e_j, e_i) \,\eta_j} &= \spot<2->{(f, e_i)_{M_0}} - \mathfrak{a}(Q_b g, e_i), \quad i=1,\dots,m
-  \end{align*}
-  
-  \pause
-  \uncover<+-> {
-  \textbf{RHS First Term}
-  \vspace{.3cm}
-
-  \uncover<+-> {
-  If basis element $i$ is not interior supported according to 
-  {\small \texttt{\textcolor{blue}{basis.\textcolor{orange}{is\_int\_supported}(i)}}}, then the inner product is 0.\\
-  
-  \uncover<+-> {
-  \vspace{.3cm}
-  Else we can fetch the interior (fe) number and monomial for the basis element via
-  {\small \texttt{\textcolor{blue}{basis.\textcolor{orange}{support\_int\_fe\_num}(i)}}}
-  and {\small \texttt{\textcolor{blue}{basis.\textcolor{orange}{int\_mon}(i)}}}.
-  
-  \uncover<+-> {
-  \vspace{.3cm}
-  Then we perform the integration via new mesh function\\
-  {\small \texttt{\textcolor{blue}{mesh.\textcolor{orange}{intg\_global\_fn\_x\_facerel\_mon\_on\_fe\_int}(f, mon, fe)}}}.
-  }}}}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Evaluating the System RHS Contd}
-  \vspace{-.29cm}
-  \begin{align*}
-    \sum_{j=1}^m{\mathfrak{a}(e_j, e_i) \,\eta_j} &= (f, e_i)_{M_0} - \spot<2->{\mathfrak{a}(Q_b g, e_i)}, \quad i=1,\dots,m
-  \end{align*}
-  
-  \pause
-  \uncover<+-> {
-  \textbf{RHS Second Term}
-
-  \vspace{.2cm}
-  First we need to compute all projections of $g$ onto the approximation spaces over the boundary sides.
-  We use a new mesh function to report boundary sides,
-  {\small \texttt{\textcolor{blue}{mesh.\textcolor{orange}{boundary\_fes\_by\_oshape\_side}()}} $\rightarrow$ [[[FENum]]]}
-
-  \uncover<+-> {
-    We group the boundary sides by the side faces of the oriented shapes on which they occur, because in these groups the projections
-    can be performed by solving a single linear system, via the projection module function discussed previously,\\
-    {\small \texttt{\textcolor{blue}{\textcolor{orange}{projs\_to\_span\_fes\_side\_supp\_basis\_els}({\small{g,fes,oshape,side\_face}})}}}
-
-  \uncover<+-> {
-  \vspace{.1cm}
-  Finally we collect the boundary projections into a \emph{map} collection by their (fe, side face) pairs, 
-  allowing fast lookup by (fe, side\_face).
-  }}}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Evaluating the System RHS Contd}
-  \vspace{-.15cm}
-  \textbf{RHS Second Term, Contd}
-  \vspace{-.20cm}
-  \begin{align*}
-    \sum_{j=1}^m{\mathfrak{a}(e_j, e_i) \,\eta_j} &= (f, e_i)_{M_0} - \spot<1->{\mathfrak{a}(Q_b g, e_i)}, \quad i=1,\dots,m
-  \end{align*}
-  
-  \uncover<+-> {
-  Now we can proceed to evaluate the second term.
-  There are two cases to consider, depending on whether $e_i$ is interior supported according to the mesh, via
-  {\small \texttt{\textcolor{blue}{basis.\textcolor{orange}{is\_int\_supported}(i)}}}.
-  
-  \uncover<+-> {
-  \vspace{.1cm}
-  \textbf{Case 1: Basis element $e_i$ is Interior Supported}
-  \vspace{.1cm}
-  
-  Only boundary sides which are included in the basis element's single supporting finite element can contribute to the vbf value, by the 
-  \emph{\textbf{locality}} property of the variational form.
-
-  \vspace{.1cm}
-  \uncover<+-> {
-  So the method for computing the vbf value will be to sum $\mathfrak{a}(p, e_i)$ over all boundary side space projections
-  $p$ on the boundary sides of the supporting finite element of $e_i$, using linearity of $\mathfrak{a}$, or its per-element
-  form, $\phi$.
-  }}}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Evaluating the System RHS Contd}
-  \vspace{-.07cm}
-  \textbf{RHS Second Term, $e_i$ Interior Supported, Contd}
-  \vspace{-.30cm}
-  \begin{align*}
-    \sum_{j=1}^m{\mathfrak{a}(e_j, e_i) \,\eta_j} &= (f, e_i)_{M_0} - \spot<1->{\mathfrak{a}(Q_b g, e_i)}, \quad i=1,\dots,m
-  \end{align*}
-  
-  \uncover<+-> {
-  Retrieve the local representation of the basis element $e_i$:\\
-  \hspace{.2cm} {\small \texttt{\textcolor{blue}{fe \textcolor{black}= basis.\textcolor{orange}{support\_int\_fe\_num}(i)}}}\\
-  \hspace{.2cm} {\small \texttt{\textcolor{blue}{oshape \textcolor{black}= mesh.\textcolor{orange}{oriented\_shape\_for\_fe}(fe)}}}\\
-  \hspace{.2cm} {\small \texttt{\textcolor{blue}{$e_i$\_monn \textcolor{black}= basis.\textcolor{orange}{int\_rel\_mon\_num}(i)}}}
-
-  \uncover<+-> {
-  \vspace{.2cm}
-  Then our second term is the sum of contributions to the vbf value from each side face
-  $s = 1,\dots, $ \textcolor{blue}{\small mesh.\textcolor{orange}{num\_side\_faces\_for\_shape}(oshape)}.
-  
-  \uncover<+-> {
-  The contribution from side face $s$ is $0$ if (fe,s) is not in the projections map, because then (fe,s) is not
-  a boundary side.
-  \uncover<+-> {
-  Else if $p=\sum_j a_j m_j$ is the projection polynomial onto boundary side $s$, then $s$'s contribution is
-  $\sum_j {a_j}$ * \textcolor{blue}{vbf.\textcolor{orange}{side\_mon\_vs\_int\_mon}(oshape, $m_j$, $s$, $e_i$\_monn)}.
-  Here we've used linearity of the vbf over the terms of the side polynomial.
-  }}}}
-\end{frame}
-
-
-\begin{frame}
-  \frametitle{Evaluating the System RHS Contd}
-  \frame{\includegraphics[width=11.5cm, height=6.84cm]{img/int_bel_bside_interaction.pdf}}
-  {\scriptsize RHS second term: Boundary projection polynomial vs interior supported basis element.}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Evaluating the System RHS Contd}
-  \vspace{-.25cm}
-  \textbf{Case 2: Basis Element $e_i$ is Side Supported}
-  \vspace{-.22cm}
-  \begin{align*}
-    \sum_{j=1}^m{\mathfrak{a}(e_j, e_i) \,\eta_j} &= (f, e_i)_{M_0} - \spot<1->{\mathfrak{a}(Q_b g, e_i)}, \quad i=1,\dots,m
-  \end{align*}
-  \begin{columns}
-    \column{.5\textwidth}
-    Only projections onto boundary side spaces from one of the two fe's which include the basis element's support side can
-    possibly contribute to the vbf value, by the locality property. So let {\small (fe1, sf1), (fe2, sf2)} be the two local
-    representations of $e_i$'s support side, which we obtain from the basis, via the function
-    \column{.5\textwidth}
-    \frame{\includegraphics[width=6cm, height=4cm]{img/two_fes_side_bel_with_bsides.pdf}}
-  \end{columns}
-  {\small \texttt{\textcolor{blue}{basis.\textcolor{orange}{fe\_inclusions\_of\_side\_support}(i)}}}.
-  \footnote{
-   This is a new basis function which translates $i$ to a non-boundary side number and then defers to the mesh function
-   {\scriptsize \texttt{\textcolor{blue}{mesh.\textcolor{orange}{fe\_inclusions\_of\_nb\_side}(nb\_side\_num)}}}.
-  }
-\end{frame}
-
-\begin{frame}
-  \frametitle{Evaluating the System RHS Contd}
-  %\vspace{-.25cm}
-  \textbf{Case 2: Basis Element $e_i$ Side Supported, Contd}
-  \vspace{-.15cm}
-  \begin{align*}
-    \sum_{j=1}^m{\mathfrak{a}(e_j, e_i) \,\eta_j} &= (f, e_i)_{M_0} - \spot<1->{\mathfrak{a}(Q_b g, e_i)}, \quad i=1,\dots,m
-  \end{align*}
-  Then for (fe, $e_i$\_sf) in \{(fe1, sf1), (fe2, sf2)\},
-  we sum the contributions from fe's boundary sides against basis element $e_i$ on side face $e_i$\_sf, and form the total
-  vbf value from the sum over the two finite elements.
-  
-  The contribution for a boundary side projection polynomial $p=\sum_j a_j m_j$ is itself the sum of its term contributions,\\ 
-  $a_j$ {\small \texttt{\textcolor{blue}{vbf.\textcolor{orange}{side\_mon\_vs\_side\_mon\_fe\_contr}(os,$m_j$,p\_sf,$e_i$\_monn,$e_i$\_sf)}}},
-  where p\_sf is the side face of $p$'s support in fe, 
-  \textcolor{blue}{\small $e_i$\_monn} = {\small \texttt{\textcolor{blue}{basis.\textcolor{orange}{side\_rel\_mon\_num}(i)}}} is
-  $e_i$'s face-relative monomial number, and 
-  \textcolor{blue}{\small os} = {\small \texttt{\textcolor{blue}{mesh.\textcolor{orange}{oriented\_shape\_for\_fe}(fe)}}} is the 
-  oriented shape for fe.
-
-  The total of all such contributions is the second term.
-  \footnote{Note that this method will never double-count a boundary side's contribution, because a boundary side can only belong
-   to a single finite element.}
-
-\end{frame}
-
-\begin{frame}
-  \frametitle{Evaluating the System RHS Contd}
-  \alt<-1> {\frame{\includegraphics[width=11.5cm, height=5.24cm]{img/side_bel_bsides_interaction_left_only.pdf}}}
-           {\frame{\includegraphics[width=11.5cm, height=5.24cm]{img/side_bel_bsides_interaction.pdf}}}
-  {\scriptsize RHS second term: Boundary projection polynomials vs side supported basis element.}
-  \pause 
-\end{frame}
-
-\subsection{TODO}
-\begin{frame}
-  \frametitle{TODO - Sketch of Remainder}
-  \begin{itemize}[<+->]
-    \item Building system matrix, in detail.  Illustrate each form of interaction of elements.
-    \item In depth look at two mesh implementations, triangle mesh from mesh generator, rectangle mesh.
-      Esp. integration examples using mixed coordinate systems between interior and side.
-  \end{itemize}
-\end{frame}
-
 
   
 \end{document}
