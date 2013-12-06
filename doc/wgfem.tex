@@ -1349,74 +1349,168 @@
   }
   \frame{\includegraphics[width=11.5cm, height=3.4877cm]{img/sysmatrix_side_vs_int.pdf}}
   \pause
-  Interior elements vs. side element entires are handled in a similar way.
+  Interior elements vs. side elements can be handled in a similar way.
 \end{frame}
 
 \begin{frame}
-  \frametitle{The System Matrix -- Side Elements vs Interior Elements}
-
-  All cases so far have yielded the total vbf $\mathfrak{a}$ value for a pair of shape functions by evaluating our per-element vbf
-  \texttt{\textcolor{blue}{vbf}} $\phi$ on only a single finite element. This is because when either argument to $\phi$ is an
-  interior supported shape function, then there can only be one finite element that includes both shape function supports.
-
+  \frametitle{The System Matrix -- Wrapup of Cases to this Point}
+  All cases so far have yielded the value for the total vbf $\mathfrak{a}$ at a pair of shape functions by evaluating the per-element
+  form $\phi$ restricted to only a single finite element.
+  
+  \pause
+  \frame{\includegraphics[width=11.5cm, height=3.1574cm]{img/sysmatrix_int_vs_int_or_side.pdf}}
+  This is because each case has involved an interior supported basis element, in which case there can only be
+  one finite element that includes the supports of both basis elements. It follows by the locality property that all
+  other finite elements cannot produce any contribution.
+  
   \pause
   \vspace{.15cm}
-  However at a pair of side supported basis elements, $\phi$ can yield non-zero contributions from \emph{two} finite elements, because
-  two finite elements can include both supports.
-
-  \pause
-  \vspace{.15cm}
-  (Diagram of possible side vs side cases)
+  We also have not had to consider that local representations of sides are not unique, because only a single finite element
+  has been contributing. 
 \end{frame}
 
-%// Iterate basis element pairs beginning with a side supported element.
-%for nbs in range(0, mesh.num_nb_sides()) {
-  %// Get the representations of our nbs as the side faces of finite elements.
-  %let nbs_incls = mesh.fe_inclusions_of_nb_side(nbs);
+\begin{frame}
+  \frametitle{The System Matrix -- Side Interactions}
+  At a pair of \emph{side} supported basis elements, however, $\phi$ can yield non-zero contributions from \emph{\textbf{two}}
+  finite elements, because there can be two finite elements which include both basis element supports.
+  \pause
+  \begin{columns}
+    \column{.25\textwidth}
+    \frame{\includegraphics[width=3cm, height=2.625cm]{img/sysmatrix_two_bels_one_common_fe.pdf}}
+    \column{.25\textwidth}
+    \frame{\includegraphics[width=3cm, height=2.625cm]{img/sysmatrix_two_bels_same_side.pdf}}
+    \column{.25\textwidth}
+    \frame{\includegraphics[width=3cm, height=2.625cm]{img/sysmatrix_two_bels_diff_sides_same_fes.pdf}}
+    \column{.25\textwidth}
+    \frame{\includegraphics[width=3cm, height=2.625cm]{img/sysmatrix_two_bels_around_hanging_node.pdf}}
+  \end{columns}
 
-  %for monn_1 in range(0, num_side_mons) { let monn_1 = FaceMonNum(monn_1);
-    %let r = *basis.nb_side_mon_el_num(nbs, monn_1);
-   
-    %// Iterate element pairs with our side supported element vs side supported elements.
-   
-    %// Loop over the non-boundary side interactions with our first side, nbs.
-    %let nbs_filter = if sym { |nbs_2: NBSideNum| nbs_2 >= nbs } else { |_nbs_2| true };
-    %for nb_sides_interaction in asc_nb_sides_interactions(&nbs_incls,
-                                                          %nbs_filter,
-                                                          %mesh,
-                                                          %fe_nb_sides_buf, nb_side_interactions_buf).iter() {
-      %match nb_sides_interaction {
-        %&OneFESideSideInter(_, nbs_2, fe, nbs_sf_in_fe, nbs_2_sf_in_fe) => {
-          %let fe_oshape = mesh.oriented_shape_for_fe(fe);
-          %let monn_range_lower = if sym && nbs_2 == nbs { *monn_1 } else { 0 };
-          %for monn_2 in range(monn_range_lower, num_side_mons) { let monn_2 = FaceMonNum(monn_2);
-             %let c = *basis.nb_side_mon_el_num(nbs_2, monn_2);
-             %let ip = self.get_side_vs_side_vbf_contr(fe_oshape, nbs_2_sf_in_fe, nbs_sf_in_fe, monn_2, monn_1,
-                                                      %&side_vs_side_vbf_fe_contrs);
-             %m.push(r, c, ip);
-          %}
-        %}
-        %&TwoFESideSideInter(_, nbs_2,
-                            %fe_a, nbs_sf_in_fe_a, nbs_2_sf_in_fe_a,
-                            %fe_b, nbs_sf_in_fe_b, nbs_2_sf_in_fe_b) => {
-          %let fe_a_oshape = mesh.oriented_shape_for_fe(fe_a);
-          %let fe_b_oshape = mesh.oriented_shape_for_fe(fe_b);
-          %let monn_range_lower = if sym && nbs_2 == nbs { *monn_1 } else { 0 };
-          %for monn_2 in range(monn_range_lower, num_side_mons) { let monn_2 = FaceMonNum(monn_2);
-            %let c = *basis.nb_side_mon_el_num(nbs_2, monn_2);
-            %let ip = self.get_side_vs_side_vbf_contr(fe_a_oshape, nbs_2_sf_in_fe_a, nbs_sf_in_fe_a, monn_2, monn_1,
-                                                     %&side_vs_side_vbf_fe_contrs) + 
-                     %self.get_side_vs_side_vbf_contr(fe_b_oshape, nbs_2_sf_in_fe_b, nbs_sf_in_fe_b, monn_2, monn_1,
-                                                     %&side_vs_side_vbf_fe_contrs);
-            %m.push(r, c, ip);
-          %}
-        %}
-      %}
-    %} // side-side interactions
-  %} // monn_1
-%} // nbs
+  \pause
+  \vspace{.15cm}
+  Two non-boundary sides \emph{\textbf{interact}} if they are both included in some common finite element, because in this case $\phi$ can
+  be non-zero at a pair of basis elements supported on the respective sides.
+  
+  \pause
+  \vspace{.15cm}
+  We divide interactions into two types: \emph{\textbf{single-fe interactions}} in which the two sides only share a single including
+  finite element, and \emph{\textbf{double-fe interactions}} in which the sides have both of their including finite elements in common.
+\end{frame}
 
-%m
+\begin{frame}
+  \frametitle{The System Matrix -- Finding Side Interactions}
+  To iterate over pairs of side basis elements efficiently, we need a new function \texttt{\small \textcolor{blue}{asc\_nb\_sides\_interactions}}
+  which will give all of the side interactions starting from a given non-boundary side. 
+  \pause
+  \begin{columns}
+    \column{.65\textwidth}
+    \frame{\includegraphics[width=7.8cm, height=4.2cm]{img/sysmatrix_nbs1_nbside_inters.pdf}}
+    \column{.35\textwidth}
+    \frame{\includegraphics[width=4.2cm, height=4.2cm]{img/sysmatrix_nbs1_nbside_inters2.pdf}}
+  \end{columns}
+  
+  \pause
+  \vspace{0.15cm}
+  Each returned side interaction will give separate \emph{\textbf{local representations}} of the two sides as side faces in one or two
+  finite elements, depending on whether the interaction is a single- or double-fe interaction.
+\end{frame}
+
+\begin{frame}
+  \frametitle{The System Matrix -- Finding Side Interactions, Impl}
+  \textbf{Implementation of \texttt{\large \textcolor{blue}{asc\_nb\_sides\_interactions}(nbs1)}}
+
+  \pause
+  \vspace{0.2cm}
+  \texttt{\small
+    \textcolor{gray}{// Get local representations of the nbs1 side in its 2 fes}\\
+    \textcolor{blue}{nbs1\_incls} = \textcolor{blue}{mesh.\textcolor{orange}{fe\_inclusions\_of\_nb\_side}(nbs1)}
+  }
+  
+  \pause
+  \vspace{0.2cm}
+  \texttt{\small
+  \textcolor{gray}{// Get local representations of nearby nb sides.}\\
+  let \textcolor{blue}{side\_reprs} = \{ (nbs, fe, sf) |\\
+    \hspace{0.2cm}  fe $\in$ \{\textcolor{blue}{nbs1\_incls}.fe1, \textcolor{blue}{nbs1\_incls}.fe2\},\\
+    \hspace{0.2cm}  sf $\in$ \{1,$\dots$,\textcolor{blue}{mesh.\textcolor{orange}{num\_side\_faces\_for\_fe}(fe)}\},\\
+    \hspace{0.5cm}  where nbs = \textcolor{blue}{mesh.\textcolor{orange}{nb\_side\_num\_for\_fe\_side}(fe, sf)}\\
+    \hspace{0.5cm}  and not \textcolor{blue}{mesh.\textcolor{orange}{is\_boundary\_side}(fe, sf)} \textcolor{gray}{// (new fun)} \}
+  }
+
+  \pause
+  \vspace{0.2cm}
+  \texttt{\small
+    \textcolor{gray}{// Partition nearby side reps by actual side (nb side num).}\\
+    let \textcolor{blue}{side\_repr\_groups} = \{ \{r $\in$ \textcolor{blue}{side\_reprs} | $r_1$ = n\} |\\
+      \hspace{0.5cm} (n,fe,sf) $\in$ \textcolor{blue}{side\_reprs} for some fe, sf \}
+  }
+
+  \pause
+  \vspace{0.2cm}
+  \texttt{\small
+    \textcolor{gray}{// Each group is a distinct nb side interacting with nbs1.}\\
+    \textcolor{gray}{// Groups with two reps are double-fe interactions with nbs1.}
+    \textbf{return}\\
+    \hspace{0.2cm} \{ interaction$_{nbs1}$(rep\_group) | rep\_group $\in$ \textcolor{blue}{side\_repr\_groups} \}
+  }
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{The System Matrix -- Finding Side Interactions, Impl Contd}
+  \vspace{0.2cm}
+  \texttt{\small
+  where interaction$_{nbs1}$(rep\_group) =\\
+  \begin{enumerate}[<+->]
+    \item \textbf{single-fe interaction} \textbf{(fe, nbs1\_sf, nbs2\_sf)}\\
+      for groups consisting of a single element\\
+      (nbs2, fe, nbs2\_sf), where nbs1\_sf is the side face of nbs1 in fe obtained from nbs1\_incls
+    \item \textbf{double-fe interaction}\\
+      \textbf{
+      \hspace{.5cm} (fe\_a, nbs1\_sf\_in\_fe\_a, nbs2\_sf\_in\_fe\_a,\\
+      \hspace{.857cm} fe\_b, nbs1\_sf\_in\_fe\_b, nbs2\_sf\_in\_fe\_b)
+      }\\
+      for groups containing two local representations\\
+        {(nbs2, fe\_a, nbs2\_sf\_in\_fe\_a),\\
+         (nbs2, fe\_b, nbs2\_sf\_in\_fe\_b)},\\
+      where nbs1\_sf\_in\_fe\_a/b are the side faces of nbs1 in fe\_a/b obtained from nbs1\_incls.
+  \end{enumerate}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{The System Matrix -- Side Elements vs Side Elements}
+
+  \texttt{\textbf{for} \textcolor{blue}{nbs\_1} in \{1,$\dots$,\textcolor{blue}{mesh.\textcolor{orange}{num\_nb\_sides}()}\}\\
+    \hspace{0.4cm}\textbf{for} \textcolor{blue}{inter} in \textcolor{blue}{\large \textbf{asc\_nb\_sides\_interactions}(nbs\_1)}\\
+    \hspace{0.8cm}\textbf{for} \textcolor{blue}{monn\_1} in 
+                     \{1,$\dots$,\textcolor{blue}{basis.\textcolor{orange}{mons\_per\_fe\_side}()}\}\\
+    \hspace{0.8cm}let \textcolor{blue}{i} = \textcolor{blue}{basis.\textcolor{orange}{nb\_side\_mon\_el\_num}(nbs\_1, monn\_1)}\\
+  } 
+
+  \texttt{
+    \hspace{1.2cm}if \textcolor{blue}{inter} is a single-fe interaction,\\
+      \hspace{1.8cm}say \textcolor{blue}{inter} = (fe, nbs\_1\_sf\_in\_fe, nbs\_2\_sf\_in\_fe)\\
+    \hspace{1.2cm}let fe\_oshape = mesh.oriented\_shape\_for\_fe(fe)\\
+    \hspace{1.2cm}for monn\_2 in range(0, num\_side\_mons)\\
+    \hspace{1.6cm}let c = basis.nb\_side\_mon\_el\_num(nbs\_2, monn\_2)\\
+    \hspace{1.6cm}let ip = self.get\_side\_vs\_side\_vbf\_contr(fe\_oshape, nbs\_2\_sf\_in\_fe, nbs\_1\_sf\_in\_fe, monn\_2, monn\_1,
+                                                  side\_vs\_side\_vbf\_fe\_contrs)\\
+    \hspace{1.6cm}m.push(r, c, ip);
+  }
+\end{frame}
+
+
+% TODO: Maybe put this just before the actual side-side algorithm.
+%(Implications of two-fe interaction possibility in side-side interactions)
+%\pause
+  %\vspace{.15cm}
+  %This has two important implications for side-side interactions:
+  %\begin{enumerate}[<+->]
+    %\item We will have to sum the $\phi$ contributions to the total vbf $\mathfrak{a}(v,w) = \sum_T { \phi(v|_T,w|_T) }$ from up to
+      %two finite elements.
+    %\item When iterating sides we need to use the global non-boundary side numbers to ensure that each side is only visited once,
+      %because this numbering is 1-1 with the non-boundary sides, unlike local reprs.
+  %\end{enumerate}
 
 \subsection{TODO}
 \begin{frame}
