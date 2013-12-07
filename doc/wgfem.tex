@@ -1480,47 +1480,35 @@
 \begin{frame}
   \frametitle{The System Matrix -- Side Elements vs Side Elements}
 
-  \texttt{\textbf{for} \textcolor{blue}{nbs\_1} in \{1,$\dots$,\textcolor{blue}{mesh.\textcolor{orange}{num\_nb\_sides}()}\}\\
-    \hspace{0.4cm}\textbf{for} \textcolor{blue}{inter} in \textcolor{blue}{\large \textbf{asc\_nb\_sides\_interactions}(nbs\_1)}\\
-    \hspace{0.8cm}\textbf{for} \textcolor{blue}{monn\_1} in 
-                     \{1,$\dots$,\textcolor{blue}{basis.\textcolor{orange}{mons\_per\_fe\_side}()}\}\\
-    \hspace{0.8cm}let \textcolor{blue}{i} = \textcolor{blue}{basis.\textcolor{orange}{nb\_side\_mon\_el\_num}(nbs\_1, monn\_1)}\\
+  \hspace{-.3cm}\texttt{\textbf{for} \textcolor{blue}{nbs1} in \{1,$\dots$,\textcolor{blue}{mesh.\textcolor{orange}{num\_nb\_sides}()}\}\\
+    %\hspace{0.4cm}let \textcolor{blue}{ss\_inters} = \textcolor{blue}{\large \textbf{asc\_nb\_sides\_interactions}(nbs1)}\\
+    \hspace{0.5cm}\textcolor{blue}{m1} in \{1,$\dots$,\textcolor{blue}{basis.\textcolor{orange}{mons\_per\_fe\_side}()}\}\\
+    \hspace{0.5cm}\textcolor{blue}{ss\_inter} in \textcolor{blue}{\large \textbf{asc\_nb\_sides\_interactions}(nbs1)}\\
+    \hspace{0.5cm}\textcolor{blue}{m2} in \{1,$\dots$,\textcolor{blue}{basis.\textcolor{orange}{mons\_per\_fe\_side}()}\}\\
+    \hspace{0.0cm}let \textcolor{blue}{i} = \textcolor{blue}{basis.\textcolor{orange}{nb\_side\_mon\_el\_num}(nbs1, m1)}\\
+    \hspace{0.0cm}if \textcolor{blue}{ss\_inter} is of the form (\textcolor{green!50!black}{fe, nbs1\_sf, nbs2\_sf})\\
+    \hspace{0.3cm}let \textcolor{blue}{j} = 
+      \textcolor{blue}{basis.\textcolor{orange}{fe\_side\_mon\_el\_num}(\textcolor{green!50!black}{\small fe, nbs2\_sf}, m2)}\\
+    \hspace{0.3cm}let \textcolor{blue}{os} = 
+      \textcolor{blue}{mesh.\textcolor{orange}{oriented\_shape\_for\_fe}(\textcolor{green!50!black}{fe})}\\
+    \hspace{0.3cm}\textcolor{blue}{$M_{i,j}$} = 
+      {\small \textcolor{blue}{side\_side\_vbf\_vals}[\textcolor{blue}{os}, \textcolor{green!50!black}{nbs2\_sf, nbs1\_sf},
+      \textcolor{blue}{m2, m1}]}\\
+    \hspace{0.0cm}else let (\textcolor{green!50!black}{fe\_a, nbs1\_a\_sf, nbs2\_a\_sf,\\
+    \hspace{2.0cm}fe\_b, nbs1\_b\_sf, nbs2\_b\_sf}) = \textcolor{blue}{ss\_inter}\\
+    \hspace{0.3cm}let \textcolor{blue}{j} = 
+      \textcolor{blue}{basis.\textcolor{orange}{fe\_side\_mon\_el\_num}(\textcolor{green!50!black}{\small fe\_a, nbs2\_a\_sf}, {\small m2})}\\
+    \hspace{0.3cm}let \textcolor{blue}{os\_a|b} = 
+      \textcolor{blue}{mesh.\textcolor{orange}{oriented\_shape\_for\_fe}(\textcolor{green!50!black}{fe\_a|b})}\\
+    \hspace{0.3cm}\textcolor{blue}{$M_{i,j}$} = 
+      {\small \textcolor{blue}{side\_side\_vbf\_vals}[\textcolor{blue}{os\_a}, \textcolor{green!50!black}{nbs2\_a\_sf, nbs1\_a\_sf},
+      \textcolor{blue}{m2, m1}]}\\
+    \hspace{1.134cm}+
+      {\small \textcolor{blue}{side\_side\_vbf\_vals}[\textcolor{blue}{os\_b}, \textcolor{green!50!black}{nbs2\_b\_sf, nbs1\_b\_sf},
+      \textcolor{blue}{m2, m1}]}
   } 
-
-  \texttt{
-    \hspace{1.2cm}if \textcolor{blue}{inter} is a single-fe interaction,\\
-      \hspace{1.8cm}say \textcolor{blue}{inter} = (fe, nbs\_1\_sf\_in\_fe, nbs\_2\_sf\_in\_fe)\\
-    \hspace{1.2cm}let fe\_oshape = mesh.oriented\_shape\_for\_fe(fe)\\
-    \hspace{1.2cm}for monn\_2 in range(0, num\_side\_mons)\\
-    \hspace{1.6cm}let c = basis.nb\_side\_mon\_el\_num(nbs\_2, monn\_2)\\
-    \hspace{1.6cm}let ip = self.get\_side\_vs\_side\_vbf\_contr(fe\_oshape, nbs\_2\_sf\_in\_fe, nbs\_1\_sf\_in\_fe, monn\_2, monn\_1,
-                                                  side\_vs\_side\_vbf\_fe\_contrs)\\
-    \hspace{1.6cm}m.push(r, c, ip);
-  }
 \end{frame}
 
-
-% TODO: Maybe put this just before the actual side-side algorithm.
-%(Implications of two-fe interaction possibility in side-side interactions)
-%\pause
-  %\vspace{.15cm}
-  %This has two important implications for side-side interactions:
-  %\begin{enumerate}[<+->]
-    %\item We will have to sum the $\phi$ contributions to the total vbf $\mathfrak{a}(v,w) = \sum_T { \phi(v|_T,w|_T) }$ from up to
-      %two finite elements.
-    %\item When iterating sides we need to use the global non-boundary side numbers to ensure that each side is only visited once,
-      %because this numbering is 1-1 with the non-boundary sides, unlike local reprs.
-  %\end{enumerate}
-
-\subsection{TODO}
-\begin{frame}
-  \frametitle{TODO - Sketch of Remainder}
-  \begin{itemize}[<+->]
-    \item Building system matrix, in detail.  Illustrate each form of interaction of elements.
-    \item In depth look at two mesh implementations, triangle mesh from mesh generator, rectangle mesh.
-      Esp. integration examples using mixed coordinate systems between interior and side.
-  \end{itemize}
-\end{frame}
 
 \subsection{Implementing VBFs}
 
