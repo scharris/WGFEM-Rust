@@ -73,33 +73,58 @@
 
 \begin{frame}
   \frametitle{How General is the Implementation?}
+  \textbf{Many problems solvable without code additions or changes.}
+
   \pause
+  \vspace{0.15cm}
   \begin{itemize}[<+->]
-    \item Many problems solvable without code additions or changes.
-      \begin{itemize}[<+->]
-        \item Allow arbitrary functions for $f$ and $g$.
-        \item Provided Meshes
-          \begin{itemize}
-            \item Triangle meshes from mesh generator (Gmsh).
-            \item Rectangle meshes for any number of space dimensions.
-          \end{itemize}
-        \item Basis -- Support arbitrary \emph{degree constraints} for approximating polynomials on interiors and sides separately,
-          using either monomial or variable degree.
-        \item Laplace bilinear form provided. 
-      \end{itemize}
-    \item Extensible in areas expected to frequently need changes.
-      \begin{itemize}
-        \item New problems solved by plugging in new code at \emph{plugin points}.
-        \item Major plugin points are provided for
-          \begin{itemize}
-            \item variational bilinear form, $\mathfrak{a}$
-            \item mesh -- Arbitrary polytope meshes for any space dimension can be supported. No uniformity requirements.
-          \end{itemize}
-        \item No mesh or vbf is ``built in'': provided ones use plugin system.
-        \item Only \emph{new} aspects have to be coded for, thought about, and tested. Core method does not change.
-      \end{itemize}
+    \item Allow arbitrary functions for $f$ and $g$.
+    \item Triangle meshes from mesh generator (Gmsh). Allows special ``physical regions'' to be further subdivided at runtime.
+    \item Rectangle meshes for dimensions 2, 3, and 4.  Nodeless.
   \end{itemize}
+
+  \begin{columns}
+    \column{.5\textwidth}
+      \uncover<3->{
+        \frame{\includegraphics[width=6cm, height=5.1cm]{img/gmsh_tri_mesh.png}}
+      }
+    \column{.5\textwidth}
+      \uncover<4->{
+        \frame{\includegraphics[width=6cm, height=5.1cm]{img/rect_meshes_234.jpg}}
+      }
+  \end{columns}
 \end{frame}
+
+\begin{frame}
+  \frametitle{How General is the Implementation? (Contd)}
+  \textbf{Many problems solvable without code additions/changes. (Contd)}
+  
+  \uncover<+-> {
+  \vspace{0.15cm}
+  -- Basis supports arbitrary \emph{degree constraints} for approximating polynomials on interiors and sides separately,
+      using either monomial or variable degree.\\
+  \uncover<+-> {
+  -- Laplace bilinear form plugin provided, others easily added.
+
+  \vspace{0.15cm}
+  \uncover<+-> {
+  \textbf{Extensible in areas expected to frequently need changes.}
+
+  \vspace{0.15cm}
+  \uncover<+-> {
+  -- New problems solved by plugging in new code at \emph{plugin points}.\\
+  \uncover<+-> {
+  -- Major plugin points are provided for \textbf{variational bilinear forms} and \textbf{meshes}.
+     Arbitrary polytope meshes for any space dimension can be supported, with no uniformity requirements.
+     Variational form requirements are discussed later.\\
+  \uncover<+-> {
+  -- No mesh or vbf is ``built in'': provided ones use plugin system.\\
+  \uncover<+-> {
+  -- Only \emph{new} aspects have to be coded for, thought about, and tested. Core method does not change.
+  }}}}}}}
+\end{frame}
+  
+
 
 \subsection{The Means -- Abstraction and Modularity}
 
@@ -458,7 +483,7 @@
 
 
 \begin{frame}
-  \frametitle{Side Dependent Dimension -- What Do I Do?}
+  \frametitle{Side Dependent Dimension -- Just What to Do}
   \pause
   Start with all monomials satisfying side degree constraints, e.g. to degree $k-1$, then drop some monomials as follows:
   \pause
@@ -972,7 +997,7 @@
 
 \begin{frame}
   \frametitle{The Main WG System -- Deriving the System}
-  Let $\{e_i\}_{i=1,\dots,m}$ be a basis for the 0-boundary subspace of our approximation space, $V_h^0(\Omega)$.
+  Let $\{e_i\}_{i=1,\dots,m}$ be a basis for the 0-boundary subspace $V_h^0(\Omega)$ of our approximation space.
   Then our original system is equivalent to
   \begin{align*}
     \mathfrak{a}(u_h,v) & = (f,e_i)_{M_0}\quad\quad i=1,\dots,m \\
@@ -1026,8 +1051,8 @@
   \end{align*}
   \pause
   \begin{itemize}[<+->]
-    \item From {\scriptsize WG-SYS}, we can see that we only need to implement \spot<2->{$\phi$}, and only for basis shape function inputs.
-      We can use linearity to evaluate polynomial inputs.
+    \item From {\scriptsize WG-SYS}, we only need to implement \spot<2->{$\phi$}, and only for basis shape function inputs,
+      which are monomials on a single face and $0$ elewhere. We can use linearity to evaluate polynomial inputs.
     \item Translatability will allow us to compute on oriented shapes.
     \item Final VBF ($\phi$) interface will be\\
     \uncover<+-> {
