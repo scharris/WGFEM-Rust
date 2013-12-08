@@ -45,7 +45,6 @@
 \end{frame}
 
 \section{Generality Goal}
-\subsection{Generality Defined}
 
 \begin{frame}
   \frametitle{What is Meant by Generality Here?}
@@ -124,12 +123,6 @@
   }}}}}}}
 \end{frame}
   
-
-
-\subsection{The Means -- Abstraction and Modularity}
-
-\subsubsection{Components: Limited Roles, Limited Knowledge}
-
 \begin{frame}
   \frametitle{How? Components: Limited Roles, Limited Knowledge}
   Divide system into components having clear, limited roles.
@@ -143,8 +136,6 @@
   Keep connections between components at a minimum!
   \includegraphics[height=3.5cm]{img/crazy-wiring.jpg}
 \end{frame}
-
-\subsubsection{Components for the WG Method}
 
 \begin{frame}
   \frametitle{How Generality is Achieved: Abstraction and Modularity}
@@ -176,8 +167,6 @@
   \raisebox{-2mm}{\tcbox{Enclosed}} types represent abstract
   types, or \emph{contracts}, as a set of operations which actual ``plugged in'' types must implement.
 \end{frame}
-
-\subsection{Bringing Components Together - Example}
 
 \begin{frame}[fragile]{Bringing Components Together -- Example Run}
   \tcbset{colback =red!5!white, colframe =red!75!black, left=0mm,right=0mm,bottom=0mm,top=0mm, tcbox raise base}
@@ -238,8 +227,6 @@
 
 \subsection{Mesh Elements}
 
-\subsubsection{Oriented Shapes}
-
 \begin{frame}
   \frametitle{Oriented Shapes}
   \begin{columns}
@@ -262,8 +249,6 @@
   \end{itemize}
 \end{frame}
 
-\subsubsection{Identifying Finite Elements and Non-Boundary Sides}
-
 \begin{frame}
   \frametitle{Identifying Finite Elements and Non-Boundary Sides}
   \begin{columns}
@@ -283,8 +268,6 @@
   \end{itemize}
 \end{frame}
  
-\subsubsection{Side Faces -- Shape Relative Side Identifiers}
-
 \begin{frame}
   \frametitle{Side Faces -- Shape Relative Side Identifiers}
   \begin{columns}
@@ -305,8 +288,6 @@
   \end{itemize}
 \end{frame}
  
-\subsubsection{Elements Including a Non-Boundary Side}
-
 \begin{frame}
   \frametitle{Finite Elements Including a Non-Boundary Side}
   \begin{columns}
@@ -331,8 +312,6 @@
   \end{itemize}
 \end{frame}
 
-\subsubsection{Summing Up: Initial Mesh Contract}
-
 \begin{frame}
   \frametitle{Summing Up Mesh Concepts: Initial Mesh Contract}
   \begin{itemize}[<+->]
@@ -355,8 +334,6 @@
 
 \subsection{Approximation space}
 
-\subsubsection{Shape Functions}
-
 \begin{frame}
   \frametitle{WG Shape Functions}
   \begin{itemize}[<+->]
@@ -371,8 +348,6 @@
   \end{itemize}
 \end{frame}
 
-
-\subsubsection{Face-Local Origins}
 
 \begin{frame}
   \frametitle{Face-Local Origins for Shape Functions}
@@ -395,7 +370,7 @@
     \column{.50\textwidth}
       \frame{\includegraphics[width=6cm, height=4cm]{img/two_fes_bad_side_origin_1.pdf}}
     \column{.50\textwidth}
-      \frame{\includegraphics[width=6cm, height=4cm]{img/two_fes_bad_side_origin_2.pdf}}
+      \uncover<2->{\frame{\includegraphics[width=6cm, height=4cm]{img/two_fes_bad_side_origin_2.pdf}}}
   \end{columns}
   \begin{itemize}[<+->]
     \item On the left, it is tempting to choose a common origin for the sides and interior of the element, to make calculations easier.
@@ -404,8 +379,6 @@
       Rules could be applied in special meshes to achieve this, but they would be ``fragile'' because of the number of assumptions required.
   \end{itemize}
 \end{frame}
-
-\subsubsection{Shape Function Independence}
 
 \begin{frame}
   \frametitle{Shape Function Independence}
@@ -431,8 +404,6 @@
     \end{columns}
   }
 \end{frame}
-
-\subsubsection{Side Dependent Dimension}
 
 \begin{frame}
   \frametitle{Side Dependent Dimension}
@@ -495,8 +466,6 @@
 
 \subsection{Variational Bilinear Form}
 
-\subsubsection{Practicality of Computation}
-
 \begin{frame}
   \frametitle{Variational Bilinear Form - Practicality}
   $$\spot<1->{\mathfrak{a}}(u_h,v) = (f,v)\quad\quad \forall{v} \in V_{h0}$$
@@ -532,8 +501,6 @@
   \end{itemize}
 \end{frame}
 
-\subsubsection{Element Summability}
-
 \begin{frame}
   \frametitle{Variational Bilinear Form -- Element Summability}
   \begin{block}{Element Summability}
@@ -551,8 +518,6 @@
       This greatly reduces the possible non-null interactions between basis elements under the vbf.
   \end{itemize}
 \end{frame}
-
-\subsubsection{Translation Invariance}
 
 \begin{frame}
   \frametitle{Variational Bilinear Form -- Translation Invariance}
@@ -572,8 +537,6 @@
 \section{Implementation}
 
 \subsection{The Basis}
-
-\subsubsection{Responsibilities}
 
 \begin{frame}
   \frametitle{The Basis -- Responsibilities}
@@ -595,8 +558,6 @@
   \end{block}
 \end{frame}
 
-\subsubsection{Enumeration Method}
-
 \begin{frame}
   \frametitle{The Basis -- Enumeration Method}
   Basis elements are arranged with interior-supported elements first, followed by those on non-boundary sides.
@@ -607,8 +568,6 @@
   \pause
   \frame{\includegraphics[width=12cm, height=2.2cm]{img/basis_layout_nbsides.pdf}}
 \end{frame}
-
-\subsubsection{Implementing Basis Methods}
 
 \begin{frame}
   \frametitle{Implementing the Basis -- Face Monomials}
@@ -705,8 +664,6 @@
 
 \subsection{Computing Weak Gradients}
 
-\subsubsection{WGRAD Definitions}
-
 \begin{frame}
   \frametitle{Computing Weak Gradients -- WGRAD Definitons}
   If $v$ is a function on a finite element $T$, then its weak gradient of degree $r$ on $T$
@@ -734,8 +691,6 @@
   \end{block}
 \end{frame}
 
-\subsubsection{The Linear System}
-
 \begin{frame}
   \frametitle{Computing Weak Gradients -- The Linear System}
   \begin{equation*}
@@ -754,8 +709,6 @@
       $r_i = -(v, \nabla \cdot b_i)_{T_0} + \langle v, b_i \cdot n \rangle_{\partial T}$
   \end{itemize}
 \end{frame}
-
-\subsubsection{System Basis}
 
 \begin{frame}
   \frametitle{Computing Weak Gradients -- System Basis}
@@ -776,8 +729,6 @@
   will be easy. 
 \end{frame}
 
-\subsubsection{Inputs}
- 
 \begin{frame}
   \frametitle{Computing Weak Gradients -- Inputs}
   \begin{equation*}
@@ -822,8 +773,6 @@
   }
 \end{frame}
 
-\subsubsection{Final Interface}
-
 \begin{frame}
   \frametitle{Computing Weak Gradients -- Final Interface}
   The final interface to our our weak gradient solver consists of a constructor function and a solver function:\\ 
@@ -842,8 +791,6 @@
       ) $\rightarrow$ {\scriptsize ([WeakGrad], [[WeakGrad]])} \textcolor{gray}{\scriptsize // int mon wgrads, side mon wgrads by side face}
   \end{itemize}
 \end{frame}
-
-\subsubsection{Requirements on Other Modules}
 
 \begin{frame}
   \frametitle{Computing Weak Gradients -- Reqs on Other Modules}
@@ -897,8 +844,6 @@
  
 \subsection{Computing Projections}
 
-\subsubsection{The System}
-
 \begin{frame}
   \frametitle{Computing Projections -- The System}
   \begin{columns}
@@ -926,8 +871,6 @@
   \end{itemize}
 \end{frame}
 
-\subsubsection{Projecting Global Functions onto Side Spaces}
-
 \begin{frame}
   \frametitle{Projecting Global Functions onto Side Spaces}
   {\small \texttt{\textcolor{blue}{projs\_to\_span\_fes\_side\_supp\_basis\_els({\scriptsize g, fes, oshape, side\_face $\sigma$})}}}\\
@@ -947,8 +890,6 @@
       $\texttt{\small \textcolor{blue}{\textcolor{orange}{intg\_global\_fn\_x\_facerel\_mon\_on\_fe\_side}(g, mon, fe, side\_face)}}$.
   \end{itemize} 
 \end{frame}
-
-\subsubsection{Projecting Interior Monomials onto Side Spaces}
 
 \begin{frame}
   \frametitle{Projecting Interior Monomials onto Side Spaces}
@@ -970,8 +911,6 @@
 \end{frame}
 
 \subsection{The Main WG System}
-
-\subsubsection{Introduction}
 
 \begin{frame}
   \frametitle{The Main WG System -- Introduction}
@@ -1013,7 +952,6 @@
   which we can rearrange to \dots
 \end{frame}
 
-\subsubsection{System Final Form}
 
 \begin{frame}
   \frametitle{The Main WG System -- System Final Form}
@@ -1038,8 +976,6 @@
 
 \end{frame}
 
-
-\subsubsection{The VBF Interface}
 
 \begin{frame}
   \frametitle{The VBF Interface}

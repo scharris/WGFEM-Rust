@@ -25,8 +25,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.35"
-     inkscape:cx="1538.8477"
-     inkscape:cy="646.38892"
+     inkscape:cx="1702.1457"
+     inkscape:cy="446.97493"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -285,7 +285,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -339,11 +339,11 @@
        id="path3007"
        inkscape:connector-curvature="0" />
     <path
-       style="opacity:0.90322583;fill:#ffffff;fill-opacity:1;stroke:#ffe57d;stroke-width:11.25;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker-start:none;filter:url(#filter6196)"
+       style="opacity:0.98;fill:#ffffff;fill-opacity:1;stroke:#ffe57d;stroke-width:11.25000000000000000;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker-start:none;filter:url(#filter6196)"
        d="m 215.97745,456.16957 -63.57143,-74.51488 0,-105.28386 0,-105.28385 65,-74.219691 65,-74.219685 45.71429,0.191485 c 25.14285,0.105317 66.51311,0.977907 91.93389,1.939086 l 46.21962,1.747599 63.06609,73.511376 63.06611,73.51137 -0.0886,105.06005 -0.0887,105.06006 -64.84546,73.57143 -64.84546,73.57143 -91.49446,-0.0635 -91.49448,-0.0635 -63.57143,-74.51492 z"
        id="path5409"
        inkscape:connector-curvature="0"
-       transform="matrix(0,-3.1143315,2.6858685,0,-328.76799,2107.602)" />
+       transform="matrix(0,-3.1143315,2.6858685,0,-343.0537,2079.0306)" />
     <path
        style="fill:url(#linearGradient6513);fill-opacity:1;stroke:#000000;stroke-width:2.89217615px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="M 2256.4142,-165.0518 1932.1915,446.69195 1092.2821,633.55186 699.56984,225.35192 850.36208,-14.896454 683.26274,-187.29696 z"
@@ -412,47 +412,6 @@
        transform="matrix(1.3074704,0,0,1.3099064,-710.39522,-503.19183)" />
     <text
        xml:space="preserve"
-       style="font-size:99.12863922px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:85.00000238%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Utopia;-inkscape-font-specification:Utopia"
-       x="-244.54933"
-       y="942.42084"
-       id="text4424"
-       sodipodi:linespacing="85.000002%"><tspan
-         sodipodi:role="line"
-         x="-244.54933"
-         y="942.42084"
-         style="font-size:82.60719299px;line-height:85.00000238%"
-         id="tspan9486"><tspan
-   style="font-size:82.60719299px;line-height:85.00000238%;fill:#0000ff"
-   id="tspan4430">vbf</tspan>.<tspan
-   style="font-size:82.60719299px;line-height:85.00000238%;fill:#d45500"
-   id="tspan4428">side_mon_vs_side_mon</tspan></tspan><tspan
-         sodipodi:role="line"
-         x="-244.54933"
-         y="1034.7467"
-         style="font-size:82.60719299px;line-height:85.00000238%"
-         id="tspan3640">       (<tspan
-   style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:85.00000238%;fill:#806600;fill-opacity:1;font-family:URW Chancery L;-inkscape-font-specification:URW Chancery L Bold Italic"
-   id="tspan4456">os<tspan
-   style="font-size:53.69543076px;line-height:85.00000238%;baseline-shift:sub"
-   id="tspan6280">1</tspan></tspan>, <tspan
-   style="font-style:italic;line-height:85.00000238%;fill:#7d0000;fill-opacity:1;stroke:#7d0000;stroke-width:0.99999994;stroke-opacity:1;-inkscape-font-specification:Utopia Italic"
-   id="tspan6159">m<tspan
-   style="font-size:53.69543076px;line-height:85.00000238%;baseline-shift:sub;stroke-width:0.99999994"
-   id="tspan6284">1j</tspan></tspan>, <tspan
-   style="font-size:112.74185944px;font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:85.00000238%;fill:#7d0000;fill-opacity:1;font-family:URW Chancery L;-inkscape-font-specification:URW Chancery L Bold Italic"
-   id="tspan4434">p<tspan
-   style="font-size:73.28324127px;line-height:85.00000238%;baseline-shift:sub"
-   id="tspan9170">1_</tspan>sf</tspan>, e<tspan
-   style="font-size:53.69543076px;line-height:85.00000238%;baseline-shift:sub"
-   id="tspan4464">i</tspan>, e<tspan
-   style="font-size:53.69543076px;line-height:85.00000238%;baseline-shift:sub"
-   id="tspan9172">i</tspan>_<tspan
-   style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:85.00000238%;font-family:URW Chancery L;-inkscape-font-specification:URW Chancery L Bold Italic"
-   id="tspan9375">sf</tspan><tspan
-   style="font-size:53.69543839px;line-height:85.00000238%;baseline-shift:sub"
-   id="tspan9369">1</tspan>)</tspan></text>
-    <text
-       xml:space="preserve"
        style="font-size:100px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#806600;fill-opacity:1;stroke:none;font-family:Utopia;-inkscape-font-specification:Utopia"
        x="169.74921"
        y="631.47186"
@@ -469,15 +428,15 @@
     <text
        xml:space="preserve"
        style="font-size:89.88819122px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:#350000;stroke-width:1;stroke-opacity:1;font-family:Sans"
-       x="823.94702"
-       y="760.85394"
+       x="845.50604"
+       y="720.81183"
        id="text4418-7-6-9"
        sodipodi:linespacing="125%"
        transform="scale(1.0010518,0.99894931)"><tspan
          sodipodi:role="line"
          id="tspan4420-5-5-2"
-         x="823.94702"
-         y="760.85394"
+         x="845.50604"
+         y="720.81183"
          style="fill:#000000;fill-opacity:1;stroke-width:1">e<tspan
    style="font-size:58.42814636px;baseline-shift:sub;fill:#000000;fill-opacity:1;stroke-width:1"
    id="tspan9201-9-6">i</tspan>_<tspan
@@ -537,6 +496,49 @@
            id="tspan8812">e</tspan><tspan
            style="font-size:110px;font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;baseline-shift:sub;font-family:URW Chancery L;-inkscape-font-specification:URW Chancery L Bold Italic"
            id="tspan6086">i</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:99.12863922px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:85.00000238%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Utopia;-inkscape-font-specification:Utopia"
+       x="-254.23929"
+       y="874.67474"
+       id="text4424"
+       sodipodi:linespacing="85.000002%"><tspan
+         sodipodi:role="line"
+         x="-254.23929"
+         y="874.67474"
+         style="font-size:82.60719299px;line-height:85.00000238%"
+         id="tspan9486"><tspan
+           style="font-size:70px;line-height:85.00000238%;fill:#0000ff"
+           id="tspan4430">vbf</tspan><tspan
+           style="font-size:70px"
+           id="tspan8660">.</tspan><tspan
+           style="font-size:70px;line-height:85.00000238%;fill:#d45500"
+           id="tspan4428">side_mon_vs_side_mon_fe_contr</tspan></tspan><tspan
+         sodipodi:role="line"
+         x="-254.23929"
+         y="964.23218"
+         style="font-size:82.60719299px;line-height:85.00000238%"
+         id="tspan3640">       (<tspan
+   style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:85.00000238%;fill:#806600;fill-opacity:1;font-family:URW Chancery L;-inkscape-font-specification:URW Chancery L Bold Italic"
+   id="tspan4456">os<tspan
+   style="font-size:53.69543076px;line-height:85.00000238%;baseline-shift:sub"
+   id="tspan6280">1</tspan></tspan>, <tspan
+   style="font-style:italic;line-height:85.00000238%;fill:#7d0000;fill-opacity:1;stroke:#7d0000;stroke-width:0.99999994;stroke-opacity:1;-inkscape-font-specification:Utopia Italic"
+   id="tspan6159">m<tspan
+   style="font-size:53.69543076px;line-height:85.00000238%;baseline-shift:sub;stroke-width:0.99999994"
+   id="tspan6284">1j</tspan></tspan>, <tspan
+   style="font-size:112.74185944px;font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:85.00000238%;fill:#7d0000;fill-opacity:1;font-family:URW Chancery L;-inkscape-font-specification:URW Chancery L Bold Italic"
+   id="tspan4434">p<tspan
+   style="font-size:73.28324127px;line-height:85.00000238%;baseline-shift:sub"
+   id="tspan9170">1_</tspan>sf</tspan>, e<tspan
+   style="font-size:53.69543076px;line-height:85.00000238%;baseline-shift:sub"
+   id="tspan4464">i</tspan>, e<tspan
+   style="font-size:53.69543076px;line-height:85.00000238%;baseline-shift:sub"
+   id="tspan9172">i</tspan>_<tspan
+   style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:85.00000238%;font-family:URW Chancery L;-inkscape-font-specification:URW Chancery L Bold Italic"
+   id="tspan9375">sf</tspan><tspan
+   style="font-size:53.69543839px;line-height:85.00000238%;baseline-shift:sub"
+   id="tspan9369">1</tspan>)</tspan></text>
   </g>
   <g
      transform="matrix(1.3321827,0,0,1.3321827,-228.8036,-224.38349)"
