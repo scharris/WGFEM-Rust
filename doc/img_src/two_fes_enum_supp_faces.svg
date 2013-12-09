@@ -439,18 +439,6 @@
          id="tspan6995"
          x="1631.25"
          y="165.32471" /></text>
-    <text
-       xml:space="preserve"
-       style="font-size:302.51235962px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="1689.3455"
-       y="111.62993"
-       id="text6997"
-       sodipodi:linespacing="125%"
-       transform="scale(0.8649136,1.1561849)"><tspan
-         sodipodi:role="line"
-         id="tspan6999"
-         x="1689.3455"
-         y="111.62993">4</tspan></text>
     <flowRoot
        xml:space="preserve"
        id="flowRoot7001"
@@ -476,14 +464,14 @@
     <text
        xml:space="preserve"
        style="font-size:144px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#aa0000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="-108.11768"
+       x="-145.61768"
        y="1347.8148"
        id="text7033"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan7035"
-         x="-108.11768"
-         y="1347.8148">2</tspan></text>
+         x="-145.61768"
+         y="1347.8148">21</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:144px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#aa0000;fill-opacity:1;stroke:none;font-family:Sans"
@@ -643,11 +631,11 @@
          sodipodi:role="line"
          id="tspan7351-5-5"
          x="406.94604"
-         y="736.66864">1</tspan></text>
+         y="736.66864">21</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:330.99829102px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="2037.8358"
+       x="1912.3828"
        y="761.57837"
        id="text7349-1-4-3"
        sodipodi:linespacing="125%"
@@ -656,21 +644,7 @@
        inkscape:transform-center-x="0.00016955067"><tspan
          sodipodi:role="line"
          id="tspan7351-5-5-4"
-         x="2037.8358"
-         y="761.57837">3</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:330.99829102px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="1555.2609"
-       y="1354.2681"
-       id="text7349-1-4-3-1"
-       sodipodi:linespacing="125%"
-       inkscape:transform-center-y="151.35853"
-       transform="scale(0.79711089,1.2545306)"
-       inkscape:transform-center-x="0.00016955067"><tspan
-         sodipodi:role="line"
-         id="tspan7351-5-5-4-5"
-         x="1555.2609"
-         y="1354.2681">2</tspan></text>
+         x="1912.3828"
+         y="761.57837">42</tspan></text>
   </g>
 </svg>

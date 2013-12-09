@@ -1,9 +1,5 @@
 \documentclass[compress]{beamer}
 
-% TODO: Add slide about monomial representation, as an example intro to object oriented programming.
-% TODO: Add slide describing that the basis pre-computes weak gradients and inner products for its
-%       elements on each oriented shape face.
-
 % define binary div operator
 \makeatletter
 \newcommand*{\bdiv}{%
@@ -30,7 +26,7 @@
 \subtitle{With a Focus on Generality}
 
 \author{Stephen Harris \\ \texttt{scharris@ualr.edu}}
-\date{Nov. 7, 2013}
+\date{Dec. 9, 2013}
 
 
 \begin{document}
@@ -51,7 +47,7 @@
   \pause
   The ability to most easily solve the widest variety of problems
     \begin{align*}
-      \spot<7>{\mathfrak{a}}(u_h,v) & = (\spot<4>{f},v)\quad\quad\quad \forall{v} \in \spot<6>{V_{h0}} \\
+      \spot<7>{\mathfrak{a}}(u_h,v) & = (\spot<4>{f},v)\quad\quad\quad \forall{v} \in \spot<6>{V_h^0} \\
       u_h & = Q_b \spot<4>{g} \text{ on } \partial\spot<5>{\Omega}
     \end{align*}
     for solution $u_h$ in piecewise polynomial approximation space $V_h$ on mesh \spot<5>{$M_h$} of \spot<5>{$\Omega$}.
@@ -63,7 +59,8 @@
     \begin{enumerate}[<+->]
       \item functions $f$ and $g$
       \item mesh $M_h$ on which $V_h$ members are piecewise polynomial
-      \item approximation space, by choice of \emph{degree constraints} on polynomial pieces of $V_h$ members -- by monomial degree or maximum variable degree
+      \item approximation space, by choice of \emph{degree constraints} on polynomial pieces of $V_h$ members 
+            -- by monomial degree or maximum variable degree
       \item bilinear form $\mathfrak{a}: V_h \times V_h \rightarrow \mathbb{R}$
     \end{enumerate}
   \end{block}
@@ -235,17 +232,17 @@
     \column{.50\textwidth}
       \pause
       \begin{itemize}[<+->]
-        \item Elements may have, \emph{independently} of each other, any \textbf{shape}, \textbf{orientation}, and \textbf{number of sides}.
-        \item An \textbf{\emph{oriented shape}} is an abstraction of a finite element, ignoring its position, but including its division into
-          enumerated sides.
+        \item Mesh elements may have, \emph{independently} of each other, any \textbf{shape}, \textbf{orientation}, and \textbf{number of sides}.
+        \item An \textbf{\emph{oriented shape}} is an abstraction of a finite element, ignoring its position, but including an enumeration of
+          its sides. 
       \end{itemize}
   \end{columns}
   
   \begin{itemize}[<+->]
-    \item Formally, two elements are of the same \textbf{\emph{oriented shape}} iff the sides can be put into a one-to-one correspondence and
-       there is some translation taking each side of one onto the matching side of the other.
     \item Mesh must assign an oriented shape for \emph{each} finite element. 
-    \item Mesh will identify oriented shapes by enumerating them in some order of its choosing. Are just \emph{opaque} identifiers to other comps.
+    \item Mesh will identify oriented shapes by numbering them in some order of its choosing.
+    \item Oriented shape numbers are just \emph{opaque} identifiers to other components, which must ask the mesh for information
+      about the shape, such as its number of sides.
   \end{itemize}
 \end{frame}
 
@@ -253,16 +250,14 @@
   \frametitle{Identifying Finite Elements and Non-Boundary Sides}
   \begin{columns}
     \column{.50\textwidth}
-      \begin{itemize}[<+->]
-        \item Mesh will need to provide identifiers for the \emph{\textbf{support faces}} for the basis shape functions.
-        \item Interiors and non-boundary sides will host shape functions, so need to be identified.
-      \end{itemize}
+    The mesh will need to provide identifiers for the interior and side faces that will support basis elements.
     \column{.50\textwidth}
-      \alt<-2> {\frame{\includegraphics[width=6cm, height=4cm]{img/two_fes.pdf}}}
+      \alt<-1> {\frame{\includegraphics[width=6cm, height=4cm]{img/two_fes.pdf}}}
                {\frame{\includegraphics[width=6cm, height=4cm]{img/two_fes_enum_supp_faces.pdf}}}
   \end{columns}
+  \pause
   \begin{itemize}[<+->]
-    \item Mesh will \textbf{enumerate finite elements (equiv., \emph{interiors}) and non-boundary sides separately}, in any order it chooses for each.
+    \item So the mesh will \textbf{enumerate finite elements (equiv., \emph{interiors}) and non-boundary sides separately}, in any orders it chooses.
     \item Separate enumerations allow sides or fes/interiors to be dealt with separately by other components.
     \item To other components, the interior and nb side numbers are just opaque identifiers -- must ask the mesh for interpretation.
   \end{itemize}
@@ -337,9 +332,8 @@
 \begin{frame}
   \frametitle{WG Shape Functions}
   \begin{itemize}[<+->]
-    \item The WG approximation space consists of piecewise polynomials on mesh element interiors and non-boundary sides,
-      satisfying degree constraints, and which are 0 on mesh boundary sides.
-    \item Interiors and sides may have distinct degree constraints as groups, each limited either by max monomial degree or max variable degree.
+    \item The WG approximation space consists of piecewise polynomials over mesh element interiors and sides,
+      satisfying distinct degree constraints on the interiors and sides.
     \item As a building block for our basis, we'll define a \emph{\textbf{shape function}} to be a function which is a monomial on one face
       (interior or side) pre-composed with a translation function providing a face-specific origin, which satisfies the appropriate
       degree constraint for the face.
@@ -408,7 +402,7 @@
 \begin{frame}
   \frametitle{Side Dependent Dimension}
   \begin{itemize}[<+->]
-  \item The subset of shape functions supported on a side which are linearly independent depends on the side's orientation.
+  \item The subsets of shape functions supported on a side which are linearly independent depends on the side's orientation.
   \item Each side has at least one \emph{\textbf{dependent dimension}}, which is a space dimension which can be written as an affine
       function of the others on the side, as expressed in the side's local coordinate system.
   \end{itemize}
@@ -468,7 +462,7 @@
 
 \begin{frame}
   \frametitle{Variational Bilinear Form - Practicality}
-  $$\spot<1->{\mathfrak{a}}(u_h,v) = (f,v)\quad\quad \forall{v} \in V_{h0}$$
+  $$\spot<1->{\mathfrak{a}}(u_h,v) = (f,v)\quad\quad \forall{v} \in V_h^0$$
   \begin{itemize}[<+->]
     \item Some additional requirements on the vbf are necessary for computations to be feasible at even moderate scale.
     \item For example for $k=3$ and a 50x50 mesh, there are already 39,700 basis elements, and \emph{1,576,090,000} 
@@ -478,7 +472,7 @@
         \begin{itemize}[<+->]
           \item \emph{\textbf{Element summability}} and associated \emph{\textbf{locality}} property, allowing element-wise operations and
             forbidding ``action at a distance''
-          \item a \emph{\textbf{translation invariance}} property, allowing calculations to be done on a general oriented shape in place of
+          \item \emph{\textbf{Translation invariance}} property, allowing calculations to be done on a general oriented shape in place of
             calculations on individual finite elements of the shape
         \end{itemize}
     \item Requirements are aligned with general spirit of FEM's.
@@ -599,7 +593,8 @@
       \frame{\includegraphics[width=6cm, height=2.44cm]{img/basis_layout_overall_ni_ns_s0.pdf}}
     \column{.5\textwidth}
       \small
-      Let \textcolor{blue}{\large $n_i$} and \textcolor{blue}{\large $n_s$} be the count of monomials per interior and side.
+      Let \textcolor{blue}{\large $n_i$} and \textcolor{blue}{\large $n_s$} be the count of basis elements supported per
+      interior and side.
       {\scriptsize We assume that the counts do not vary between sides, which is always true for any WG method using
       $P_k$ style polynomials, or for $Q_k$ polynomials over rectangle meshes.}
   \end{columns}
@@ -922,8 +917,8 @@
     \end{align*}
     Here 
     \begin{itemize}[<+->]
-      \item $\mathfrak{a}$ is a bilinear form which satisfies our additional \emph{\textbf{locality}} and
-        \emph{\textbf{element-summability}} requirements discussed previously.
+      \item $\mathfrak{a}$ is a bilinear form which satisfies our additional \emph{\textbf{element-summability}} 
+        and \emph{\textbf{translation-invariance}} requirements.
       \item The polynomials of $V_h(\Omega)$ satisfy a pair of degree constraints for the interior and side polynomial pieces. 
       \item The inner product $(f,v)_{M_0}$ is integration of the product of its operands over the union of all mesh element
         interiors, $M_0$.
@@ -939,7 +934,7 @@
   Let $\{e_i\}_{i=1,\dots,m}$ be a basis for the 0-boundary subspace $V_h^0(\Omega)$ of our approximation space.
   Then our original system is equivalent to
   \begin{align*}
-    \mathfrak{a}(u_h,v) & = (f,e_i)_{M_0}\quad\quad i=1,\dots,m \\
+    \mathfrak{a}(u_h,e_i) & = (f,e_i)_{M_0}\quad\quad i=1,\dots,m \\
     u_h & = Q_b\,g \text{ on } \partial\Omega
   \end{align*}
   \pause
@@ -987,9 +982,9 @@
   \end{align*}
   \pause
   \begin{itemize}[<+->]
-    \item From {\scriptsize WG-SYS}, we only need to implement \spot<2->{$\phi$}, and only for basis shape function inputs,
-      which are monomials on a single face and $0$ elewhere. We can use linearity to evaluate polynomial inputs.
-    \item Translatability will allow us to compute on oriented shapes.
+    \item From the above it's clear that we only need to implement \spot<2->{$\phi$}, and only for basis shape function inputs,
+      which are monomials on a single face and $0$ elewhere. We use linearity on polynomial inputs.
+    \item Translation invariance will allow us to compute on oriented shapes, because the input shape functions are all face-relative.
     \item Final VBF ($\phi$) interface will be\\
     \uncover<+-> {
     \texttt{\small \textcolor{blue}{int\_mon\_vs\_int\_mon(oshape, imonn1, imonn2)}}\\
@@ -1076,7 +1071,7 @@
   
   \uncover<+-> {
   Now we can proceed to evaluate the second term.
-  There are two cases to consider, depending on whether $e_i$ is interior supported according to the mesh, via
+  There are two cases to consider, depending on whether $e_i$ is interior supported according to 
   {\small \texttt{\textcolor{blue}{basis.\textcolor{orange}{is\_int\_supported}(i)}}}.
   
   \uncover<+-> {
@@ -1089,9 +1084,8 @@
 
   \vspace{.1cm}
   \uncover<+-> {
-  So the method for computing the vbf value will be to sum $\mathfrak{a}(p, e_i)$ over all boundary side space projections
-  $p$ on the boundary sides of the supporting finite element of $e_i$, using linearity of $\mathfrak{a}$, or its per-element
-  form, $\phi$.
+    So the method for computing the vbf value will be to sum $\mathfrak{a}(p, e_i)=\phi(p|_T, e_i|_T)$ over all boundary side space projections
+  $p$ on the boundary sides of the supporting finite element $T$ of $e_i$, using linearity of $\phi$.
   }}}
 \end{frame}
 
@@ -1225,7 +1219,7 @@
 
   \vspace{.15cm}
   Instead, we traverse the local representations of the basis elements, and only compute vbf values for ``nearby'' basis  
-  elements according to their local representations.
+  elements in the local representations, ignoring all others using the locality property of the vbf.
   
   \pause
   \vspace{.15cm}
@@ -1238,8 +1232,8 @@
   \frametitle{The System Matrix -- Pre-Computing Interactions}
   
   Since our vbf is defined in terms of interactions on single oriented shapes, thanks to the \emph{locality} and
-  \emph{element-summability} assumptions, we can \emph{\textbf{pre-compute vbf values}} between shape functions on the same
-  oriented shape, for each oriented shape, before building the matrix.
+  \emph{element-summability} assumptions, we can \emph{\textbf{pre-compute}}  $\phi$ values between
+  shape functions on the same oriented shape, for each oriented shape, before building the matrix.
   
   \pause
   \vspace{.2cm}
@@ -1471,7 +1465,7 @@
 \end{frame}
 
 
-\subsection{Implementing VBFs}
+\subsection{Implementing VBFs - Laplace Example}
 
 \begin{frame}
   \frametitle{Implementing VBFs -- Laplace on Interior/Interior Mons}
@@ -1482,7 +1476,8 @@
   \end{align*}
   \texttt{\textcolor{blue}{int\_mon\_vs\_int\_mon(oshape, imonn1, imonn2)}}\\
   \pause
-  \vspace{.35cm}
+  \vspace{.2cm}
+  For the first term:\\
   \uncover<+-> {
   -- Ask the \texttt{\textcolor{blue}{basis}} for the weak gradients of the interior monomials, using
   function {\small \texttt{\textcolor{blue}{basis.\textbf{\textcolor{orange}{int\_mon\_wgrad}(monn, oshape)}}}}.
@@ -1491,14 +1486,14 @@
   \uncover<+-> {
   -- Form product $a \nabla_w m_1 \cdot \nabla_w m_2$, which is a polynomial. Polynomials can be represented as a sequence
   of $(\mathbb{R}, Monomial)$ pairs. See functions \emph{dot} and \emph{mdot} in the weak gradient source code
-  \footnote{https://raw.github.com/scharris/WGFEM-Rust/master/weak\_gradient.rs} for implementation details.
+  \footnote{https://raw.github.com/scharris/WGFEM-Rust/master/weak\_gradient.rs} for details.
        
   \vspace{.1cm}
   \uncover<+-> {
   -- Integrate the dot product polynomial over the shape's interior, using another new function for the mesh contract,\\
   \texttt{\small \textcolor{blue}{mesh.\textcolor{orange}{intg\_facerel\_poly\_on\_oshape\_int}(poly, oshape)}}.\\
 
-  \vspace{0.4cm}
+  \vspace{.15cm}
   This takes care of the first term.
   }}}
 \end{frame}
@@ -1510,7 +1505,7 @@
    \mathfrak \phi(v,w) = (a \nabla_w v,\nabla_w w)_{\scriptscriptstyle T_0} \;+\; 
    \spot<1->{h_T^{-1}\langle Q_b v_{\scriptscriptstyle T_0} - v,Q_b w_{\scriptscriptstyle T_0} - w \rangle_{\partial T}}
   \end{align*}
-
+  For the second term:\\
   \uncover<+-> {
   -- Introduce new mesh function for maximum element diameter,
      $\quad h_T = \texttt{\small \textcolor{blue}{mesh.\textcolor{orange}{max\_fe\_diameter}()}}$.
@@ -1540,12 +1535,13 @@
     \mathfrak \phi(v,w) = \spot<2->{(a \nabla_w v,\nabla_w w)_{\scriptscriptstyle T_0}} \;+\;
     h_T^{-1}\langle Q_b v_{\scriptscriptstyle T_0} - v,Q_b w_{\scriptscriptstyle T_0} - w \rangle_{\partial T}
   \end{align*}
-  
+
   \texttt{\small \textcolor{blue}{int\_mon\_vs\_side\_mon(oshape, imonn, smonn, side\_face)}}\\
-  \vspace{.3cm}
+  \vspace{.2cm}
   
   \pause
   \uncover<+-> {
+  For the first term:\\
   -- Again we ask the \texttt{\textcolor{blue}{basis}} for the weak gradients,
      via functions {\small \texttt{\textcolor{blue}{basis.\textbf{\textcolor{orange}{int\_mon\_wgrad}(monn, oshape)}}}} and
      {\small \texttt{\textcolor{blue}{basis.\textbf{\textcolor{orange}{side\_mon\_wgrad}(monn, oshape, side\_face)}}}}.\\
