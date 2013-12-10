@@ -61,7 +61,6 @@ pub struct WeakGradSolver<Mon> {
 impl <Mon:Monomial> WeakGradSolver<Mon> {
 
   pub fn new<MESHT:Mesh<Mon>>(comp_mons_deg_lim: DegLim, mesh: &MESHT) -> WeakGradSolver<Mon> {
-    lapack::init(); // TODO: Move this to main when available.
     let comp_mons: ~[Mon] = Monomial::mons_with_deg_lim_asc(comp_mons_deg_lim);
     let vmons = VectorMonomial::with_comp_mons_ordered_by_comp_and_mon(comp_mons);
     let num_vmons = vmons.len();

@@ -1,7 +1,14 @@
 use sparse_matrix::*;
 use lapack::lapack_int;
+use lapack;
 
 use std::vec;
+
+#[test]
+fn test_do_lapack_init() {
+  lapack::init(); // TODO: Do this somewhere else, where it's gauranteed to be run before other tests as part of each test setup.
+}
+
 
 #[test]
 fn test_3x4_push_and_get() {

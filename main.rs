@@ -6,6 +6,7 @@ use wg_basis::{WGBasis};
 //use vbf_laplace::VBFLaplace;
 use wg_solver;
 use wg_error_estimates::{err_L2_norm};
+use lapack;
 
 use std::num::{sin, cos};
 use std::num::log2;
@@ -13,6 +14,8 @@ use std::iter::{range_step};
 
 #[main]
 fn main() {
+  lapack::init();
+
   // u(x) = cos(x_0) + sin(x_1)
   // (grad u)(x) = (-sin(x_0), cos(x_1))
   // (div (grad u))(x) = -cos(x[0]) - sin(x[1])

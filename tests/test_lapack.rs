@@ -4,6 +4,12 @@ use sparse_matrix::SparseMatrix;
 use dense_matrix::DenseMatrix;
 use std::num::abs;
 
+#[test]
+fn test_do_lapack_init() {
+  lapack::init(); // TODO: Do this somewhere else, where it's gauranteed to be run before other tests as part of each test setup.
+}
+
+
 fn approx_eq(v1: &[R], v2: &[R], tol: R) {
   if v1.len() != v2.len() || !v1.iter().zip(v2.iter()).all(|(&a,&b)| abs(a-b) <= tol) {
     fail!("Vectors not approximately equal: left value was {}, right was {}", v1.to_str(), v2.to_str());
