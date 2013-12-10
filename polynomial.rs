@@ -104,13 +104,13 @@ pub trait Polynomial<Mon>: ToStr {
   
   fn term(&self, n: uint) -> (R,Mon);
 
-  fn foldl_terms<A>(&self, z: A, f: &fn(a: A, term: (R,Mon)) -> A) -> A;
+  fn foldl_terms<A>(&self, z: A, f: |a: A, term: (R,Mon)| -> A) -> A;
   
-  fn foldl_numbered_terms<A>(&self, z: A, f: &fn(a: A, term: (uint,R,Mon)) -> A) -> A;
+  fn foldl_numbered_terms<A>(&self, z: A, f: |a: A, term: (uint,R,Mon)| -> A) -> A;
 
   fn value_at(&self, x: &[R]) -> R;
   
-  fn each_term(&self, f: &fn(term: (R,Mon)) -> ()) ->  ();
+  fn each_term(&self, f: |term: (R,Mon)| -> ()) ->  ();
 
   fn canonical_form(&self) -> PolyOwning<Mon>;
   
@@ -159,7 +159,7 @@ impl<Mon:Monomial> Polynomial<Mon>
     (coef,mon)
   }
   
-  fn foldl_terms<A>(&self, z: A, f: &fn(a: A, term: (R,Mon)) -> A) -> A {
+  fn foldl_terms<A>(&self, z: A, f: |a: A, term: (R,Mon)| -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.mons.len()) {
       let term = unsafe { (self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
@@ -168,7 +168,7 @@ impl<Mon:Monomial> Polynomial<Mon>
     acc_val
   }
   
-  fn foldl_numbered_terms<A>(&self, z: A, f: &fn(a: A, term: (uint,R,Mon)) -> A) -> A {
+  fn foldl_numbered_terms<A>(&self, z: A, f: |a: A, term: (uint,R,Mon)| -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.num_terms()) {
       let term = unsafe { (n, self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
@@ -183,7 +183,7 @@ impl<Mon:Monomial> Polynomial<Mon>
   }
 
   #[inline]
-  fn each_term(&self, f: &fn(term: (R,Mon)) -> ()) ->  () {
+  fn each_term(&self, f: |term: (R,Mon)| -> ()) ->  () {
     for n in range(0, self.mons.len()) {
       unsafe { f((self.coefs.unsafe_get(n), self.mons.unsafe_get(n))) };
     }
@@ -220,7 +220,7 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
     (coef,mon)
   }
   
-  fn foldl_terms<A>(&self, z: A, f: &fn(a: A, term: (R,Mon)) -> A) -> A {
+  fn foldl_terms<A>(&self, z: A, f: |a: A, term: (R,Mon)| -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.mons.len()) {
       let term = unsafe { (self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
@@ -229,7 +229,7 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
     acc_val
   }
   
-  fn foldl_numbered_terms<A>(&self, z: A, f: &fn(a: A, term: (uint,R,Mon)) -> A) -> A {
+  fn foldl_numbered_terms<A>(&self, z: A, f: |a: A, term: (uint,R,Mon)| -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.num_terms()) {
       let term = unsafe { (n, self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
@@ -244,7 +244,7 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
   }
 
   #[inline]
-  fn each_term(&self, f: &fn(term: (R,Mon)) -> ()) ->  () {
+  fn each_term(&self, f: |term: (R,Mon)| -> ()) ->  () {
     for n in range(0, self.mons.len()) {
       unsafe { f((self.coefs.unsafe_get(n), self.mons.unsafe_get(n))) };
     }
@@ -281,7 +281,7 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
     (coef,mon)
   }
   
-  fn foldl_terms<A>(&self, z: A, f: &fn(a: A, term: (R,Mon)) -> A) -> A {
+  fn foldl_terms<A>(&self, z: A, f: |a: A, term: (R,Mon)| -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.mons.len()) {
       let term = unsafe { (self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
@@ -290,7 +290,7 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
     acc_val
   }
   
-  fn foldl_numbered_terms<A>(&self, z: A, f: &fn(a: A, term: (uint,R,Mon)) -> A) -> A {
+  fn foldl_numbered_terms<A>(&self, z: A, f: |a: A, term: (uint,R,Mon)| -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.num_terms()) {
       let term = unsafe { (n, self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
@@ -305,7 +305,7 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
   }
 
   #[inline]
-  fn each_term(&self, f: &fn(term: (R,Mon)) -> ()) ->  () {
+  fn each_term(&self, f: |term: (R,Mon)| -> ()) ->  () {
     for n in range(0, self.mons.len()) {
       unsafe { f((self.coefs.unsafe_get(n), self.mons.unsafe_get(n))) };
     }

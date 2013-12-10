@@ -1,6 +1,7 @@
 use tensor::*;
 use common::R;
 
+/*
 #[test]
 fn test_tensor3_constr_from_elem() {
   let t = Tensor3::from_elem(3,4,5, 99.);
@@ -12,6 +13,7 @@ fn test_tensor3_constr_from_elem() {
     }
   }
 }
+*/
 
 #[test]
 fn test_tensor3_constr_from_fn() {
@@ -53,6 +55,7 @@ fn test_tensor4_constr_from_fn() {
   }
 }
 
+/*
 #[test]
 fn test_tensor5_constr_from_elem() {
   let t = Tensor5::from_elem(3,4,5,6,7, 99.);
@@ -68,6 +71,7 @@ fn test_tensor5_constr_from_elem() {
     }
   }
 }
+*/
 
 #[test]
 fn test_tensor5_constr_from_fn() {

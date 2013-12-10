@@ -36,10 +36,10 @@ use vbf_laplace::VBFLaplace; // TODO: remove when Rust ICE is fixed
 
 /*
 pub fn solve<'self, Mon: Monomial, MeshT: Mesh<Mon>, VBF: VariationalBilinearForm<'self, Mon, MeshT>>
-       (vbf: &'self VBF, f: &fn(&[R])->R, g: &fn(&[R])->R) -> WGSolution<'self,Mon,MeshT> {
+       (vbf: &'self VBF, f: |&[R]| -> R, g: |&[R]| -> R) -> WGSolution<'self,Mon,MeshT> {
 */
 pub fn solve_laplace<'a, Mon:Monomial, MeshT:Mesh<Mon>>
-   (basis: &'a WGBasis<Mon,MeshT>, f: &fn(&[R])->R, g: &fn(&[R])->R) -> WGSolution<'a,Mon,MeshT> {
+   (basis: &'a WGBasis<Mon,MeshT>, f: |&[R]| -> R, g: |&[R]| -> R) -> WGSolution<'a,Mon,MeshT> {
   
   // TODO: Replace with vbf trait parameter when Rust internal compiler error is fixed. https://github.com/mozilla/rust/issues/10201
   let vbf = &VBFLaplace::new(None, basis);
@@ -60,7 +60,7 @@ pub fn solve_laplace<'a, Mon:Monomial, MeshT:Mesh<Mon>>
 }
 
 fn ip_on_ints<Mon:Monomial, MeshT: Mesh<Mon>>
-   (f: &fn(&[R])->R,
+   (f: |&[R]| -> R,
     bel: BasisElNum,
     basis: &WGBasis<Mon,MeshT>) -> R {
   if !basis.is_int_supported(bel) { 0 as R }
@@ -127,7 +127,7 @@ fn vbf_bnd_projs_vs_bel<'a, Mon:Monomial, MeshT: Mesh<Mon>>
 }
 
 fn boundary_projections<'a, Mon: Monomial, MeshT: Mesh<Mon>>
-   (g: &fn(&[R])->R, basis: &'a WGBasis<Mon,MeshT>) -> BoundaryProjections<'a, Mon> {
+   (g: |&[R]| -> R, basis: &'a WGBasis<Mon,MeshT>) -> BoundaryProjections<'a, Mon> {
  
   let mut projector = Projector::new(basis);
 

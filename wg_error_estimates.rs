@@ -5,7 +5,7 @@ use wg_solution::WGSolution;
 
 use std::num::sqrt;
 
-pub fn err_L2_norm<Mon:Monomial,MeshT:Mesh<Mon>>(exact_sol: &fn(&[R])->R, approx: &WGSolution<Mon,MeshT>) -> R {
+pub fn err_L2_norm<Mon:Monomial,MeshT:Mesh<Mon>>(exact_sol: |&[R]| -> R, approx: &WGSolution<Mon,MeshT>) -> R {
   let mesh = approx.basis().mesh();
   let sum_fe_sq_err_intgs = range(0, mesh.num_fes()).fold(0 as R, |sum_fe_sq_err_intgs, fe| {
     let fe = FENum(fe);

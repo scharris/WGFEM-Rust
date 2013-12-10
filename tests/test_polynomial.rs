@@ -31,6 +31,7 @@ fn test_1d_owned_equiv() {
   .equiv(&PolyBorrowingMons::new(~[2.,5.], mons)))
 }  
 
+#[test]
 fn test_1d_owned_scaling() {
   let one_mon: Mon1d = Monomial::one();
   let x_mon = Mon1d { exps: [Deg(1)] };

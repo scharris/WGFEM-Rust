@@ -2,22 +2,11 @@ use dense_matrix::*;
 use common::R;
 use lapack;
 
-use extra::c_vec;
 use std::vec;
 
 #[test]
 fn test_do_lapack_init() {
   lapack::init(); // TODO: Do this somewhere else, where it's gauranteed to be run before other tests as part of each test setup.
-}
-
-#[test]
-fn test_alloc_data() {
-  let data = unsafe { alloc_data(3) };
-  c_vec::set(data, 0u, 1.);
-  c_vec::set(data, 1u, 2.);
-  c_vec::set(data, 2u, 3.);
-  let vec_from_data = unsafe { vec::from_buf(c_vec::ptr(data) as *R, 3) };
-  assert_eq!(vec_from_data, ~[1.,2.,3.]);
 }
 
 #[test]
@@ -28,12 +17,6 @@ fn test_constr_from_fn() {
   
   let data_as_vec = unsafe { vec::from_buf(m.col_maj_data_ptr(), 9) };
   assert_eq!(data_as_vec, ~[0.,1000.,2000.,1.,1001.,2001.,2.,1002.,2002.]);
-}
-
-fn test_constr_from_elem() {
-  let m = DenseMatrix::from_elem(3,3, 10.);
-  let data_as_vec = unsafe { vec::from_buf(m.col_maj_data_ptr(), 9) };
-  assert_eq!(data_as_vec, ~[10.,10.,10.,10.,10.,10.,10.,10.,10.]);
 }
 
 #[test]

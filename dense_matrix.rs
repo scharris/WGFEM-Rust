@@ -4,27 +4,26 @@ use lapack;
 use std::libc::{c_ulong};
 use std::ptr;
 use std::iter::{range_inclusive};
-use std::cast;
-use extra::c_vec;
+use std::cast::transmute;
 use extra::c_vec::CVec;
 
 /// Column major dense matrix type.
 pub struct DenseMatrix {
-  data: CVec<R>,
-  num_rows: uint,
-  num_cols: uint,
-  capacity_cols: uint,
+  priv data: CVec<R>,
+  priv num_rows: uint,
+  priv num_cols: uint,
+  priv capacity_cols: uint,
 }
 
 impl DenseMatrix {
 
-  pub fn from_fn(num_rows: uint, num_cols: uint, f: &fn(row:uint, col:uint) -> R) -> DenseMatrix {
+  pub fn from_fn(num_rows: uint, num_cols: uint, f: |row:uint, col:uint| -> R) -> DenseMatrix {
     let n = num_rows * num_cols;
-    let data = unsafe { alloc_data(n) };
+    let mut data = unsafe { alloc_data(n) };
     for i in range(0u, n) {
       let c = i / num_rows;
       let r = i % num_rows;
-      c_vec::set(data, i, f(r,c));
+      unsafe { unsafe_set(&mut data, i, f(r,c)); }
     }
     DenseMatrix {
       data: data,
@@ -36,9 +35,9 @@ impl DenseMatrix {
   
   pub fn from_elem(num_rows: uint, num_cols: uint, elem: R) -> DenseMatrix {
     let n = num_rows * num_cols;
-    let data = unsafe { alloc_data(n) };
+    let mut data = unsafe { alloc_data(n) };
     for i in range(0u, n) {
-      c_vec::set(data, i, elem);
+      unsafe { unsafe_set(&mut data, i, elem); }
     }
     DenseMatrix {
       data: data,
@@ -51,9 +50,9 @@ impl DenseMatrix {
   pub fn from_elem_with_cols_capacity(num_rows: uint, num_cols: uint, elem: R, capacity_cols: uint) -> DenseMatrix {
     if capacity_cols < num_cols { fail!("Capacity columns must be greater or equal to number of columns."); }
     let cap = num_rows * capacity_cols;
-    let data = unsafe { alloc_data(cap) };
+    let mut data = unsafe { alloc_data(cap) };
     for i in range(0u, cap) {
-      c_vec::set(data, i, elem);
+      unsafe { unsafe_set(&mut data, i, elem); }
     }
     DenseMatrix {
       data: data,
@@ -75,12 +74,12 @@ impl DenseMatrix {
   }
 
   // NOTE: This constructor does not initialize the lower triangular values.
-  pub fn upper_triangle_from_fn(side_len: uint, f: &fn(row:uint, col:uint) -> R) -> DenseMatrix {
+  pub fn upper_triangle_from_fn(side_len: uint, f: |row:uint, col:uint| -> R) -> DenseMatrix {
     let n = side_len * side_len;
-    let data = unsafe { alloc_data(n) };
+    let mut data = unsafe { alloc_data(n) };
     for c in range(0, side_len) {
       for r in range_inclusive(0, c) {
-        c_vec::set(data, c * side_len + r, f(r,c));
+        unsafe { unsafe_set(&mut data, c * side_len + r, f(r,c)); }
       }
     }
     DenseMatrix {
@@ -92,12 +91,12 @@ impl DenseMatrix {
   }
   
   // NOTE: This constructor does not initialize the upper triangular values.
-  pub fn lower_triangle_from_fn(side_len: uint, f: &fn(row:uint, col:uint) -> R) -> DenseMatrix {
+  pub fn lower_triangle_from_fn(side_len: uint, f: |row:uint, col:uint| -> R) -> DenseMatrix {
     let n = side_len * side_len;
-    let data = unsafe { alloc_data(n) };
+    let mut data = unsafe { alloc_data(n) };
     for r in range(0, side_len) {
       for c in range_inclusive(0, r) {
-        c_vec::set(data, c * side_len + r, f(r,c));
+        unsafe { unsafe_set(&mut data, c * side_len + r, f(r,c)); }
       }
     }
     DenseMatrix {
@@ -111,70 +110,81 @@ impl DenseMatrix {
   pub fn from_rows(num_rows: uint, num_cols: uint, elems: &[~[R]]) -> DenseMatrix {
     DenseMatrix::from_fn(num_rows, num_cols, |r,c| elems[r][c])
   }
+  
+  #[inline(always)]
+  pub fn num_rows(&self) -> uint {
+    self.num_rows
+  }
+  
+  #[inline(always)]
+  pub fn num_cols(&self) -> uint {
+    self.num_cols
+  }
+  
+  #[inline(always)]
+  pub fn capacity_cols(&self) -> uint {
+    self.capacity_cols
+  }
 
   #[inline]
   pub fn get(&self, r: uint, c: uint) -> R {
     if c >= self.num_cols || r >= self.num_rows { fail!("Row or column out of range."); }
-    unsafe { *ptr::mut_offset(c_vec::ptr(self.data), (c * self.num_rows + r) as int) }
+    unsafe { unsafe_get(&self.data, c * self.num_rows + r) }
   }
   
   #[inline]
   pub fn set(&mut self, r: uint, c: uint, value: R) {
     if c >= self.num_cols || r >= self.num_rows { fail!("Row or column out of range."); }
-    unsafe { *ptr::mut_offset(c_vec::ptr(self.data), (c * self.num_rows + r) as int) = value; }
+    unsafe { unsafe_set(&mut self.data, c * self.num_rows + r, value); }
   }
 
-  #[fixed_stack_segment]
   #[inline(never)]
   pub fn copy_into(&self, m: &mut DenseMatrix) {
     if self.num_rows != m.num_rows || self.num_cols > m.num_cols {
       fail!("Matrix layouts not compatible for dense matrix copy-into operation.");
     }
     unsafe {
-      lapack::copy_matrix(c_vec::ptr(self.data) as *R, self.num_rows as c_ulong, self.num_cols as c_ulong, c_vec::ptr(m.data));
+      lapack::copy_matrix(transmute(self.data.get(0)), self.num_rows as c_ulong, self.num_cols as c_ulong, transmute(m.data.get(0)));
     }
   }
   
-  #[fixed_stack_segment]
   #[inline(never)]
   pub fn copy_upper_triangle_into(&self, m: &mut DenseMatrix) {
     if self.num_rows != m.num_rows || self.num_cols > m.num_cols {
       fail!("Matrix layouts not compatible for dense matrix copy-into operation.");
     }
     unsafe {
-      lapack::copy_upper_triangle(c_vec::ptr(self.data) as *R, self.num_rows as c_ulong, self.num_cols as c_ulong, c_vec::ptr(m.data));
+      lapack::copy_upper_triangle(transmute(self.data.get(0)), self.num_rows as c_ulong, self.num_cols as c_ulong, transmute(m.data.get(0)));
     }
   }
   
-  #[fixed_stack_segment]
   #[inline(never)]
   pub fn fill_upper_triangle_from(&mut self, m: &DenseMatrix) {
     if self.num_rows != m.num_rows || m.num_cols > self.num_cols {
       fail!("Matrix layouts not compatible for dense matrix copy-into operation.");
     }
     unsafe {
-      lapack::copy_upper_triangle(c_vec::ptr(m.data) as *R, m.num_rows as c_ulong, m.num_cols as c_ulong, c_vec::ptr(self.data));
+      lapack::copy_upper_triangle(transmute(m.data.get(0)), m.num_rows as c_ulong, m.num_cols as c_ulong, transmute(self.data.get(0)));
     }
   }
 
-  #[fixed_stack_segment]
   #[inline(never)]
-  pub fn fill_from_fn(&mut self, f: &fn(row:uint, col:uint) -> R) {
+  pub fn fill_from_fn(&mut self, f: |row:uint, col:uint| -> R) {
     for r in range(0, self.num_rows) {
       for c in range(0, self.num_cols) {
-        unsafe { *ptr::mut_offset(c_vec::ptr(self.data), (c * self.num_rows + r) as int) = f(r,c); }
+        unsafe { unsafe_set(&mut self.data, c * self.num_rows + r, f(r,c)); }
       }
     }
   }
 
-  #[inline]
+  #[inline(always)]
   pub unsafe fn col_maj_data_ptr(&self) -> *R {
-    c_vec::ptr(self.data) as *R
+    transmute(self.data.get(0))
   }
 
-  #[inline]
+  #[inline(always)]
   pub unsafe fn mut_col_maj_data_ptr(&self) -> *mut R {
-    c_vec::ptr(self.data)
+    transmute(self.data.get(0))
   }
   
   pub fn set_num_cols(&mut self, num_cols: uint) {
@@ -192,25 +202,33 @@ impl DenseMatrix {
       println!("");
     }
   }
-
+  
 } // DenseMatrix impl
 
 
+#[inline(always)]
+unsafe fn unsafe_set(v: &mut CVec<R>, i: uint, value: R) {
+  *ptr::mut_offset(transmute(v.get(0)), i as int) = value;
+}
 
-#[fixed_stack_segment]
+#[inline(always)]
+unsafe fn unsafe_get(v: &CVec<R>, i: uint) -> R {
+  *ptr::mut_offset(transmute(v.get(0)), i as int)
+}
+
+
 #[inline(never)]
 pub unsafe fn alloc_data(num_doubles: uint) -> CVec<R> {
   let doubles = lapack::alloc_doubles(num_doubles as c_ulong);
-  c_vec::CVec(doubles, num_doubles)
+  CVec::new(doubles, num_doubles)
 }
 
 #[unsafe_destructor]
 impl Drop for DenseMatrix {
-  #[fixed_stack_segment]
   #[inline(never)]
   fn drop(&mut self) {
     unsafe {
-      lapack::free_doubles(cast::transmute(c_vec::ptr(self.data)))
+      lapack::free_doubles(transmute(self.data.get(0)))
     }
   }
 }

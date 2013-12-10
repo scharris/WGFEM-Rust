@@ -107,7 +107,6 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
     mesh.intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(v, q, oshape, side_face)
   }
 
-  #[fixed_stack_segment] 
   #[inline(never)]
   pub fn wgrads_on_oshape<MESHT:Mesh<Mon>>(&mut self, int_mons: &[Mon], side_mons_by_side: &[&[Mon]],
                                                       oshape: OShape, mesh: &MESHT) -> (~[WeakGrad], ~[~[WeakGrad]]) {
@@ -125,7 +124,7 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
         //     linearized in column-major order.
         let (b, num_rhs_cols) = {
           let rhss = self.wgrad_def_rhss(int_mons, side_mons_by_side, oshape, mesh);
-          (rhss.mut_col_maj_data_ptr(), rhss.num_cols)
+          (rhss.mut_col_maj_data_ptr(), rhss.num_cols())
         };
 
         lapack::solve_symmetric_as_col_maj_with_ut_sys(a, num_vmons as lapack_int,
@@ -161,7 +160,7 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
       int_mons.len() + total_side_mons_all_sides
     };
 
-    if self.lapack_rhs.capacity_cols < num_rhs_cols {
+    if self.lapack_rhs.capacity_cols() < num_rhs_cols {
       self.lapack_rhs = DenseMatrix::of_size_with_cols_capacity(num_vmons, num_rhs_cols, 2*num_rhs_cols);
     } else {
       self.lapack_rhs.set_num_cols(num_rhs_cols);
@@ -195,10 +194,10 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
   // Unpack slice of solution coefficients for interior monomials from LAPACK solver as weak gradients.
   fn int_wgrads_from_combined_sol_coefs(&self, int_wgrad_coefs: &[R]) -> ~[WeakGrad] {
     int_wgrad_coefs
-      .chunk_iter(self.basis_vmons.len()) // Chunk into sections corresponding to wgrad coefs of individual int mons.
+      .chunks(self.basis_vmons.len()) // Chunk into sections corresponding to wgrad coefs of individual int mons.
       .map(|wgrad_vmon_coefs| 
            WeakGrad {
-             comp_mon_coefs: wgrad_vmon_coefs.chunk_iter(self.wgrad_comp_mons.len()) // comp dim sections
+             comp_mon_coefs: wgrad_vmon_coefs.chunks(self.wgrad_comp_mons.len()) // comp dim sections
                                              .map(|comp_coefs| comp_coefs.to_owned())
                                              .collect()
            })
@@ -214,10 +213,10 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
       let side_start_ix = side_start_ixs[side_num];
       let side_wgrad_coefs = sides_wgrad_coefs.slice(side_start_ix, side_start_ix + num_vmons * num_side_mons_by_side[side_num]);
       side_wgrad_coefs           // Solution coefficients for all monomials on this side.
-        .chunk_iter(num_vmons)   // Chunk into sections corresponding to wgrads of individual side monomials.
+        .chunks(num_vmons)   // Chunk into sections corresponding to wgrads of individual side monomials.
         .map(|wgrad_vmon_coefs|
              WeakGrad {
-               comp_mon_coefs: wgrad_vmon_coefs.chunk_iter(self.wgrad_comp_mons.len()) // comp dim sections
+               comp_mon_coefs: wgrad_vmon_coefs.chunks(self.wgrad_comp_mons.len()) // comp dim sections
                                                .map(|comp_coefs| comp_coefs.to_owned())
                                                .collect() // Collect component coefficients for a single weak grad.
              })

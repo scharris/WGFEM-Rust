@@ -89,22 +89,22 @@ pub trait Mesh<Mon> {
   // integration functions
   
   fn intg_global_fn_on_fe_int(&self,
-       g: &fn(&[R]) -> R,
+       g: |&[R]| -> R,
        fe: FENum) -> R;
 
   fn intg_global_fn_x_facerel_mon_on_fe_int(&self,
-       g: &fn(&[R]) -> R,
+       g: |&[R]| -> R,
        mon: Mon,
        fe: FENum) -> R;
 
   fn intg_global_fn_x_facerel_mon_on_fe_side(&self,
-       g: &fn(&[R]) -> R,
+       g: |&[R]| -> R,
        mon: Mon,
        fe: FENum,
        side_face: SideFace) -> R;
   
   fn intg_mixed_global_and_facerel_fn_on_fe_int(&self,
-       f: &fn(&[R], &[R])->R,
+       f: |&[R], &[R]|->R,
        fe: FENum) -> R; 
 
   fn intg_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self,

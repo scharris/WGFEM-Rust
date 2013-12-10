@@ -6,6 +6,7 @@
 #[crate_type = "exe"];
 #[feature(globs)];
 #[feature(macro_rules)];
+#[feature(link_args)];
 
 extern mod extra;
 

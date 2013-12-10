@@ -2,6 +2,7 @@ use common::*;
 use monomial;
 use monomial::{Monomial, Mon1d, Mon2d, Mon3d, Mon4d, MaxMonDeg};
 
+#[test]
 fn test_domain_dims() {
   assert_eq!(Monomial::domain_space_dims(None::<Mon1d>), 1u);
   assert_eq!(Monomial::domain_space_dims(None::<Mon2d>), 2u);
@@ -506,6 +507,7 @@ fn test_mul_1d() {
   assert_eq!(x * x, Mon1d { exps: [Deg(2)] });
   assert_eq!(x * one, x);
 }
+#[test]
 fn test_mul_2d() {
   let x = Mon2d { exps: [Deg(1), Deg(0)] };
   let y = Mon2d { exps: [Deg(0), Deg(1)] };

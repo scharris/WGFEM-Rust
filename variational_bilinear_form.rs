@@ -270,7 +270,7 @@ pub trait VariationalBilinearForm<'self,Mon:Monomial,MeshT:Mesh<Mon>> {
 fn asc_nbsn_fe_sf_triplets_for_fes<'a, Mon:Monomial, MeshT:Mesh<Mon>>
    (fe1: FENum,
     fe2: Option<FENum>,
-    nbs_filter: &fn(NBSideNum) -> bool,
+    nbs_filter: |NBSideNum| -> bool,
     mesh: &MeshT, fe_nb_sides_buf: &'a mut [(NBSideNum, FENum, SideFace)])
    -> &'a [(NBSideNum, FENum, SideFace)] {
 
@@ -299,7 +299,7 @@ fn asc_nbsn_fe_sf_triplets_for_fes<'a, Mon:Monomial, MeshT:Mesh<Mon>>
 #[inline]
 fn asc_nb_sides_interactions<'a, Mon:Monomial, MeshT:Mesh<Mon>>
    (nbs_1_incls: &NBSideInclusions,
-    nbs_filter: &fn(NBSideNum) -> bool,
+    nbs_filter: |NBSideNum| -> bool,
     mesh: &MeshT,
     fe_nb_sides_buf: &mut [(NBSideNum, FENum, SideFace)],
     nb_side_interactions_buf: &'a mut [NBSidesInteraction]) -> &'a [NBSidesInteraction] {

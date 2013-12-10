@@ -382,11 +382,6 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WGBasis<Mon,MeshT> {
   pub fn side_mon_wgrad<'a>(&'a self, monn: FaceMonNum, oshape: OShape, side_face: SideFace) -> &'a WeakGrad {
     &self.side_mon_wgrads[*oshape][*side_face][*monn]
   }
-  
-  #[inline]
-  pub fn weak_grad_solver<'a>(&'a self) -> &'a WeakGradSolver<Mon> {
-    &self.weak_grad_solver
-  }
 
   #[inline]
   pub fn new_weak_grad_ops(&self) -> WeakGradOps<Mon> {

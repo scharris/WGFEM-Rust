@@ -12,6 +12,7 @@ struct Tensor3 {
 
 impl Tensor3 {
 
+/*
   pub fn from_elem(size_0: uint, size_1: uint, size_2: uint, elem: R) -> Tensor3 {
     let sz = size_0 * size_1 * size_2;
     Tensor3 {
@@ -21,8 +22,9 @@ impl Tensor3 {
       size_2: size_2,
     }
   }
-  
-  pub fn from_fn(size_0: uint, size_1: uint, size_2: uint, f: &fn(i0:uint, i1:uint, i2:uint) -> R) -> Tensor3 {
+*/ 
+
+  pub fn from_fn(size_0: uint, size_1: uint, size_2: uint, f: |i0:uint, i1:uint, i2:uint| -> R) -> Tensor3 {
     let mut data = vec::with_capacity(size_0 * size_1 * size_2);
     for i0 in range(0, size_0) {
       for i1 in range(0, size_1) {
@@ -39,10 +41,12 @@ impl Tensor3 {
     }
   }
 
+/*
   #[inline]
   pub fn set(&mut self, i0: uint, i1: uint, i2: uint, val: R) {
     self.data[(i0 * self.size_1 + i1)*self.size_2 + i2] = val;
   }
+*/
   
   #[inline]
   pub fn get(&self, i0: uint, i1: uint, i2: uint) -> R {
@@ -71,7 +75,7 @@ impl Tensor4 {
     }
   }
   
-  pub fn from_fn(size_0: uint, size_1: uint, size_2: uint, size_3: uint, f: &fn(i0:uint, i1:uint, i2:uint, i3: uint) -> R) -> Tensor4 {
+  pub fn from_fn(size_0: uint, size_1: uint, size_2: uint, size_3: uint, f: |i0:uint, i1:uint, i2:uint, i3: uint| -> R) -> Tensor4 {
     let sz = size_0 * size_1 * size_2 * size_3;
     let mut data = vec::with_capacity(sz);
     for i0 in range(0, size_0) {
@@ -92,11 +96,13 @@ impl Tensor4 {
     }
   }
 
+/*
   #[inline]
   pub fn set(&mut self, i0: uint, i1: uint, i2: uint, i3: uint, val: R) {
     self.data[((i0 * self.size_1 + i1) * self.size_2 + i2) * self.size_3 + i3] = val;
   }
-  
+*/  
+
   #[inline]
   pub fn get(&self, i0: uint, i1: uint, i2: uint, i3: uint) -> R {
     self.data[((i0 * self.size_1 + i1) * self.size_2 + i2) * self.size_3 + i3]
@@ -115,6 +121,7 @@ struct Tensor5 {
 
 impl Tensor5 {
 
+/*
   pub fn from_elem(size_0: uint, size_1: uint, size_2: uint, size_3: uint, size_4: uint, elem: R) -> Tensor5 {
     let sz = size_0 * size_1 * size_2 * size_3 * size_4;
     Tensor5 {
@@ -126,8 +133,9 @@ impl Tensor5 {
       size_4: size_4,
     }
   }
-  
-  pub fn from_fn(size_0: uint, size_1: uint, size_2: uint, size_3: uint, size_4: uint, f: &fn(i0:uint, i1:uint, i2:uint, i3: uint, i4: uint) -> R) -> Tensor5 {
+*/
+
+  pub fn from_fn(size_0: uint, size_1: uint, size_2: uint, size_3: uint, size_4: uint, f: |i0:uint, i1:uint, i2:uint, i3: uint, i4: uint| -> R) -> Tensor5 {
     let sz = size_0 * size_1 * size_2 * size_3 * size_4;
     let mut data = vec::with_capacity(sz);
     for i0 in range(0, size_0) {
@@ -151,10 +159,12 @@ impl Tensor5 {
     }
   }
 
+/*
   #[inline]
   pub fn set(&mut self, i0: uint, i1: uint, i2: uint, i3: uint, i4: uint, val: R) {
     self.data[(((i0 * self.size_1 + i1) * self.size_2 + i2) * self.size_3 + i3) * self.size_4 + i4] = val;
   }
+*/
   
   #[inline]
   pub fn get(&self, i0: uint, i1: uint, i2: uint, i3: uint, i4: uint) -> R {

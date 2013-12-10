@@ -10,7 +10,6 @@ use std::vec;
 pub type lapack_int = c_int; // Adjust according to whether LP64 or ILP64 libraries are being linked.
 pub type mkl_int = c_int;    // Adjust according to whether LP64 or ILP64 libraries are being linked.
 
-#[fixed_stack_segment]
 #[inline(never)]
 pub fn init() {
   unsafe {
@@ -18,7 +17,6 @@ pub fn init() {
   }
 }
 
-#[fixed_stack_segment]
 #[inline(never)]
 pub fn solve_sparse_structurally_symmetric(sys: &SparseMatrix, rhs: &DenseMatrix, sym: bool) -> ~[R] {
   let n = sys.num_rows();
@@ -31,12 +29,12 @@ pub fn solve_sparse_structurally_symmetric(sys: &SparseMatrix, rhs: &DenseMatrix
     let stat = 
       if sym {
         solve_sparse_symmetric_as_ut_csr3(n as mkl_int, ia, ja, a,
-                                          rhs.col_maj_data_ptr(), rhs.num_cols as mkl_int,
+                                          rhs.col_maj_data_ptr(), rhs.num_cols() as mkl_int,
                                           vec::raw::to_mut_ptr(sol),
                                           cpu_cores)
       } else {
         solve_sparse_structurally_symmetric_csr3(n as mkl_int, ia, ja, a,
-                                                 rhs.col_maj_data_ptr(), rhs.num_cols as mkl_int,
+                                                 rhs.col_maj_data_ptr(), rhs.num_cols() as mkl_int,
                                                  vec::raw::to_mut_ptr(sol),
                                                  cpu_cores)
       };
@@ -49,6 +47,8 @@ pub fn solve_sparse_structurally_symmetric(sys: &SparseMatrix, rhs: &DenseMatrix
   }
 }
 
+/* TODO: This isn't the preferred way to link anymore (too platform specific), so requires feature gate in wgfem.rs.
+         I'm not sure how to specify the -L option otherwise though. */
 #[link_args = "-Llib/mkl lib/lapack.o -lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -lmkl_core -lmkl_intel_thread -lmkl_core -liomp5 -lpthread"]
 extern {
 

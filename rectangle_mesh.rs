@@ -485,7 +485,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
   // integration functions
 
   #[inline]
-  fn intg_global_fn_on_fe_int(&self, f: &fn(&[R]) -> R, fe: FENum) -> R {
+  fn intg_global_fn_on_fe_int(&self, f: |&[R]| -> R, fe: FENum) -> R {
     let (fe_min_corner, fe_max_corner) = unsafe { // Mutate a work buffer to hold the fe min and max corners.
       cast::transmute_mut(self).fe_coord_min_max_corners(fe)
     };
@@ -493,7 +493,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
   }
 
   #[inline]
-  fn intg_global_fn_x_facerel_mon_on_fe_int(&self, f: &fn(&[R]) -> R, mon: Mon, fe: FENum) -> R {
+  fn intg_global_fn_x_facerel_mon_on_fe_int(&self, f: |&[R]| -> R, mon: Mon, fe: FENum) -> R {
     let (fe_min_corner, fe_max_corner) = unsafe { // Mutate a work buffer to hold the fe min and max corners.
       cast::transmute_mut(self).fe_coord_min_max_corners(fe)
     };
@@ -504,7 +504,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
   }
   
   #[inline]
-  fn intg_mixed_global_and_facerel_fn_on_fe_int(&self, f: &fn(&[R], &[R])->R, fe: FENum) -> R {
+  fn intg_mixed_global_and_facerel_fn_on_fe_int(&self, f: |&[R], &[R]| -> R, fe: FENum) -> R {
     let (fe_min_corner, fe_max_corner) = unsafe { // Mutate a work buffer to hold the fe min and max corners.
       cast::transmute_mut(self).fe_coord_min_max_corners(fe)
     };
@@ -525,7 +525,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
   }
 
   
-  fn intg_global_fn_x_facerel_mon_on_fe_side(&self, g: &fn(&[R]) -> R, mon: Mon, fe: FENum, side_face: SideFace) -> R {
+  fn intg_global_fn_x_facerel_mon_on_fe_side(&self, g: |&[R]| -> R, mon: Mon, fe: FENum, side_face: SideFace) -> R {
     let a = side_face_perp_axis(side_face);
     let lesser_side = side_face_is_lesser_on_perp_axis(side_face);
     

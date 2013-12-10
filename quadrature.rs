@@ -6,9 +6,8 @@ use std::cast;
 
 use common::*;
 
-#[fixed_stack_segment]  
 #[inline(never)]
-pub fn quadrature(f: & &fn(&[R]) -> R, // OK for this to be a closure address
+pub fn quadrature(f: & |&[R]| -> R,
                   min_corner: &[R],
                   max_corner: &[R],
                   rel_err: R, abs_err: R) -> R {
@@ -42,7 +41,7 @@ pub fn quadrature(f: & &fn(&[R]) -> R, // OK for this to be a closure address
 // is to calculate the integrand value using f_ptr and set that value in *fval. 
 #[inline(never)]
 extern fn integrand_caller(ndim: c_uint, x: *R, 
-                           f_ptr: *mut (&fn(x:&[R]) -> R), 
+                           f_ptr: *(|x:&[R]| -> R), 
                            _: c_uint, fval: *mut R) -> c_int {
   unsafe {
     let f = ptr::read_ptr(f_ptr);
@@ -65,7 +64,6 @@ extern {
 }
 
 
-#[fixed_stack_segment]  
 #[test]
 fn test_quadrature() {
   let f1 = |_: &[f64]| 2.0;

@@ -68,10 +68,9 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
   /// the interiors of the given finite elements in turn. The monomials of the returned polynomials are
   /// gauranteed to be in order of their ascending face monomial numbers, which is the same order in
   /// which the monomials appear in the basis.
-  #[fixed_stack_segment]
   #[inline(never)]
   pub fn projs_to_span_fes_int_supp_basis_els(&mut self,
-         g: &fn(&[R]) -> R, fes: &[FENum], fes_oshape: OShape) -> ~[PolyBorrowingMons<'self,Mon>] {
+         g: |&[R]| -> R, fes: &[FENum], fes_oshape: OShape) -> ~[PolyBorrowingMons<'self,Mon>] {
 
     let int_mons = self.basis.ref_int_mons();
 
@@ -86,7 +85,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
       // Prepare right hand side b matrix, one column per fe to be projected onto.
       let b = {
         //   - Set the proper number of columns for our sequence of fes, recreate matrix if necessary.
-        if self.lapack_int_proj_rhs.capacity_cols >= fes.len() {
+        if self.lapack_int_proj_rhs.capacity_cols() >= fes.len() {
           self.lapack_int_proj_rhs.set_num_cols(fes.len());
         } else {
           self.lapack_int_proj_rhs = DenseMatrix::of_size_with_cols_capacity(int_mons.len(), fes.len(), 3*fes.len()/2);
@@ -108,7 +107,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
     };
 
     sol_as_col_maj_vec
-      .chunk_iter(int_mons.len()) // Chunk into columns representing the projection coefficients.
+      .chunks(int_mons.len()) // Chunk into columns representing the projection coefficients.
       .map(|proj_coefs| PolyBorrowingMons { coefs: proj_coefs.to_owned(), mons: int_mons })
       .collect()
   }
@@ -117,10 +116,9 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
   /// the given side face of the given finite elements in turn. The monomials of the returned polynomials
   /// are gauranteed to be in order of their ascending face monomial numbers, which is the same order in
   /// which the monomials appear in the basis.
-  #[fixed_stack_segment]
   #[inline(never)]
   pub fn projs_to_span_fes_side_supp_basis_els(&mut self,
-         g: &fn(&[R]) -> R, fes: &[FENum], fes_oshape: OShape, side_face: SideFace) -> ~[PolyBorrowingMons<'self,Mon>] {
+         g: |&[R]| -> R, fes: &[FENum], fes_oshape: OShape, side_face: SideFace) -> ~[PolyBorrowingMons<'self,Mon>] {
 
     let side_mons = self.basis.side_mons_for_oshape_side(fes_oshape, side_face);
 
@@ -135,7 +133,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
       // Prepare right hand side b matrix, one column per fe to be projected onto.
       let b = {
         //   - Set the proper number of columns for our sequence of fes, recreate matrix if necessary.
-        if self.lapack_side_proj_rhs.capacity_cols >= fes.len() {
+        if self.lapack_side_proj_rhs.capacity_cols() >= fes.len() {
           self.lapack_side_proj_rhs.set_num_cols(fes.len());
         } else {
           self.lapack_side_proj_rhs = DenseMatrix::of_size_with_cols_capacity(side_mons.len(), fes.len(), 3*fes.len()/2);
@@ -157,12 +155,11 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
     };
 
     sol_as_col_maj_vec
-      .chunk_iter(side_mons.len()) // Chunk into columns representing the projection coefficients.
+      .chunks(side_mons.len()) // Chunk into columns representing the projection coefficients.
       .map(|proj_coefs| PolyBorrowingMons { coefs: proj_coefs.to_owned(), mons: side_mons })
       .collect()
   }
 
-  #[fixed_stack_segment]
   #[inline(never)]
   pub fn proj_int_mons_to_span_oshape_side_supp_basis_els(&mut self,
      int_mons: &[Mon], oshape: OShape, side_face: SideFace) -> ~[PolyBorrowingMons<'self,Mon>] {
@@ -180,7 +177,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
       // Prepare right hand side b matrix, one column per interior monomial to be projected onto the side.
       let b = {
         //   - Set the proper number of columns for our sequence of fes, recreate matrix if necessary.
-        if self.lapack_side_proj_rhs.capacity_cols >= int_mons.len() {
+        if self.lapack_side_proj_rhs.capacity_cols() >= int_mons.len() {
           self.lapack_side_proj_rhs.set_num_cols(int_mons.len());
         } else {
           self.lapack_side_proj_rhs = DenseMatrix::of_size_with_cols_capacity(side_mons.len(), int_mons.len(), 3*int_mons.len()/2);
@@ -201,7 +198,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
     };
 
     sol_as_col_maj_vec
-      .chunk_iter(side_mons.len()) // Chunk into columns representing the projection coefficients.
+      .chunks(side_mons.len()) // Chunk into columns representing the projection coefficients.
       .map(|proj_coefs| PolyBorrowingMons { coefs: proj_coefs.to_owned(), mons: side_mons })
       .collect()
   }

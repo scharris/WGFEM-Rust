@@ -24,7 +24,7 @@ pub trait Monomial: Eq +
   
   fn exp(&self, coord: Dim) -> Deg;
 
-  fn map_exp(&self, coord: Dim, f: &fn(Deg) -> Deg) -> Self;
+  fn map_exp(&self, coord: Dim, f: |Deg| -> Deg) -> Self;
 
   fn one() -> Self;
 
@@ -80,7 +80,7 @@ impl Monomial for Mon1d {
     self.exps[*coord]
   }
   
-  fn map_exp(&self, coord: Dim, f: &fn(Deg) -> Deg) -> Mon1d {
+  fn map_exp(&self, coord: Dim, f: |Deg| -> Deg) -> Mon1d {
     if *coord > 0 { fail!("Dimension number out of range in map_exp."); }
     else {
       Mon1d { exps: [ f(self.exps[0]) ] }
@@ -137,7 +137,7 @@ impl Monomial for Mon2d {
     self.exps[*coord]
   }
   
-  fn map_exp(&self, coord: Dim, f: &fn(Deg) -> Deg) -> Mon2d {
+  fn map_exp(&self, coord: Dim, f: |Deg| -> Deg) -> Mon2d {
     match coord {
       Dim(0) => Mon2d { exps: [f(self.exps[0]),  self.exps[1] ] },
       Dim(1) => Mon2d { exps: [  self.exps[0], f(self.exps[1])] },
@@ -220,7 +220,7 @@ impl Monomial for Mon3d {
     self.exps[*coord]
   }
 
-  fn map_exp(&self, coord: Dim, f: &fn(Deg) -> Deg) -> Mon3d {
+  fn map_exp(&self, coord: Dim, f: |Deg| -> Deg) -> Mon3d {
     match coord {
       Dim(0) => Mon3d { exps: [f(self.exps[0]),  self.exps[1],   self.exps[2] ] },
       Dim(1) => Mon3d { exps: [  self.exps[0], f(self.exps[1]),  self.exps[2] ] },
@@ -318,7 +318,7 @@ impl Monomial for Mon4d {
     self.exps[*coord]
   }
 
-  fn map_exp(&self, coord: Dim, f: &fn(Deg) -> Deg) -> Mon4d {
+  fn map_exp(&self, coord: Dim, f: |Deg| -> Deg) -> Mon4d {
     match coord {
       Dim(0) => Mon4d { exps: [f(self.exps[0]),  self.exps[1],   self.exps[2],   self.exps[3] ] },
       Dim(1) => Mon4d { exps: [  self.exps[0], f(self.exps[1]),  self.exps[2],   self.exps[3] ] },
@@ -413,25 +413,25 @@ eq_impl!(Mon4d)
 
 // Implement IterBytes for hashing.
 impl IterBytes for Mon1d {
-  fn iter_bytes(&self, _: bool, f: &fn(buf: &[u8]) -> bool) -> bool {
+  fn iter_bytes(&self, _: bool, f: |buf: &[u8]| -> bool) -> bool {
     f(&[*self.exps[0]])
   }
 }
 
 impl IterBytes for Mon2d {
-  fn iter_bytes(&self, _: bool, f: &fn(buf: &[u8]) -> bool) -> bool {
+  fn iter_bytes(&self, _: bool, f: |buf: &[u8]| -> bool) -> bool {
     f(&[*self.exps[0], *self.exps[1]])
   }
 }
 
 impl IterBytes for Mon3d {
-  fn iter_bytes(&self, _: bool, f: &fn(buf: &[u8]) -> bool) -> bool {
+  fn iter_bytes(&self, _: bool, f: |buf: &[u8]| -> bool) -> bool {
     f(&[*self.exps[0], *self.exps[1], *self.exps[2]])
   }
 }
 
 impl IterBytes for Mon4d {
-  fn iter_bytes(&self, _: bool, f: &fn(buf: &[u8]) -> bool) -> bool {
+  fn iter_bytes(&self, _: bool, f: |buf: &[u8]| -> bool) -> bool {
     f(&[*self.exps[0], *self.exps[1], *self.exps[2], *self.exps[3]])
   }
 }
