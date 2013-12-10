@@ -17,3 +17,4 @@ doc/*.snm
 doc/*.toc
 doc/*.vrb
 
+wgfem_tests
