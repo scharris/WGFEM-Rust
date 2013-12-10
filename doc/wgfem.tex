@@ -335,8 +335,8 @@
     \item The WG approximation space consists of piecewise polynomials over mesh element interiors and sides,
       satisfying distinct degree constraints on the interiors and sides.
     \item As a building block for our basis, we'll define a \emph{\textbf{shape function}} to be a function which is a monomial on one face
-      (interior or side) pre-composed with a translation function providing a face-specific origin, which satisfies the appropriate
-      degree constraint for the face.
+      (interior or side) pre-composed with a translation function providing a face-specific origin, which satisfies the degree constraint for
+      the face, and which is 0 everywhere else on the mesh.
     \item Such shape functions can be chosen to equal any untranslated polynomials of the same degree constraint on their supporting faces,
       which implies that these shape functions taken together \emph{\textbf{span the WG approximation space}}. 
   \end{itemize}
@@ -432,8 +432,8 @@
 \begin{frame}
   \frametitle{Side Dependent Dimension -- Contd}
   \begin{itemize}[<+->]
-    \item To form a linearly independent set of shape functions supported on a side, we will \emph{\textbf{omit the shape functions
-      having any non-zero power of the dependent dimension variable}}.
+    \item To form a linearly independent set of shape functions supported on a side, we will \emph{\textbf{omit those whose 
+      monomials have a non-zero power of the dependent dimension variable}}.
     \item The reduced set of shape functions spans the same space as the full set, because with a dependent of dimension $j$,
       any monomial of the full set can be expressed as
        $$x_1^{k_1} \dots x_j^{k_j} \dots x_d^{k_d}
@@ -467,7 +467,7 @@
     \item Some additional requirements on the vbf are necessary for computations to be feasible at even moderate scale.
     \item For example for $k=3$ and a 50x50 mesh, there are already 39,700 basis elements, and \emph{1,576,090,000} 
       \emph{interactions} between elements. 
-    \item The majority of these interactions will yield $0$ vbf value, but we need to avoid computing as many as possible.
+    \item The majority of these interactions could be ignored, but we need to avoid computing or even considering as many as possible.
     \item We'll use two additional requirements on the vbf to eliminate many unnecessary calculations:
         \begin{itemize}[<+->]
           \item \emph{\textbf{Element summability}} and associated \emph{\textbf{locality}} property, allowing element-wise operations and
