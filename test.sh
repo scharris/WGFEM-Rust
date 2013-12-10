@@ -1,3 +1,3 @@
-#!/bin/sh
-export RUST_TEST_TASKS=1 
-rustc --test wgfem.rs && ./wgfem
+rustc --test wgfem.rs -o wgfem_tests
+./wgfem_tests
+
