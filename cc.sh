@@ -1,6 +1,6 @@
 #!/bin/sh
 
-MKLROOT=${MKLROOT:-"/usr/local/composer_xe_2013_sp1.0.080/mkl"}
+MKLROOT=${MKLROOT:-"/opt/intel/composer_xe_2013_sp1.0.080/mkl"}
 echo Using MKLROOT "$MKLROOT".
 
 PROJHOME=`dirname $BASH_SOURCE[0]`
