@@ -105,23 +105,18 @@ MKL_INT solve_sparse_symmetric_as_ut_csr3(MKL_INT n, const MKL_INT* ia, const MK
   PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, &d_un, &d_un, &error);
   
   if (error != 0) { fprintf (stderr, "\nERROR during symbolic factorization: %d", error); return error; }
-  printf ("\nReordering and symbolic factorization completed ... ");
-  printf ("\n  Number of nonzeros in factors = %d", iparm[17]);
-  printf ("\n  Number of factorization MFLOPS = %d", iparm[18]);
   
   /* Numerical factorization. */
   phase = 22;
   PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, &d_un, &d_un, &error);
   
   if (error != 0) { fprintf (stderr, "\nERROR during numerical factorization: %d", error); return error; }
-  printf ("\nFactorization completed ... ");
 
   /* Back substitution and iterative refinement. */
   phase = 33;
   PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, b, x, &error);
 
   if (error != 0) { fprintf (stderr, "\nERROR during solution: %d", error); return error; }
-  printf ("\nSolve completed ... ");
 
   /* Release resources. */
   phase = -1;
@@ -167,20 +162,15 @@ MKL_INT solve_sparse_structurally_symmetric_csr3(MKL_INT n, const MKL_INT* ia, c
   PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, &d_un, &d_un, &error);
   
   if (error != 0) { fprintf (stderr, "\nERROR during symbolic factorization: %d", error); return error; }
-  printf ("\nReordering completed ... ");
-  printf ("\nNumber of nonzeros in factors = %d", iparm[17]);
-  printf ("\nNumber of factorization MFLOPS = %d", iparm[18]);
 
   /* Numerical factorization. */
   phase = 22;
   PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, &d_un, &d_un, &error);
  
   if (error != 0) { fprintf ("\nERROR during numerical factorization: %d", error); return error; }
-  printf ("\nFactorization completed ... ");
 
   /* Back substitution and iterative refinement. */
   phase = 33;
-  printf("\n\nSolving system...\n");
 
   PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, a, ia, ja, &i_un, &nrhs, iparm, &msglvl, b, x, &error);
  
