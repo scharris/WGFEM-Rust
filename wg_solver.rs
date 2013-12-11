@@ -10,8 +10,6 @@ use variational_bilinear_form::VariationalBilinearForm;
 use lapack;
 
 use std::hashmap::HashMap;
-use vbf_laplace::VBFLaplace; // TODO: remove when Rust ICE is fixed
-
 
 /* METHOD
  * Let {b_i}_i be a basis for V_h^0(Omega), and vbf the bilinear form for
@@ -34,15 +32,9 @@ use vbf_laplace::VBFLaplace; // TODO: remove when Rust ICE is fixed
  */
 
 
-/*
-pub fn solve<'self, Mon: Monomial, MeshT: Mesh<Mon>, VBF: VariationalBilinearForm<'self, Mon, MeshT>>
-       (vbf: &'self VBF, f: |&[R]| -> R, g: |&[R]| -> R) -> WGSolution<'self,Mon,MeshT> {
-*/
-pub fn solve_laplace<'a, Mon:Monomial, MeshT:Mesh<Mon>>
-   (basis: &'a WGBasis<Mon,MeshT>, f: |&[R]| -> R, g: |&[R]| -> R) -> WGSolution<'a,Mon,MeshT> {
-  
-  // TODO: Replace with vbf trait parameter when Rust internal compiler error is fixed. https://github.com/mozilla/rust/issues/10201
-  let vbf = &VBFLaplace::new(None, basis);
+pub fn solve<'a, Mon: Monomial, MeshT: Mesh<Mon>, VBF: VariationalBilinearForm<Mon, MeshT>>
+       (vbf: &'a VBF, f: |&[R]| -> R, g: |&[R]| -> R) -> WGSolution<'a,Mon,MeshT> {
+  let basis = vbf.basis();
 
   let bnd_projs = boundary_projections(g, basis);
 
@@ -74,8 +66,8 @@ fn ip_on_ints<Mon:Monomial, MeshT: Mesh<Mon>>
 // onto outside boundary segments vs. the given basis element. This is the vbf(Q_b g, b_i) term
 // of the right hand side of (sys). The implementation uses the Element Summability and Locality
 // properties of supported variational forms (see VBF module for a discussion).
-fn vbf_bnd_projs_vs_bel<'a, Mon:Monomial, MeshT: Mesh<Mon>>
-   (vbf: &VBFLaplace<'a,Mon,MeshT>,
+fn vbf_bnd_projs_vs_bel<'a, Mon:Monomial, MeshT: Mesh<Mon>, VBF: VariationalBilinearForm<Mon, MeshT>>
+   (vbf: &'a VBF,
     bnd_projs: &BoundaryProjections<'a,Mon>,
     bel: BasisElNum,
     basis: &WGBasis<Mon,MeshT>) -> R {

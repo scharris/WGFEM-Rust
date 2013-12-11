@@ -3,7 +3,7 @@ use monomial::{Mon2d, MaxMonDeg};
 use mesh::{Mesh};
 use rectangle_mesh::{RectMesh, MeshCoord};
 use wg_basis::{WGBasis};
-//use vbf_laplace::VBFLaplace;
+use vbf_laplace::VBFLaplace;
 use wg_solver;
 use wg_error_estimates::{err_L2_norm};
 use lapack;
@@ -30,18 +30,20 @@ fn main() {
   let nums_side_divs = range_step(40u, 51, 10);
 
   let solve = |k: Deg, side_divs: uint| {
-    let mesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[6.28,6.28], ~[MeshCoord(side_divs), MeshCoord(side_divs)]);
-    println("Constructing basis...");
-    let basis = &WGBasis::new(mesh, MaxMonDeg(*k), MaxMonDeg(*k-1));
    
-    //let laplace_vbf = VBFLaplace::new(None, basis);
+    let mesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[6.28,6.28], ~[MeshCoord(side_divs), MeshCoord(side_divs)]);
+    let h = mesh.max_fe_diameter();
+    
+    println("Constructing basis...");
+    let basis = ~WGBasis::new(mesh, MaxMonDeg(*k), MaxMonDeg(*k-1));
+   
+    let vbf = &VBFLaplace::new(None, basis);
  
     println("Solving system...");
-    let wg_sol = wg_solver::solve_laplace(basis, f, g);
+    let wg_sol = wg_solver::solve(vbf, f, g);
 
     println("Computing L2 error...");
     let err = err_L2_norm(u, &wg_sol);
-    let h = basis.mesh().max_fe_diameter();
     println("Done.");
     (h, err)
   };

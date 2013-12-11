@@ -3,7 +3,7 @@ use lapack;
 use lapack::lapack_int;
 use dense_matrix::DenseMatrix;
 use monomial::{Monomial};
-use polynomial::{PolyBorrowingMons};
+use polynomial::{PolyBorrowingMons, PolyOwning};
 use mesh::{Mesh, FENum, OShape, SideFace};
 use wg_basis::{WGBasis};
 
@@ -162,7 +162,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
 
   #[inline(never)]
   pub fn proj_int_mons_to_span_oshape_side_supp_basis_els(&mut self,
-     int_mons: &[Mon], oshape: OShape, side_face: SideFace) -> ~[PolyBorrowingMons<'self,Mon>] {
+     int_mons: &[Mon], oshape: OShape, side_face: SideFace) -> ~[PolyOwning<Mon>] {
 
     let side_mons = self.basis.side_mons_for_oshape_side(oshape, side_face);
     
@@ -199,7 +199,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
 
     sol_as_col_maj_vec
       .chunks(side_mons.len()) // Chunk into columns representing the projection coefficients.
-      .map(|proj_coefs| PolyBorrowingMons { coefs: proj_coefs.to_owned(), mons: side_mons })
+      .map(|proj_coefs| PolyOwning { coefs: proj_coefs.to_owned(), mons: side_mons.to_owned() })
       .collect()
   }
 

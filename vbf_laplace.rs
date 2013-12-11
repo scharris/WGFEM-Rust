@@ -1,6 +1,6 @@
 use common::{R};
 use monomial::Monomial;
-use polynomial::{PolyBorrowingMons};
+use polynomial::{PolyOwning};
 use dense_matrix::DenseMatrix;
 use mesh::{Mesh, OShape, SideFace};
 use wg_basis::{WGBasis, FaceMonNum};
@@ -19,36 +19,39 @@ use std::iter::{AdditiveIterator};
  *    of basis elements supported on the boundary of T.
  */
 
-struct VBFLaplace<'self,Mon,MeshT> {
+struct VBFLaplace<Mon,MeshT> {
 
   left_wgrad_multiplier: Option<DenseMatrix>, // post-multiplier matrix for left weak gradient in inner product
 
-  int_mon_side_projs: ~[~[~[PolyBorrowingMons<'self,Mon>]]], // indexed by fe oshape, side face, int mon num
+  // TODO: Seems we should be able borrow mons from the basis without having to copy them, without introducing a lifetime param on the struct.
+  int_mon_side_projs: ~[~[~[PolyOwning<Mon>]]], // indexed by fe oshape, side face, int mon num
 
   weak_grad_ops: WeakGradOps<Mon>,
   
-  basis: &'self WGBasis<Mon,MeshT>,
+  basis: ~WGBasis<Mon,MeshT>,
 
 }
 
-impl<'self, Mon:Monomial, MeshT:Mesh<Mon>> VBFLaplace<'self,Mon,MeshT> {
+impl<Mon:Monomial, MeshT:Mesh<Mon>> VBFLaplace<Mon,MeshT> {
 
-  pub fn new(left_wgrad_multiplier: Option<DenseMatrix>,
-             basis: &'self WGBasis<Mon,MeshT>) -> VBFLaplace<'self,Mon,MeshT> {
-    
-    let mut projector = Projector::new(basis);
-
-    let int_mon_side_projs = vec::from_fn(basis.mesh().num_oriented_element_shapes(), |os| {
-      vec::from_fn(basis.mesh().num_side_faces_for_shape(OShape(os)), |sf| {
-        projector.proj_int_mons_to_span_oshape_side_supp_basis_els(basis.ref_int_mons(), OShape(os), SideFace(sf))
+  pub fn new(left_wgrad_multiplier: Option<DenseMatrix>, basis: ~WGBasis<Mon,MeshT>) -> VBFLaplace<Mon,MeshT> {
+   
+    let int_mon_side_projs = {
+      let mut projector = Projector::new(&*basis);
+      vec::from_fn(basis.mesh().num_oriented_element_shapes(), |os| {
+        vec::from_fn(basis.mesh().num_side_faces_for_shape(OShape(os)), |sf| {
+          projector.proj_int_mons_to_span_oshape_side_supp_basis_els(basis.ref_int_mons(), OShape(os), SideFace(sf))
+        })
       })
-    });
+    };
+
+    let wgrad_ops = basis.new_weak_grad_ops();
 
     VBFLaplace { 
       left_wgrad_multiplier: left_wgrad_multiplier,
       basis: basis,
       int_mon_side_projs: int_mon_side_projs,
-      weak_grad_ops: basis.new_weak_grad_ops()
+      weak_grad_ops: wgrad_ops
     }
   }
 
@@ -65,12 +68,12 @@ impl<'self, Mon:Monomial, MeshT:Mesh<Mon>> VBFLaplace<'self,Mon,MeshT> {
 
 }
 
-impl<'self, Mon:Monomial, MeshT:Mesh<Mon>> VariationalBilinearForm<'self,Mon,MeshT>
-                                       for VBFLaplace<'self,Mon,MeshT> {
+impl<Mon:Monomial, MeshT:Mesh<Mon>> VariationalBilinearForm<Mon,MeshT>
+                                for VBFLaplace<Mon,MeshT> {
 
   #[inline]
-  fn basis(&self) -> &'self WGBasis<Mon,MeshT> {
-    self.basis
+  fn basis<'a>(&'a self) -> &'a WGBasis<Mon,MeshT> {
+    &*self.basis
   }
 
   #[inline]

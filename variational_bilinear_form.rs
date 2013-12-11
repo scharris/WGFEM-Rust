@@ -10,9 +10,9 @@ use std::option::{Option};
 use extra::sort;
 
 
-pub trait VariationalBilinearForm<'self,Mon:Monomial,MeshT:Mesh<Mon>> {
+pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
 
-  fn basis(&self) -> &'self WGBasis<Mon,MeshT>;
+  fn basis<'a>(&'a self) -> &'a WGBasis<Mon,MeshT>;
 
   fn is_symmetric(&self) -> bool;
 
