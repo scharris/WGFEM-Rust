@@ -552,6 +552,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
     })
   }
 
+/*
   #[inline]
   fn intg_facerel_poly_x_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self, p1: &P, p2: &P, oshape: OShape) -> R {
     assert!(oshape == OShape(0));
@@ -561,6 +562,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
       })
     })
   }
+*/
 
   #[inline]
   fn intg_facerel_poly_x_facerel_poly_on_oshape_side<P:Polynomial<Mon>>(&self, p1: &P, p2: &P, oshape: OShape, side_face: SideFace) -> R {
@@ -588,6 +590,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
     mon.surface_integral_siderel_over_rect_side(self.fe_side_lens, a)
   }
 
+/*
   #[inline]
   fn intg_facerel_mon_x_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self, mon: Mon, p: &P, oshape: OShape) -> R {
     assert!(oshape == OShape(0));
@@ -595,6 +598,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
       sum + coef * (mon*p_mon).integral_over_rect_at_origin(self.fe_side_lens)
     })
   }
+*/
 
   #[inline]
   fn intg_facerel_mon_x_facerel_poly_on_oshape_side<P:Polynomial<Mon>>(&self, mon: Mon, p: &P, oshape: OShape, side_face: SideFace) -> R {
@@ -649,7 +653,8 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
       _ => 0 as R
     }
   }
- 
+
+/*
   fn intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side<P:Polynomial<Mon>>(&self, p: &P, int_vmon: &VectorMonomial<Mon>, oshape: OShape, side_face: SideFace) -> R {
     assert!(oshape == OShape(0));
     assert!(*side_face < self.num_side_faces_per_fe);
@@ -660,9 +665,9 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
         let is_lesser_side = side_face_is_lesser_on_perp_axis(side_face);
         let side_intrel_a_coord = if is_lesser_side { 0 as R } else { self.fe_side_lens[*a] };
 
-        /* Here we break the interior-relative monomial on the side into the constant a-dim factor and the monomial
-           of other dimension factors. Since the interior and side-relative coordinate systems differ only in dimension 
-           a, the latter monomial has the same expression in side-relative coordinates. */
+        // Here we break the interior-relative monomial on the side into the constant a-dim factor and the monomial
+        // of other dimension factors. Since the interior and side-relative coordinate systems differ only in dimension 
+        // a, the latter monomial has the same expression in side-relative coordinates.
         let int_vmon_mon_dim_a_fac = pow(side_intrel_a_coord, *int_vmon_mon.exp(a) as uint);
         let int_vmon_mon_wo_dim_a_fac = int_vmon_mon.map_exp(a, |_| Deg(0));
 
@@ -677,7 +682,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
       _ => 0 as R
     }
   }
-
+*/
 }
 
 

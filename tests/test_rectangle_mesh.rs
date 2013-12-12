@@ -1583,7 +1583,7 @@ fn test_intg_facerel_poly_on_oshape_int_4d() -> () {
   assert_approx(rmesh3x4x5x6.intg_facerel_poly_on_oshape_int(&poly([(2.,y), (3.,x*x*t)]), OShape(0)),
                 2. * 1./3. * pow(1./4.,2)/2. * 1./5. * 1./6. + 3. * pow(1./3.,3)/3. * 1./4. * 1./5. * pow(1./6.,2)/2.);
 }
-
+/*
 #[test]
 fn test_intg_facerel_poly_x_facerel_poly_on_oshape_int_2d() -> () {
   let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
@@ -1633,6 +1633,7 @@ fn test_intg_facerel_poly_x_facerel_poly_on_oshape_int_4d() -> () {
               + 3. * pow(1./3.,3)/3. * pow(1./4.,2)/2. * pow(1./5.,2)/2. * 1./6.
               - 6. * pow(1./3.,2)/2. * pow(1./4.,3)/3. * pow(1./5.,2)/2. * 1./6.);
 }
+*/
 
 #[test]
 fn test_intg_facerel_poly_x_facerel_poly_on_oshape_side_2d() -> () {
@@ -2135,6 +2136,7 @@ fn test_intg_facerel_mon_on_oshape_side_4d() -> () {
                 pow(1./3.,4)/4. * pow(1./4.,5)/5. * 1./5.);
 }
 
+/*
 #[test]
 fn test_intg_facerel_mon_x_facerel_poly_on_oshape_int() -> () {
   let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
@@ -2153,7 +2155,7 @@ fn test_intg_facerel_mon_x_facerel_poly_on_oshape_int() -> () {
   assert_approx(rmesh3x4x5.intg_facerel_mon_x_facerel_poly_on_oshape_int(z*z, &poly([(2.,y), (3.,x*x)]), OShape(0)),
                 2. * 1./3. * pow(1./4.,2)/2. * pow(1./5.,3)/3. + 3. * pow(1./3.,3)/3. * 1./4. * pow(1./5.,3)/3.);
 }
-
+*/
 
 #[test]
 fn test_intg_facerel_mon_x_facerel_poly_on_oshape_side() -> () {
@@ -2390,7 +2392,7 @@ fn test_intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side_dim2() -> () {
              pow(1./3.,4)/4. * pow(1./4.,5)/5.);
 }
 
-
+/*
 #[test]
 fn test_intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side_dim0() -> () {
   let rmesh3x4x5: ~RectMesh<Mon3d> = ~RectMesh::new(~[1f64, 2., 3.],
@@ -2544,7 +2546,7 @@ fn test_intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side_dim2() -> () {
              2. * pow(1./3.,4)/4. * pow(1./4.,5)/5.
          + 5.2  * pow(1./3.,5)/5. * pow(1./4.,6)/6.);
 }
-
+*/
 
 fn assert_approx(a:R, b:R) -> () {
   assert!(abs(a - b) < 10e-9)

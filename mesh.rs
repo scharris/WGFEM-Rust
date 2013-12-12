@@ -101,11 +101,6 @@ pub trait Mesh<Mon> {
        p: &P,
        oshape: OShape) -> R;
 
-  fn intg_facerel_poly_x_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self,
-       p1: &P,
-       p2: &P,
-       oshape: OShape) -> R;
-
   fn intg_facerel_poly_x_facerel_poly_on_oshape_side<P:Polynomial<Mon>>(&self,
        p1: &P,
        p2: &P,
@@ -120,11 +115,6 @@ pub trait Mesh<Mon> {
        mon: Mon,
        oshape: OShape,
        side_face: SideFace) -> R;
-
-  fn intg_facerel_mon_x_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self,
-       mon: Mon,
-       p: &P,
-       oshape: OShape) -> R;
 
   fn intg_facerel_mon_x_facerel_poly_on_oshape_side<P:Polynomial<Mon>>(&self,
        mon: Mon,
@@ -143,12 +133,5 @@ pub trait Mesh<Mon> {
        oshape: OShape,
        side_face: SideFace) -> R;
  
-
-  fn intg_siderel_poly_x_intrel_vmon_dot_normal_on_oshape_side<P:Polynomial<Mon>>(&self,
-       p: &P,
-       q: &VectorMonomial<Mon>,
-       oshape: OShape,
-       side_face: SideFace) -> R;
-
 }
 
