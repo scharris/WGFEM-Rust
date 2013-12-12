@@ -129,7 +129,7 @@ fn boundary_projections<'a, Mon: Monomial, MeshT: Mesh<Mon>>
 
   for (fes_oshape, oshape_b_fes_by_sf) in b_fes_by_oshape_sf.iter().enumerate() {
     for (sf, fes) in oshape_b_fes_by_sf.iter().enumerate() {
-      let fes_projs = projector.projs_to_span_fes_side_supp_basis_els(|x|g(x), *fes, OShape(fes_oshape), SideFace(sf));
+      let fes_projs = projector.projs_to_side_supp_approx_spaces(|x|g(x), *fes, OShape(fes_oshape), SideFace(sf));
       for (proj_poly, fe) in fes_projs.move_iter().zip(fes.iter()) {
         projs_by_fe_sf.insert((*fe, SideFace(sf)), proj_poly);
       }

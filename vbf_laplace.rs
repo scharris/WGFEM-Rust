@@ -40,7 +40,7 @@ impl<Mon:Monomial, MeshT:Mesh<Mon>> VBFLaplace<Mon,MeshT> {
       let mut projector = Projector::new(&*basis);
       vec::from_fn(basis.mesh().num_oriented_element_shapes(), |os| {
         vec::from_fn(basis.mesh().num_side_faces_for_oshape(OShape(os)), |sf| {
-          projector.proj_int_mons_to_span_oshape_side_supp_basis_els(basis.ref_int_mons(), OShape(os), SideFace(sf))
+          projector.projs_int_mons_to_side_supp_approx_space(basis.ref_int_mons(), OShape(os), SideFace(sf))
         })
       })
     };

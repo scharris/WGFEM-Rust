@@ -24,7 +24,7 @@ fn test_identity_proj_fe0() {
 
   let g = |x: &[R]| p.value_at(x);
   
-  let proj = projector.projs_to_span_fes_int_supp_basis_els(g, &[FENum(0)], OShape(0));
+  let proj = projector.projs_to_int_supp_approx_spaces(g, &[FENum(0)], OShape(0));
 
   assert!(approx_equiv(&proj[0], &p, 1e-10));
 }
@@ -44,7 +44,7 @@ fn test_int_projs() {
     pow(x[0] - fe4_int_orig_0, 2) * (x[1] - fe4_int_orig_1) - 2. *  pow(x[0] - fe4_int_orig_0, 1) * pow(x[1] - fe4_int_orig_1, 2)
   };
     
-  let projs = projector.projs_to_span_fes_int_supp_basis_els(g, &[FENum(0),FENum(4),FENum(0),FENum(4),FENum(0)], OShape(0));
+  let projs = projector.projs_to_int_supp_approx_spaces(g, &[FENum(0),FENum(4),FENum(0),FENum(4),FENum(0)], OShape(0));
   
   // interior mons: x^0y^0, x^0y^1, x^0y^2, x^0y^3, x^1y^0, x^1y^1, x^1y^2, x^2y^0, x^2y^1, x^3y^0
   
@@ -81,7 +81,7 @@ fn test_right_side_projs() {
     2.*pow(x, 2) - 3.*pow(y, 2) - 5.*x - 4.*y
   };
 
-  let projs = projector.projs_to_span_fes_side_supp_basis_els(g, &[FENum(0),FENum(5),FENum(0),FENum(5),FENum(0)], OShape(0), SideFace(1));
+  let projs = projector.projs_to_side_supp_approx_spaces(g, &[FENum(0),FENum(5),FENum(0),FENum(5),FENum(0)], OShape(0), SideFace(1));
 
   let right_side_mons = basis.side_mons_for_fe_side(FENum(5), SideFace(1)); // vertical side monomials: x^0y^0, x^0y^1, x^0y^2
 
@@ -122,12 +122,12 @@ fn test_int_mons_side_projs() {
 
   // Test identity projections onto vertical sides.
 
-  assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([one, y, y*y], OShape(0), right_side),
+  assert!(approx_equiv_v(projector.projs_int_mons_to_side_supp_approx_space([one, y, y*y], OShape(0), right_side),
                          [PolyOwning::new(~[1.,0.,0.], vert_side_mons.to_owned()),
                           PolyOwning::new(~[0.,1.,0.], vert_side_mons.to_owned()),
                           PolyOwning::new(~[0.,0.,1.], vert_side_mons.to_owned())], 1e-10));
   
-  assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([one, y, y*y], OShape(0), left_side),
+  assert!(approx_equiv_v(projector.projs_int_mons_to_side_supp_approx_space([one, y, y*y], OShape(0), left_side),
                          [PolyOwning::new(~[1.,0.,0.], vert_side_mons.to_owned()),
                           PolyOwning::new(~[0.,1.,0.], vert_side_mons.to_owned()),
                           PolyOwning::new(~[0.,0.,1.], vert_side_mons.to_owned())], 1e-10));
@@ -137,22 +137,22 @@ fn test_int_mons_side_projs() {
   // into the projection which is 0 if projecting onto the lesser side along the perpendicular axis, or the side length along the
   // axis for the greater side. The fe side lengths are 2 horizontally and 3 vertically.
   
-  assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([x, x*y, x*y*y], OShape(0), right_side),
+  assert!(approx_equiv_v(projector.projs_int_mons_to_side_supp_approx_space([x, x*y, x*y*y], OShape(0), right_side),
                          [PolyOwning::new(~[2.,0.,0.], vert_side_mons.to_owned()),
                           PolyOwning::new(~[0.,2.,0.], vert_side_mons.to_owned()),
                           PolyOwning::new(~[0.,0.,2.], vert_side_mons.to_owned())], 1e-10));
   
-  assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([x, x*y, x*y*y], OShape(0), left_side),
+  assert!(approx_equiv_v(projector.projs_int_mons_to_side_supp_approx_space([x, x*y, x*y*y], OShape(0), left_side),
                          [PolyOwning::new(~[0.,0.,0.], vert_side_mons.to_owned()),
                           PolyOwning::new(~[0.,0.,0.], vert_side_mons.to_owned()),
                           PolyOwning::new(~[0.,0.,0.], vert_side_mons.to_owned())], 1e-10));
   
-  assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([y, y*x, y*x*x], OShape(0), top_side),
+  assert!(approx_equiv_v(projector.projs_int_mons_to_side_supp_approx_space([y, y*x, y*x*x], OShape(0), top_side),
                          [PolyOwning::new(~[3.,0.,0.], horz_side_mons.to_owned()),
                           PolyOwning::new(~[0.,3.,0.], horz_side_mons.to_owned()),
                           PolyOwning::new(~[0.,0.,3.], horz_side_mons.to_owned())], 1e-10));
   
-  assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([y, y*x, y*x*x], OShape(0), bottom_side),
+  assert!(approx_equiv_v(projector.projs_int_mons_to_side_supp_approx_space([y, y*x, y*x*x], OShape(0), bottom_side),
                          [PolyOwning::new(~[0.,0.,0.], horz_side_mons.to_owned()),
                           PolyOwning::new(~[0.,0.,0.], horz_side_mons.to_owned()),
                           PolyOwning::new(~[0.,0.,0.], horz_side_mons.to_owned())], 1e-10));
