@@ -15,14 +15,6 @@ pub struct NBSideNum(uint);
 #[deriving(Eq,TotalEq,Ord,TotalOrd,Clone,IterBytes)]
 pub struct SideFace(uint);
 
-/// A Face locally identifies either the interior or a side in the context of a single
-/// oriented shape or finite element.
-#[deriving(Eq,TotalEq,Ord,TotalOrd,Clone)]
-pub enum Face {
-  Interior,
-  Side(SideFace)
-}
-
 /// An identifier for the shape of a finite element together with the orientation
 /// of the shape (rotation will yield a different oriented shape). Many calculations
 /// on a finite element can be expressed in element-local coordinates and will only
@@ -104,7 +96,7 @@ pub trait Mesh<Mon> {
        side_face: SideFace) -> R;
   
   fn intg_mixed_global_and_facerel_fn_on_fe_int(&self,
-       f: |&[R], &[R]|->R,
+       f: |&[R], &[R]| -> R,
        fe: FENum) -> R; 
 
   fn intg_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self,
