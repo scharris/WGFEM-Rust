@@ -6,15 +6,15 @@ use rectangle_mesh::{RectMesh, MeshCoord};
 use wg_basis::{WGBasis, FaceMonNum, BasisElNum};
 
 
-struct AsymmetricTestVBF<'self,Mon,MeshT> {
-  basis: &'self WGBasis<Mon,MeshT>,
+struct AsymmetricTestVBF<Mon,MeshT> {
+  basis: ~WGBasis<Mon,MeshT>,
 }
 
-impl<'self,Mon:Monomial,MeshT:Mesh<Mon>> VariationalBilinearForm<'self,Mon,MeshT>
-                                     for AsymmetricTestVBF<'self,Mon,MeshT> {
+impl<Mon:Monomial,MeshT:Mesh<Mon>> VariationalBilinearForm<Mon,MeshT>
+                               for AsymmetricTestVBF<Mon,MeshT> {
 
-  fn basis(&self) -> &'self WGBasis<Mon,MeshT> {
-    self.basis
+  fn basis<'a>(&'a self) -> &'a WGBasis<Mon,MeshT> {
+    &*self.basis
   }
 
   fn is_symmetric(&self) -> bool { false }
@@ -49,15 +49,15 @@ impl<'self,Mon:Monomial,MeshT:Mesh<Mon>> VariationalBilinearForm<'self,Mon,MeshT
 }
 
 
-struct SymmetricTestVBF<'self, Mon, MeshT> {
-  basis: &'self WGBasis<Mon,MeshT>,
+struct SymmetricTestVBF<Mon, MeshT> {
+  basis: ~WGBasis<Mon,MeshT>,
 }
 
-impl<'self,Mon:Monomial,MeshT:Mesh<Mon>> VariationalBilinearForm<'self,Mon,MeshT>
-                                      for SymmetricTestVBF<'self,Mon,MeshT> {
+impl<Mon:Monomial,MeshT:Mesh<Mon>> VariationalBilinearForm<Mon,MeshT>
+                               for SymmetricTestVBF<Mon,MeshT> {
 
-  fn basis(&self) -> &'self WGBasis<Mon,MeshT> {
-    self.basis
+  fn basis<'a>(&'a self) -> &'a WGBasis<Mon,MeshT> {
+    &*self.basis
   }
 
   fn is_symmetric(&self) -> bool { true }
@@ -98,11 +98,13 @@ impl<'self,Mon:Monomial,MeshT:Mesh<Mon>> VariationalBilinearForm<'self,Mon,MeshT
 #[test]
 fn test_asymmetric() {
   let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[2.,2.], ~[MeshCoord(5),MeshCoord(4)]);
-  let basis = &WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
+  let basis = ~WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
 
   let vbf: AsymmetricTestVBF<Mon2d,RectMesh<Mon2d>> = AsymmetricTestVBF { basis: basis };
 
   let m = vbf.basis_els_vs_basis_els_transpose();
+
+  let basis = vbf.basis();
 
   for r in range(0, basis.num_els()) {
     for c in range(0, basis.num_els()) {
@@ -169,11 +171,13 @@ fn test_asymmetric() {
 #[test]
 fn test_symmetric() {
   let rmesh: ~RectMesh<Mon2d> = ~RectMesh::new(~[0.,0.], ~[2.,2.], ~[MeshCoord(5),MeshCoord(4)]);
-  let basis = &WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
+  let basis = ~WGBasis::new(rmesh, MaxMonDeg(3), MaxMonDeg(2));
 
   let vbf: SymmetricTestVBF<Mon2d,RectMesh<Mon2d>> = SymmetricTestVBF { basis: basis };
 
   let m = vbf.basis_els_vs_basis_els_transpose();
+
+  let basis = vbf.basis();
 
   for r in range(0, basis.num_els()) {
     for c in range(0, basis.num_els()) {

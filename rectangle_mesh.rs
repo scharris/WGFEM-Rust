@@ -334,7 +334,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
   }
   
   #[inline(always)]
-  fn num_side_faces_for_shape(&self, oshape: OShape) -> uint {
+  fn num_side_faces_for_oshape(&self, oshape: OShape) -> uint {
     assert!(oshape == OShape(0));
     self.num_side_faces_per_fe 
   }

@@ -39,7 +39,7 @@ impl<Mon:Monomial, MeshT:Mesh<Mon>> VBFLaplace<Mon,MeshT> {
     let int_mon_side_projs = {
       let mut projector = Projector::new(&*basis);
       vec::from_fn(basis.mesh().num_oriented_element_shapes(), |os| {
-        vec::from_fn(basis.mesh().num_side_faces_for_shape(OShape(os)), |sf| {
+        vec::from_fn(basis.mesh().num_side_faces_for_oshape(OShape(os)), |sf| {
           projector.proj_int_mons_to_span_oshape_side_supp_basis_els(basis.ref_int_mons(), OShape(os), SideFace(sf))
         })
       })
@@ -66,6 +66,9 @@ impl<Mon:Monomial, MeshT:Mesh<Mon>> VBFLaplace<Mon,MeshT> {
     self.basis.mesh().intg_facerel_poly_on_oshape_int(&wgrads_prod, oshape)
   }
 
+  pub fn left_wgrad_multiplier<'a>(&'a self) -> &'a Option<DenseMatrix> {
+    &self.left_wgrad_multiplier 
+  }
 }
 
 impl<Mon:Monomial, MeshT:Mesh<Mon>> VariationalBilinearForm<Mon,MeshT>
@@ -97,7 +100,7 @@ impl<Mon:Monomial, MeshT:Mesh<Mon>> VariationalBilinearForm<Mon,MeshT>
     // s(v,w) = (1/h_T) <Q_b v_T0, Q_b w_T0>_bnd(T)
     //        = (1/h_T) sum_{s in sides(T)} {<Q_b v_T0, Q_b w_T0>_s}
     let h_inv = mesh.shape_diameter_inv(oshape);
-    let stab_term = h_inv * range(0, mesh.num_side_faces_for_shape(oshape)).map(|sf| {
+    let stab_term = h_inv * range(0, mesh.num_side_faces_for_oshape(oshape)).map(|sf| {
       let projs = &self.int_mon_side_projs[*oshape][sf];
       mesh.intg_facerel_poly_x_facerel_poly_on_oshape_side(&projs[*monn_1], &projs[*monn_2], oshape, SideFace(sf))
     }).sum();

@@ -80,7 +80,7 @@ fn vbf_bnd_projs_vs_bel<'a, Mon:Monomial, MeshT: Mesh<Mon>, VBF: VariationalBili
     let fe_oshape = mesh.oriented_shape_for_fe(fe);
     let bel_monn = basis.int_rel_mon_num(bel);
     // Sum of vbf(p,bel) for all boundary side projections p on the boundary sides of bel's fe.
-    range(0, mesh.num_side_faces_for_shape(fe_oshape)).fold(0 as R, |sum, sf| {
+    range(0, mesh.num_side_faces_for_oshape(fe_oshape)).fold(0 as R, |sum, sf| {
         match bnd_projs.find(&(fe, SideFace(sf))) {
           Some(bnd_proj) => { 
             bnd_proj.foldl_numbered_terms(sum, |sum, (proj_monn, proj_coef, _)| {
@@ -103,7 +103,7 @@ fn vbf_bnd_projs_vs_bel<'a, Mon:Monomial, MeshT: Mesh<Mon>, VBF: VariationalBili
     // Sum contributions from projections on boundary sides (if any) of both including fe's against the basis element.
     fe_incls_of_bel_supp.iter().fold(0 as R, |sum, &(fe, bel_sf)| {
       let fe_oshape = mesh.oriented_shape_for_fe(fe);
-      range(0, mesh.num_side_faces_for_shape(fe_oshape)).fold(sum, |sum, sf| {
+      range(0, mesh.num_side_faces_for_oshape(fe_oshape)).fold(sum, |sum, sf| {
         match bnd_projs.find(&(fe, SideFace(sf))) {
           Some(bnd_proj) =>
             bnd_proj.foldl_numbered_terms(sum, |sum, (proj_monn, proj_coef, _)| {

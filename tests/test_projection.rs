@@ -1,6 +1,6 @@
 use projection::{Projector};
 use common::{R, Deg, pow};
-use polynomial::{Polynomial, PolyBorrowingMons, approx_equiv, approx_equiv_v};
+use polynomial::{Polynomial, PolyOwning, PolyBorrowingMons, approx_equiv, approx_equiv_v};
 use monomial::{Monomial, Mon2d, MaxMonDeg}; 
 use mesh::{FENum, OShape, SideFace};
 use rectangle_mesh::{RectMesh, MeshCoord};
@@ -123,14 +123,14 @@ fn test_int_mons_side_projs() {
   // Test identity projections onto vertical sides.
 
   assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([one, y, y*y], OShape(0), right_side),
-                         [PolyBorrowingMons::new(~[1.,0.,0.], vert_side_mons),
-                          PolyBorrowingMons::new(~[0.,1.,0.], vert_side_mons),
-                          PolyBorrowingMons::new(~[0.,0.,1.], vert_side_mons)], 1e-10));
+                         [PolyOwning::new(~[1.,0.,0.], vert_side_mons.to_owned()),
+                          PolyOwning::new(~[0.,1.,0.], vert_side_mons.to_owned()),
+                          PolyOwning::new(~[0.,0.,1.], vert_side_mons.to_owned())], 1e-10));
   
   assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([one, y, y*y], OShape(0), left_side),
-                         [PolyBorrowingMons::new(~[1.,0.,0.], vert_side_mons),
-                          PolyBorrowingMons::new(~[0.,1.,0.], vert_side_mons),
-                          PolyBorrowingMons::new(~[0.,0.,1.], vert_side_mons)], 1e-10));
+                         [PolyOwning::new(~[1.,0.,0.], vert_side_mons.to_owned()),
+                          PolyOwning::new(~[0.,1.,0.], vert_side_mons.to_owned()),
+                          PolyOwning::new(~[0.,0.,1.], vert_side_mons.to_owned())], 1e-10));
 
 
   // Test projections with a perpendicular axis variable factor in the interior monomial, which should introduce a constant factor
@@ -138,23 +138,23 @@ fn test_int_mons_side_projs() {
   // axis for the greater side. The fe side lengths are 2 horizontally and 3 vertically.
   
   assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([x, x*y, x*y*y], OShape(0), right_side),
-                         [PolyBorrowingMons::new(~[2.,0.,0.], vert_side_mons),
-                          PolyBorrowingMons::new(~[0.,2.,0.], vert_side_mons),
-                          PolyBorrowingMons::new(~[0.,0.,2.], vert_side_mons)], 1e-10));
+                         [PolyOwning::new(~[2.,0.,0.], vert_side_mons.to_owned()),
+                          PolyOwning::new(~[0.,2.,0.], vert_side_mons.to_owned()),
+                          PolyOwning::new(~[0.,0.,2.], vert_side_mons.to_owned())], 1e-10));
   
   assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([x, x*y, x*y*y], OShape(0), left_side),
-                         [PolyBorrowingMons::new(~[0.,0.,0.], vert_side_mons),
-                          PolyBorrowingMons::new(~[0.,0.,0.], vert_side_mons),
-                          PolyBorrowingMons::new(~[0.,0.,0.], vert_side_mons)], 1e-10));
+                         [PolyOwning::new(~[0.,0.,0.], vert_side_mons.to_owned()),
+                          PolyOwning::new(~[0.,0.,0.], vert_side_mons.to_owned()),
+                          PolyOwning::new(~[0.,0.,0.], vert_side_mons.to_owned())], 1e-10));
   
   assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([y, y*x, y*x*x], OShape(0), top_side),
-                         [PolyBorrowingMons::new(~[3.,0.,0.], horz_side_mons),
-                          PolyBorrowingMons::new(~[0.,3.,0.], horz_side_mons),
-                          PolyBorrowingMons::new(~[0.,0.,3.], horz_side_mons)], 1e-10));
+                         [PolyOwning::new(~[3.,0.,0.], horz_side_mons.to_owned()),
+                          PolyOwning::new(~[0.,3.,0.], horz_side_mons.to_owned()),
+                          PolyOwning::new(~[0.,0.,3.], horz_side_mons.to_owned())], 1e-10));
   
   assert!(approx_equiv_v(projector.proj_int_mons_to_span_oshape_side_supp_basis_els([y, y*x, y*x*x], OShape(0), bottom_side),
-                         [PolyBorrowingMons::new(~[0.,0.,0.], horz_side_mons),
-                          PolyBorrowingMons::new(~[0.,0.,0.], horz_side_mons),
-                          PolyBorrowingMons::new(~[0.,0.,0.], horz_side_mons)], 1e-10));
+                         [PolyOwning::new(~[0.,0.,0.], horz_side_mons.to_owned()),
+                          PolyOwning::new(~[0.,0.,0.], horz_side_mons.to_owned()),
+                          PolyOwning::new(~[0.,0.,0.], horz_side_mons.to_owned())], 1e-10));
 }
 

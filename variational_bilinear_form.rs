@@ -193,7 +193,7 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
                      basis.mons_per_fe_side(),
                      basis.mons_per_fe_int(),
                      |os, sf, side_monn, int_monn| {
-      if sf < basis.mesh().num_side_faces_for_shape(OShape(os)) {
+      if sf < basis.mesh().num_side_faces_for_oshape(OShape(os)) {
         self.side_mon_vs_int_mon(OShape(os), FaceMonNum(side_monn), SideFace(sf), FaceMonNum(int_monn))
       }
       else { R_NaN }
@@ -209,7 +209,7 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
                      basis.mons_per_fe_int(),
                      basis.mons_per_fe_side(),
                      |os, sf, int_monn, side_monn| {
-      if sf < basis.mesh().num_side_faces_for_shape(OShape(os)) {
+      if sf < basis.mesh().num_side_faces_for_oshape(OShape(os)) {
         self.int_mon_vs_side_mon(OShape(os), FaceMonNum(int_monn), FaceMonNum(side_monn), SideFace(sf))
       }
       else { R_NaN }
@@ -229,7 +229,7 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
     let (max_sides, num_side_mons) = (basis.mesh().max_num_shape_sides(), basis.mons_per_fe_side());
     let sym = self.is_symmetric();
     Tensor5::from_fn(num_oshapes, max_sides, max_sides, num_side_mons, num_side_mons, |os, sf_1, sf_2, monn_1, monn_2| {
-      let num_sides = basis.mesh().num_side_faces_for_shape(OShape(os));
+      let num_sides = basis.mesh().num_side_faces_for_oshape(OShape(os));
       if sf_1 >= num_sides || sf_2 >= num_sides || // non-existent side
          sym && (sf_1 < sf_2 || sf_1 == sf_2 && monn_1 < monn_2) { // value should be obtained via other indexes by symmetry
         R_NaN
@@ -278,7 +278,7 @@ fn asc_nbsn_fe_sf_triplets_for_fes<'a, Mon:Monomial, MeshT:Mesh<Mon>>
 
   let fe1_singleton = [fe1];
   for &fe in fe1_singleton.iter().chain(fe2.iter()) {
-    for sf in range(0, mesh.num_side_faces_for_shape(mesh.oriented_shape_for_fe(fe))) {
+    for sf in range(0, mesh.num_side_faces_for_oshape(mesh.oriented_shape_for_fe(fe))) {
       if !mesh.is_boundary_side(fe, SideFace(sf)) {
         let nbs = mesh.nb_side_num_for_fe_side(fe, SideFace(sf));
         if nbs_filter(nbs) {

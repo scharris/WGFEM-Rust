@@ -158,7 +158,7 @@ impl <Mon:Monomial, MeshT:Mesh<Mon>> WGBasis<Mon,MeshT> {
     };
    
     let ips_side_mons_by_oshape_side = vec::from_fn(mesh.num_oriented_element_shapes(), |os| {
-      vec::from_fn(mesh.num_side_faces_for_shape(OShape(os)), |sf| {
+      vec::from_fn(mesh.num_side_faces_for_oshape(OShape(os)), |sf| {
         let side_dep_dim = mesh.dependent_dim_for_oshape_side(OShape(os), SideFace(sf));
         let side_mons = side_mons_by_dep_dim[*side_dep_dim].as_slice();
         DenseMatrix::upper_triangle_from_fn(side_mons.len(), |i,j| {
@@ -416,7 +416,7 @@ fn compute_wgrads<Mon:Monomial,MeshT:Mesh<Mon>>(wgrad_solver: &mut WeakGradSolve
 
   for os in range(0, mesh.num_oriented_element_shapes()) {
     let os = OShape(os);
-    let side_mons_by_side = vec::from_fn(mesh.num_side_faces_for_shape(os), |sf| {
+    let side_mons_by_side = vec::from_fn(mesh.num_side_faces_for_oshape(os), |sf| {
       let sf_dep_dim = mesh.dependent_dim_for_oshape_side(os, SideFace(sf));
       side_mons_by_dep_dim[*sf_dep_dim].as_slice()
     });

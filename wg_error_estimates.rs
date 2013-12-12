@@ -42,7 +42,7 @@ function wg_sol_wgrad_on_interior(fe::FENum, wg_sol::WGSolution)
   end
 
   # Add contributions for the solution's side polynomials, for both non-boundary and boundary sides.
-  for sf=feface_one:Mesh.num_side_faces_for_shape(fe_oshape, mesh)
+  for sf=feface_one:Mesh.num_side_faces_for_oshape(fe_oshape, mesh)
     if Mesh.is_boundary_side(fe, sf, mesh)
       const proj_coefs = boundary_projs[(fe, sf)]
       for side_monn=monnum(1):basis.mons_per_fe_side
@@ -175,7 +175,7 @@ function err_vs_proj_vbf_seminorm(exact_sol::Function, wg_sol::WGSolution, vbf::
   sum = zeroR
   for fe=fenum(1):Mesh.num_fes(mesh)
     const fe_oshape = Mesh.oriented_shape_for_fe(fe, mesh)
-    const num_sides = Mesh.num_side_faces_for_shape(fe_oshape, mesh)
+    const num_sides = Mesh.num_side_faces_for_oshape(fe_oshape, mesh)
     # Find non-boundary sides
     for sf=feface_one:num_sides
       is_nb_side[sf] = !Mesh.is_boundary_side(fe, sf, mesh)
