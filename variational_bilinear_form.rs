@@ -278,7 +278,7 @@ fn asc_nbsn_fe_sf_triplets_for_fes<'a, Mon:Monomial, MeshT:Mesh<Mon>>
 
   let fe1_singleton = [fe1];
   for &fe in fe1_singleton.iter().chain(fe2.iter()) {
-    for sf in range(0, mesh.num_side_faces_for_fe(fe)) {
+    for sf in range(0, mesh.num_side_faces_for_shape(mesh.oriented_shape_for_fe(fe))) {
       if !mesh.is_boundary_side(fe, SideFace(sf)) {
         let nbs = mesh.nb_side_num_for_fe_side(fe, SideFace(sf));
         if nbs_filter(nbs) {

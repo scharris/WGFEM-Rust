@@ -46,8 +46,6 @@ pub trait Mesh<Mon> {
 
   fn oriented_shape_for_fe(&self, fe: FENum) -> OShape;
 
-  fn num_side_faces_for_fe(&self, fe: FENum) -> uint;
-
   fn num_side_faces_for_shape(&self, oshape: OShape) -> uint;
 
   // The dependent dim is, for a given side, the dimension j which is affine-

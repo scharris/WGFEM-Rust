@@ -334,12 +334,6 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
   }
   
   #[inline(always)]
-  fn num_side_faces_for_fe(&self, fe: FENum) -> uint {
-    assert!(*fe < self.num_fes);
-    self.num_side_faces_per_fe
-  }
-  
-  #[inline(always)]
   fn num_side_faces_for_shape(&self, oshape: OShape) -> uint {
     assert!(oshape == OShape(0));
     self.num_side_faces_per_fe 
@@ -472,7 +466,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
   
   #[inline]
   fn num_nb_sides_for_fe(&self, fe: FENum) -> uint {
-    range(0, self.num_side_faces_for_fe(fe))
+    range(0, self.num_side_faces_per_fe)
       .count(|sf| !self.is_boundary_side(fe, SideFace(sf))) 
   }
   
