@@ -12,6 +12,7 @@ use std::num::{sin, cos};
 use std::num::log2;
 use std::iter::{range_step};
 
+/*
 #[main]
 fn main() {
   lapack::init();
@@ -59,18 +60,16 @@ fn main() {
   }).collect();
 
   for &(deg, ref diam_L2err_pairs) in deg_diam_L2errs.iter() {
-    for i in range_step(0, diam_L2err_pairs.len(), 2) {
-      if i + 1 < diam_L2err_pairs.len() {
-        let ((h1,err1), (h2,err2)) = (diam_L2err_pairs[i], diam_L2err_pairs[i+1]);
-        let slope = (log2(err2) - log2(err1))/(log2(h2) - log2(h1));
-        println!("Deg {} mesh sizes {:f} and {:f}: convergence rate is {:f}", deg.to_str(), h1, h2, slope);
-      }
+    for i in range(0, diam_L2err_pairs.len()-1) {
+      let ((h1,err1), (h2,err2)) = (diam_L2err_pairs[i], diam_L2err_pairs[i+1]);
+      let slope = (log2(err2) - log2(err1))/(log2(h2) - log2(h1));
+      println!("Deg {} mesh sizes {:f} and {:f}: convergence rate is {:f}", deg.to_str(), h1, h2, slope);
     }
   }
 
 }
+*/
 
-/*
 #[main]
 fn main() {
   lapack::init();
@@ -83,7 +82,7 @@ fn main() {
   fn g(x: &[R])-> R { 0 as R }
 
   let poly_degs = range(2u8, 3);
-  let nums_side_divs = range_step(20u, 260, 10);
+  let nums_side_divs = range_step(10u, 71, 10);
 
   let solve = |k: Deg, side_divs: uint| {
    
@@ -113,14 +112,11 @@ fn main() {
   }).collect();
 
   for &(deg, ref diam_L2err_pairs) in deg_diam_L2errs.iter() {
-    for i in range_step(0, diam_L2err_pairs.len(), 2) {
-      if i + 1 < diam_L2err_pairs.len() {
-        let ((h1,err1), (h2,err2)) = (diam_L2err_pairs[i], diam_L2err_pairs[i+1]);
-        let slope = (log2(err2) - log2(err1))/(log2(h2) - log2(h1));
-        println!("Deg {} mesh sizes {:f} and {:f}: convergence rate is {:f}", deg.to_str(), h1, h2, slope);
-      }
+    for i in range(0, diam_L2err_pairs.len()-1) {
+      let ((h1,err1), (h2,err2)) = (diam_L2err_pairs[i], diam_L2err_pairs[i+1]);
+      let slope = (log2(err2) - log2(err1))/(log2(h2) - log2(h1));
+      println!("Deg {} mesh sizes {:f} and {:f}: convergence rate is {:f}", deg.to_str(), h1, h2, slope);
     }
   }
 }
-*/
 
