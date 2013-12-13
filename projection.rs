@@ -69,7 +69,10 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
   /// gauranteed to be in order of their ascending face monomial numbers, which is the same order in
   /// which the monomials appear in the basis.
   #[inline(never)]
-  pub fn projs_to_int_supp_approx_spaces(&mut self, g: |&[R]| -> R, fes: &[FENum], fes_oshape: OShape) -> ~[PolyBorrowingMons<'self,Mon>] {
+  pub fn projs_to_int_supp_approx_spaces(&mut self,
+                                         g: |&[R]| -> R,
+                                         fes: &[FENum],
+                                         fes_oshape: OShape) -> ~[PolyBorrowingMons<'self,Mon>] {
 
     let int_mons = self.basis.ref_int_mons();
 
@@ -164,7 +167,9 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
 
   #[inline(never)]
   pub fn projs_int_mons_to_side_supp_approx_space(&mut self,
-     int_mons: &[Mon], oshape: OShape, side_face: SideFace) -> ~[PolyOwning<Mon>] {
+                                                  int_mons: &[Mon],
+                                                  oshape: OShape,
+                                                  side_face: SideFace) -> ~[PolyOwning<Mon>] {
 
     let side_mons = self.basis.side_mons_for_oshape_side(oshape, side_face);
     
