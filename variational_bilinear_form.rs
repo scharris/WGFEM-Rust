@@ -93,7 +93,7 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
         for &(nbs, _, sf) in asc_nbsn_fe_sf_triplets_for_fes(fe, None, |_nbs_2| true, mesh, fe_nb_sides_buf).iter() {
           for monn_2 in range(0, num_side_mons) { let monn_2 = FaceMonNum(monn_2);
             let c = *basis.nb_side_mon_el_num(nbs, monn_2);
-            let ip = side_vs_int_vbf_vals.get(*oshape, *sf, *monn_2, *monn_1);
+            let ip = side_vs_int_vbf_vals.get(*oshape, *monn_2, *sf, *monn_1);
             m.push(r, c, ip);
           }
         }
@@ -124,7 +124,7 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
             let mon_2_fe_oshape = mesh.oriented_shape_for_fe(mon_2_fe);
             for monn_2 in range(0, num_int_mons) { let monn_2 = FaceMonNum(monn_2);
               let c = *basis.int_mon_el_num(mon_2_fe, monn_2);
-              let ip = int_vs_side_vbf_vals.get(*mon_2_fe_oshape, *mon_1_sf, *monn_2, *monn_1);
+              let ip = int_vs_side_vbf_vals.get(*mon_2_fe_oshape, *monn_2, *monn_1, *mon_1_sf);
               m.push(r, c, ip);
             }
           }
@@ -140,7 +140,7 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
               let monn_range_lower = if sym && nbs_2 == nbs { *monn_1 } else { 0 };
               for monn_2 in range(monn_range_lower, num_side_mons) { let monn_2 = FaceMonNum(monn_2);
                  let c = *basis.nb_side_mon_el_num(nbs_2, monn_2);
-                 let ip = self.get_side_vs_side_vbf_contr(fe_oshape, nbs_2_sf_in_fe, nbs_sf_in_fe, monn_2, monn_1,
+                 let ip = self.get_side_vs_side_vbf_contr(fe_oshape, monn_2, nbs_2_sf_in_fe, monn_1, nbs_sf_in_fe,
                                                           &side_vs_side_vbf_fe_contrs);
                  m.push(r, c, ip);
               }
@@ -153,9 +153,9 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
               let monn_range_lower = if sym && nbs_2 == nbs { *monn_1 } else { 0 };
               for monn_2 in range(monn_range_lower, num_side_mons) { let monn_2 = FaceMonNum(monn_2);
                 let c = *basis.nb_side_mon_el_num(nbs_2, monn_2);
-                let ip = self.get_side_vs_side_vbf_contr(fe_a_oshape, nbs_2_sf_in_fe_a, nbs_sf_in_fe_a, monn_2, monn_1,
+                let ip = self.get_side_vs_side_vbf_contr(fe_a_oshape, monn_2, nbs_2_sf_in_fe_a, monn_1, nbs_sf_in_fe_a,
                                                          &side_vs_side_vbf_fe_contrs) + 
-                         self.get_side_vs_side_vbf_contr(fe_b_oshape, nbs_2_sf_in_fe_b, nbs_sf_in_fe_b, monn_2, monn_1,
+                         self.get_side_vs_side_vbf_contr(fe_b_oshape, monn_2, nbs_2_sf_in_fe_b, monn_1, nbs_sf_in_fe_b,
                                                          &side_vs_side_vbf_fe_contrs);
                 m.push(r, c, ip);
               }
@@ -184,15 +184,15 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
     })
   }
 
-  /* Returns a tensor of vbf values indexed by oshape, side face, side monomial number, and interior monomial number.
+  /* Returns a tensor of vbf values indexed by oshape, side monomial number, side face, and interior monomial number.
    */
-  fn ref_side_vs_int_vbf_values(&self) -> Tensor4 { // indexed by oshape, sf, side monn, int monn
+  fn ref_side_vs_int_vbf_values(&self) -> Tensor4 { // indexed by oshape, side monn, sf, int monn
     let basis = self.basis();
     Tensor4::from_fn(basis.mesh().num_oriented_element_shapes(),
-                     basis.mesh().max_num_shape_sides(),
                      basis.mons_per_fe_side(),
+                     basis.mesh().max_num_shape_sides(),
                      basis.mons_per_fe_int(),
-                     |os, sf, side_monn, int_monn| {
+                     |os, side_monn, sf, int_monn| {
       if sf < basis.mesh().num_side_faces_for_oshape(OShape(os)) {
         self.side_mon_vs_int_mon(OShape(os), FaceMonNum(side_monn), SideFace(sf), FaceMonNum(int_monn))
       }
@@ -200,15 +200,15 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
     })
   }
 
-  /* Returns a tensor of vbf values indexed by oshape, side face, interior monomial number, and side monomial number.
+  /* Returns a tensor of vbf values indexed by oshape, interior monomial number, side monomial number, and side face.
    */
-  fn ref_int_vs_side_vbf_values(&self) -> Tensor4 { // indexed by oshape, sf, int monn, side monn
+  fn ref_int_vs_side_vbf_values(&self) -> Tensor4 { // indexed by oshape, int monn, side monn, sf
     let basis = self.basis();
     Tensor4::from_fn(basis.mesh().num_oriented_element_shapes(),
-                     basis.mesh().max_num_shape_sides(),
                      basis.mons_per_fe_int(),
                      basis.mons_per_fe_side(),
-                     |os, sf, int_monn, side_monn| {
+                     basis.mesh().max_num_shape_sides(),
+                     |os, int_monn, side_monn, sf| {
       if sf < basis.mesh().num_side_faces_for_oshape(OShape(os)) {
         self.int_mon_vs_side_mon(OShape(os), FaceMonNum(int_monn), FaceMonNum(side_monn), SideFace(sf))
       }
@@ -223,12 +223,12 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
    * function to obtain values from the returned data, which will find the proper value by reversing indexes as
    * necessary in the case that the vbf is symmetric.
    */
-  fn ref_side_vs_side_vbf_fe_contrs(&self) -> Tensor5 { // indexed by oshape, sf, sf, side monn side monn
+  fn ref_side_vs_side_vbf_fe_contrs(&self) -> Tensor5 { // indexed by oshape, side monn, sf, side monn, sf
     let basis = self.basis();
     let num_oshapes = basis.mesh().num_oriented_element_shapes();
     let (max_sides, num_side_mons) = (basis.mesh().max_num_shape_sides(), basis.mons_per_fe_side());
     let sym = self.is_symmetric();
-    Tensor5::from_fn(num_oshapes, max_sides, max_sides, num_side_mons, num_side_mons, |os, sf_1, sf_2, monn_1, monn_2| {
+    Tensor5::from_fn(num_oshapes, num_side_mons, max_sides, num_side_mons, max_sides, |os, monn_1, sf_1, monn_2, sf_2| {
       let num_sides = basis.mesh().num_side_faces_for_oshape(OShape(os));
       if sf_1 >= num_sides || sf_2 >= num_sides || // non-existent side
          sym && (sf_1 < sf_2 || sf_1 == sf_2 && monn_1 < monn_2) { // value should be obtained via other indexes by symmetry
@@ -243,21 +243,21 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
   #[inline]
   fn get_side_vs_side_vbf_contr(&self,
                                 oshape: OShape, 
-                                sf_1: SideFace, sf_2: SideFace,
-                                monn_1: FaceMonNum, monn_2: FaceMonNum,
+                                monn_1: FaceMonNum, sf_1: SideFace,
+                                monn_2: FaceMonNum, sf_2: SideFace,
                                 side_vs_side_vbf_fe_contrs: &Tensor5) -> R {
     if !self.is_symmetric() {
-      side_vs_side_vbf_fe_contrs.get(*oshape, *sf_1, *sf_2, *monn_1, *monn_2)
+      side_vs_side_vbf_fe_contrs.get(*oshape, *monn_1, *sf_1, *monn_2, *sf_2)
     }
     else if sf_1 < sf_2 {
-      side_vs_side_vbf_fe_contrs.get(*oshape, *sf_2, *sf_1, *monn_2, *monn_1)
+      side_vs_side_vbf_fe_contrs.get(*oshape, *monn_2, *sf_2, *monn_1, *sf_1)
     }
     else if sf_1 == sf_2 {
       let (lesser_monn, greater_monn) = if monn_1 < monn_2 { (monn_1, monn_2) } else { (monn_2, monn_1) };
-      side_vs_side_vbf_fe_contrs.get(*oshape, *sf_1, *sf_1, *greater_monn, *lesser_monn)
+      side_vs_side_vbf_fe_contrs.get(*oshape, *greater_monn, *sf_1, *lesser_monn, *sf_1)
     }
     else {
-      side_vs_side_vbf_fe_contrs.get(*oshape, *sf_1, *sf_2, *monn_1, *monn_2)
+      side_vs_side_vbf_fe_contrs.get(*oshape, *monn_1, *sf_1, *monn_2, *sf_2)
     }
   }
 
