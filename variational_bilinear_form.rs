@@ -85,7 +85,9 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
           // As for all value fetches in this method, the value is fetched here with the second basis element in
           // first position because this is the *transpose* of the el vs el matrix.
           let ip = int_vs_int_vbf_vals.get(*oshape, *monn_2, *monn_1);
-          m.push(r, c, ip);
+          if ip != 0. as R || r == c {
+            m.push(r, c, ip);
+          }
         }
 
         // Iterate element pairs with our interior supported element vs side supported elements.
@@ -94,7 +96,9 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
           for monn_2 in range(0, num_side_mons) { let monn_2 = FaceMonNum(monn_2);
             let c = *basis.nb_side_mon_el_num(nbs, monn_2);
             let ip = side_vs_int_vbf_vals.get(*oshape, *monn_2, *sf, *monn_1);
-            m.push(r, c, ip);
+            if ip != 0. as R {
+              m.push(r, c, ip);
+            }
           }
         }
       }
@@ -125,7 +129,9 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
             for monn_2 in range(0, num_int_mons) { let monn_2 = FaceMonNum(monn_2);
               let c = *basis.int_mon_el_num(mon_2_fe, monn_2);
               let ip = int_vs_side_vbf_vals.get(*mon_2_fe_oshape, *monn_2, *monn_1, *mon_1_sf);
-              m.push(r, c, ip);
+              if ip != 0. as R {
+                m.push(r, c, ip);
+              }
             }
           }
         }
@@ -142,7 +148,9 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
                  let c = *basis.nb_side_mon_el_num(nbs_2, monn_2);
                  let ip = self.get_side_vs_side_vbf_contr(fe_oshape, monn_2, nbs_2_sf_in_fe, monn_1, nbs_sf_in_fe,
                                                           &side_vs_side_vbf_fe_contrs);
-                 m.push(r, c, ip);
+                 if ip != 0. as R || r == c {
+                   m.push(r, c, ip);
+                 }
               }
             }
             &TwoFESideSideInter(_, nbs_2,
@@ -157,7 +165,9 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
                                                          &side_vs_side_vbf_fe_contrs) + 
                          self.get_side_vs_side_vbf_contr(fe_b_oshape, monn_2, nbs_2_sf_in_fe_b, monn_1, nbs_sf_in_fe_b,
                                                          &side_vs_side_vbf_fe_contrs);
-                m.push(r, c, ip);
+                if ip != 0. as R || r == c {
+                  m.push(r, c, ip);
+                }
               }
             }
           }
