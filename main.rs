@@ -82,7 +82,7 @@ fn main() {
   fn g(x: &[R])-> R { 0 as R }
 
   let poly_degs = range(2u8, 3);
-  let nums_side_divs = range_step(10u, 71, 10);
+  let nums_side_divs = range_step(10u, 150, 10);
 
   let solve = |k: Deg, side_divs: uint| {
    

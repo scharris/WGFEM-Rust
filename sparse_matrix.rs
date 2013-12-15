@@ -1,10 +1,11 @@
 use common::{R};
-use lapack::{lapack_int};
+use lapack::{lapack_int, alloc_doubles, alloc_ints};
 
 use std::vec;
 use std::vec::raw;
 use std::cast;
 use std::ptr;
+use std::libc::{c_double, c_ulong, c_int, c_uint, c_void, malloc, calloc, realloc, free};
 
 /// Sparse matrix type, with compressed sparse row storage, 3-array variation (CSR3).
 /// Values must be pushed into the matrix in increasing order of their (row, column)
@@ -14,15 +15,23 @@ pub struct SparseMatrix {
   values: ~[R],
   value_cols: ~[lapack_int],
   row_begins: ~[lapack_int],
+  matrix_type: MatrixType,
+}
+
+pub enum MatrixType {
+  Symmetric,             // symmetric with values in upper triangle
+  StructurallySymmetric, // structurally symmetric, m_{i,j} present iff m_{j,i} present.
+  General,
 }
 
 impl SparseMatrix {
 
-  pub fn new_with_capacities(values_capacity: uint, rows_capacity: uint) -> SparseMatrix {
+  pub fn new_with_capacities(values_capacity: uint, rows_capacity: uint, mtype: MatrixType) -> SparseMatrix {
     SparseMatrix {
       values: vec::with_capacity(values_capacity),
       value_cols: vec::with_capacity(values_capacity),
       row_begins: vec::with_capacity(rows_capacity+1),
+      matrix_type: mtype
     }
   }
 
@@ -51,8 +60,10 @@ impl SparseMatrix {
     self.values.len()
   }
   
+  pub fn matrix_type(&self) -> MatrixType { self.matrix_type }
+  
   pub fn get(&self, r: uint, c: uint) -> R {
-    let next_row_begin = if r == self.row_begins.len()-1 { self.values.len()} else { self.row_begins[r+1] as uint };
+    let next_row_begin = if r == self.row_begins.len()-1 { self.values.len() } else { self.row_begins[r+1] as uint };
     for i in range(self.row_begins[r] as uint, next_row_begin) {
       match (c as lapack_int).cmp(&self.value_cols[i]) {
         Less =>  { return 0 as R; }
@@ -62,6 +73,18 @@ impl SparseMatrix {
     }
     0 as R
   }
+
+  pub fn debug_print(&self) {
+    for r in range(0, self.row_begins.len()) {
+      let next_row_begin = if r == self.row_begins.len()-1 { self.values.len() } else { self.row_begins[r+1] as uint};
+      for i in range(self.row_begins[r] as uint, next_row_begin) {
+        let c = self.value_cols[i];
+        println!("{}\t{}\t{:.10f}", r+1, c+1, self.values[i]);
+      }
+    }
+  }
+
+
 
   /// Returns the 3-array variant (a, ia, ja) of the Compressed Sparse Row format as pointers to the values array a,
   /// the row beginning indexes ia into the values array, and the corresponding column numbers ja of the values.
@@ -73,10 +96,10 @@ impl SparseMatrix {
       fail!("Need one capacity element beyond the length of the row_begins vector for conversion to raw pointers.");
     }
     else {
-      // Cap the row_begins buffer with the number of values as trailing "ghost" row start index, as required by lapack. 
+      // Cap the row_begins buffer with the number of values as trailing "ghost" row start index.
       let row_begins_ptr = raw::to_mut_ptr(cast::transmute_mut(self).row_begins);
       *ptr::mut_offset(row_begins_ptr, self.row_begins.len() as int) = self.values.len() as lapack_int;
-      
+
       (raw::to_ptr(self.values),
        raw::to_ptr(self.row_begins),
        raw::to_ptr(self.value_cols))

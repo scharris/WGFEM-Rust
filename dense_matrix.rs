@@ -150,7 +150,7 @@ impl DenseMatrix {
   
   #[inline(never)]
   pub fn copy_upper_triangle_into(&self, m: &mut DenseMatrix) {
-    if self.num_rows != m.num_rows || self.num_cols > m.num_cols {
+    if self.num_rows != m.num_rows || self.num_cols != m.num_cols {
       fail!("Matrix layouts not compatible for dense matrix copy-into operation.");
     }
     unsafe {

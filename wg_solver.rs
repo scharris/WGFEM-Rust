@@ -46,7 +46,7 @@ pub fn solve<'a, Mon: Monomial, MeshT: Mesh<Mon>, VBF: VariationalBilinearForm<M
     vbf_bnd_projs_vs_bel(vbf, &bnd_projs, BasisElNum(i), basis)
   );
 
-  let sol_coefs = lapack::solve_sparse_structurally_symmetric(&sys_m, &sys_rhs, vbf.is_symmetric());
+  let sol_coefs = lapack::solve_sparse(&sys_m, &sys_rhs);
 
   WGSolution::new(sol_coefs, basis, bnd_projs)
 }

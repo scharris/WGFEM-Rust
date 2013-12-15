@@ -1,6 +1,6 @@
 use common::R;
 use dense_matrix::DenseMatrix;
-use sparse_matrix::SparseMatrix;
+use sparse_matrix::{SparseMatrix, Symmetric, StructurallySymmetric};
 
 use std::libc::{c_double, c_ulong, c_int, c_uint, c_void, malloc, calloc, realloc, free};
 use std::cast;
@@ -18,7 +18,7 @@ pub fn init() {
 }
 
 #[inline(never)]
-pub fn solve_sparse_structurally_symmetric(sys: &SparseMatrix, rhs: &DenseMatrix, sym: bool) -> ~[R] {
+pub fn solve_sparse(sys: &SparseMatrix, rhs: &DenseMatrix) -> ~[R] {
   let n = sys.num_rows();
 
   unsafe {
@@ -26,18 +26,19 @@ pub fn solve_sparse_structurally_symmetric(sys: &SparseMatrix, rhs: &DenseMatrix
     let mut sol = vec::from_elem(n, 0 as R);
     let cpu_cores = 4; // TODO
 
-    let stat = 
-      if sym {
+    let stat = match sys.matrix_type() {
+      Symmetric => 
         solve_sparse_symmetric_as_ut_csr3(n as mkl_int, ia, ja, a,
                                           rhs.col_maj_data_ptr(), rhs.num_cols() as mkl_int,
                                           vec::raw::to_mut_ptr(sol),
-                                          cpu_cores)
-      } else {
+                                          cpu_cores),
+      StructurallySymmetric =>
         solve_sparse_structurally_symmetric_csr3(n as mkl_int, ia, ja, a,
                                                  rhs.col_maj_data_ptr(), rhs.num_cols() as mkl_int,
                                                  vec::raw::to_mut_ptr(sol),
-                                                 cpu_cores)
-      };
+                                                 cpu_cores),
+      _ => fail!("Only symmetric and structurally symmetric matrices are currently supported in solve_sparse()."),
+    };
 
     if stat != 0 {
       fail!(format!("solve_sparse_symmetric_as_ut_csr3 failed with error {:d}", stat));
@@ -55,9 +56,12 @@ extern {
   pub fn init_allocator(malloc_fn: *c_void, calloc_fn: *c_void, realloc_fn: *c_void, free_fn: *c_void);
 
   pub fn alloc_doubles(num_doubles: c_ulong) -> *mut c_double;
+  
+  pub fn alloc_ints(num_ints: c_ulong) -> *mut lapack_int;
 
   pub fn free_doubles(mem: *mut c_double);
-
+  
+  pub fn free_ints(mem: *mut lapack_int);
 
   pub fn copy_matrix(from_data: *c_double, num_rows: c_ulong, num_cols: c_ulong, to_data: *mut c_double);
   

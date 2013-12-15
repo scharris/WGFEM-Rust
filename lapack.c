@@ -39,6 +39,15 @@ void free_doubles(double* ptr) {
   MKL_free(ptr);
 }
 
+/* allocation and de-allocation of aligned data for use as matrix storage */
+double* alloc_ints(unsigned long n) {
+  return (lapack_int*)MKL_malloc(n*sizeof(lapack_int), 64);
+}
+
+void free_ints(lapack_int* ptr) {
+  MKL_free(ptr);
+}
+
 
 /* matrix copy operations */
 
@@ -86,12 +95,15 @@ MKL_INT solve_sparse_symmetric_as_ut_csr3(MKL_INT n, const MKL_INT* ia, const MK
   for (i = 0; i<64; i++) { iparm[i] = 0; }
   iparm[0] = 1;  /* Not all defaults */
   iparm[1] = 2;  /* Fill-in reordering from METIS */
-  iparm[7] = 2;  /* Max numbers of iterative refinement steps. 0 also means 2 iterations but does not seem to allow for early stopping.  */
+  iparm[7] = 15; /* Max numbers of iterative refinement steps. 0 also means 2 iterations but does not seem to allow for early stopping.  */
   iparm[9] = 8;  /* Perturb the pivot elements with 1E-8 which is the default for symmetric matrices. */
+  iparm[10] = 1; /* Use nonsymmetric permutation and scaling MPS */
+  iparm[12] = 1; /* Maximum weighted matching algorithm (default off for symmetric). Try iparm[12] = 1 in case of inappropriate accuracy */
+  iparm[20] = 1; /* pivoting method, Bunch-Kaufman is recommended for symmetric indefinite matrices */
   iparm[23] = num_cpu_cores > 8 ? 1 : 0; /* Use two level parallel factorization algorithm. */
   iparm[26] = 1; /* Check matrix. TODO: Unset after testing. */
   iparm[34] = 1; /* Use 0-based row and column numbers within ia and ja arrays. */
-
+ 
   maxfct = 1;    /* Leave this at 1. Number of numerical factorizations to keep in memory */
   mnum = 1;      /* Leave this at 1. Which factorization of the above to use in the solving step. */
   msglvl = 0;    /* No statistical information output. */
@@ -130,7 +142,7 @@ MKL_INT solve_sparse_structurally_symmetric_csr3(MKL_INT n, const MKL_INT* ia, c
                                                  double* x,
                                                  unsigned num_cpu_cores) {
 
-  MKL_INT mtype = 1; /* Real structurally symmetric matrix. */
+  MKL_INT mtype = 1; /*  1 == Real structurally symmetric matrix. */
   void *pt[64];
   MKL_INT iparm[64];
   MKL_INT maxfct, mnum, phase, error, msglvl;
@@ -141,7 +153,7 @@ MKL_INT solve_sparse_structurally_symmetric_csr3(MKL_INT n, const MKL_INT* ia, c
   for (i=0; i<64; i++) { iparm[i] = 0; }
   iparm[0] = 1;  /* Not all defaults */
   iparm[1] = 2;  /* Fill-in reordering from METIS */
-  iparm[7] = 2;  /* Max numbers of iterative refinement steps. 0 also means 2 iterations but does not seem to allow for early stopping.  */
+  iparm[7] = 20;  /* Max numbers of iterative refinement steps. 0 also means 2 iterations but does not seem to allow for early stopping.  */
   iparm[9] = 13; /* Perturb the pivot elements with 1E-13 which is the default for nonsymmetric matrices. */
   iparm[10] = 1; /* Use nonsymmetric permutation and scaling MPS. */
   iparm[12] = 1; /* Maximum weighted matching algorithm is switched-on (default for nonsymmetric matrices). */
@@ -151,7 +163,7 @@ MKL_INT solve_sparse_structurally_symmetric_csr3(MKL_INT n, const MKL_INT* ia, c
 
   maxfct = 1;    /* Leave this at 1. Number of numerical factorizations to keep in memory. */
   mnum = 1;      /* Leave this at 1. Which factorization of the above to use in the solving step. */
-  msglvl = 0;    /* No statistical information output. */
+  msglvl = 1;    /* No statistical information output. */
   error = 0;
   
   /* Required initialization for MKL internal use data. */
