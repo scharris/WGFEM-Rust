@@ -40,7 +40,7 @@ void free_doubles(double* ptr) {
 }
 
 /* allocation and de-allocation of aligned data for use as matrix storage */
-double* alloc_ints(unsigned long n) {
+lapack_int* alloc_ints(unsigned long n) {
   return (lapack_int*)MKL_malloc(n*sizeof(lapack_int), 64);
 }
 
