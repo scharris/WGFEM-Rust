@@ -12,7 +12,7 @@ fn test_do_lapack_init() {
 
 #[test]
 fn test_3x4_push_and_get() {
-  let mut m = SparseMatrix::new_with_capacities(12, 4);
+  let mut m = SparseMatrix::new_with_capacities(12, 4, General);
   // row 0
   m.push(0,0, 0.);
   m.push(0,1, 1.);
@@ -46,8 +46,26 @@ fn test_3x4_push_and_get() {
 }
 
 #[test]
+#[should_fail]
+fn test_bad_values_capacity() {
+  //      1 2 3
+  // A =  2 2 0
+  //      3 0 3 
+  // b = [3 2 1]^t
+  // sol = [0 1 1/3]^t
+  let mut A = SparseMatrix::new_with_capacities(6, 3, General);
+  A.push(0,0, 1.);
+  A.push(0,1, 2.);
+  A.push(0,2, 3.);
+  A.push(1,0, 2.);
+  A.push(1,1, 2.);
+  A.push(2,0, 3.);
+  A.push(2,2, 3.);
+}
+
+#[test]
 fn test_3x4_csr3() {
-  let mut m = SparseMatrix::new_with_capacities(12, 4);
+  let mut m = SparseMatrix::new_with_capacities(12, 4, General);
   // row 0
   m.push(0,0, 0.);
   m.push(0,1, 1.);

@@ -1,6 +1,6 @@
 use lapack;
 use common::R;
-use sparse_matrix::SparseMatrix;
+use sparse_matrix::{SparseMatrix, Symmetric, StructurallySymmetric};
 use dense_matrix::DenseMatrix;
 use std::num::abs;
 
@@ -23,14 +23,14 @@ fn test_sparse_symmetric_solve1() {
   //      0 0 3 
   // b = [3 2 1]^t
   // sol = [3 1 1/3]^t
-  let mut A = SparseMatrix::new_with_capacities(3, 3);
+  let mut A = SparseMatrix::new_with_capacities(3, 3, Symmetric);
   A.push(0,0, 1.);
   A.push(1,1, 2.);
   A.push(2,2, 3.);
   
   let b = DenseMatrix::from_rows(3,1, [~[3.],~[2.],~[1.]]);
   
-  let sol = lapack::solve_sparse_structurally_symmetric(&A, &b, true);
+  let sol = lapack::solve_sparse(&A, &b);
 
   approx_eq(sol, [3., 1., 1./3.], 1e-15);
 }
@@ -42,7 +42,7 @@ fn test_sparse_symmetric_solve2() {
   //      3 0 3 
   // b = [3 2 1]^t
   // sol = [0 1 1/3]^t
-  let mut A = SparseMatrix::new_with_capacities(3, 3);
+  let mut A = SparseMatrix::new_with_capacities(5, 3, Symmetric);
   A.push(0,0, 1.);
   A.push(0,1, 2.);
   A.push(0,2, 3.);
@@ -53,7 +53,7 @@ fn test_sparse_symmetric_solve2() {
   
   let b = DenseMatrix::from_rows(3,1, [~[3.],~[2.],~[1.]]);
 
-  let sol = lapack::solve_sparse_structurally_symmetric(&A, &b, true);
+  let sol = lapack::solve_sparse(&A, &b);
 
   approx_eq(sol, [0., 1., 1./3.], 1e-15);
 }
@@ -66,7 +66,7 @@ fn test_sparse_symmetric_solve_bad_entry() {
   //      3 0 3 
   // b = [3 2 1]^t
   // sol = [0 1 1/3]^t
-  let mut A = SparseMatrix::new_with_capacities(3, 3);
+  let mut A = SparseMatrix::new_with_capacities(7, 3, Symmetric);
   A.push(0,0, 1.);
   A.push(0,1, 2.);
   A.push(0,2, 3.);
@@ -77,9 +77,8 @@ fn test_sparse_symmetric_solve_bad_entry() {
   
   let b = DenseMatrix::from_rows(3,1, [~[3.],~[2.],~[1.]]);
 
-  lapack::solve_sparse_structurally_symmetric(&A, &b, true);
+  lapack::solve_sparse(&A, &b);
 }
-
 
 #[test]
 fn test_sparse_asymmetric_solve() {
@@ -88,7 +87,7 @@ fn test_sparse_asymmetric_solve() {
   //      3 0 3 
   // b = [3 2 1]^t
   // sol = [1/3 4/3 0]^t
-  let mut A = SparseMatrix::new_with_capacities(3, 3);
+  let mut A = SparseMatrix::new_with_capacities(7, 3, StructurallySymmetric);
   A.push(0,0, 1.);
   A.push(0,1, 2.);
   A.push(0,2, 3.);
@@ -99,7 +98,7 @@ fn test_sparse_asymmetric_solve() {
   
   let b = DenseMatrix::from_rows(3,1, [~[3.],~[2.],~[1.]]);
 
-  let sol = lapack::solve_sparse_structurally_symmetric(&A, &b, false);
+  let sol = lapack::solve_sparse(&A, &b);
 
   approx_eq(sol, [1./3., 4./3., 0.], 1e-15);
 }
