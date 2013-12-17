@@ -7,7 +7,7 @@ use wg_basis::{WGBasis, FaceMonNum, BasisElNum};
 use wg_solution::{WGSolution, BoundaryProjections};
 use projection::Projector;
 use variational_bilinear_form::VariationalBilinearForm;
-use lapack;
+use la;
 
 use std::hashmap::HashMap;
 
@@ -46,7 +46,7 @@ pub fn solve<'a, Mon: Monomial, MeshT: Mesh<Mon>, VBF: VariationalBilinearForm<M
     vbf_bnd_projs_vs_bel(vbf, &bnd_projs, BasisElNum(i), basis)
   );
 
-  let sol_coefs = lapack::solve_sparse(&sys_m, &sys_rhs);
+  let sol_coefs = la::solve_sparse(&sys_m, &sys_rhs);
 
   WGSolution::new(sol_coefs, basis, bnd_projs)
 }

@@ -51,7 +51,7 @@ pub fn solve_sparse(sys: &SparseMatrix, rhs: &DenseMatrix) -> ~[R] {
 
 /* TODO: This isn't the preferred way to link anymore (too platform specific), so requires feature gate in wgfem.rs.
          I'm not sure how to specify the -L option otherwise though. */
-#[link_args = "-Llib/mkl lib/lapack.o -lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -lmkl_core -lmkl_intel_thread -lmkl_core -liomp5 -lpthread"]
+#[link_args = "-Llib/mkl lib/linear_algebra.o -lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -lmkl_core -lmkl_intel_thread -lmkl_core -liomp5 -lpthread"]
 extern {
 
   pub fn init_allocator(malloc_fn: *c_void, calloc_fn: *c_void, realloc_fn: *c_void, free_fn: *c_void);

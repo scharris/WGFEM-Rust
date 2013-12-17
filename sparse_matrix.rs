@@ -1,6 +1,6 @@
 use common::{R};
-use lapack;
-use lapack::lapack_int;
+use la;
+use la::lapack_int;
 
 use extra::c_vec::CVec;
 use std::cast::transmute;
@@ -33,9 +33,9 @@ impl SparseMatrix {
 
   pub fn new_with_capacities(values_capacity: uint, rows_capacity: uint, mtype: MatrixType) -> SparseMatrix {
     let (values, value_cols, row_first_value_ixs) = unsafe {
-      (CVec::new(lapack::alloc_doubles(values_capacity as c_ulong), values_capacity),
-       CVec::new(lapack::alloc_ints(values_capacity as c_ulong), values_capacity),
-       CVec::new(lapack::alloc_ints((rows_capacity+1u) as c_ulong), rows_capacity)) // alloc extra element for cap value
+      (CVec::new(la::alloc_doubles(values_capacity as c_ulong), values_capacity),
+       CVec::new(la::alloc_ints(values_capacity as c_ulong), values_capacity),
+       CVec::new(la::alloc_ints((rows_capacity+1u) as c_ulong), rows_capacity)) // alloc extra element for cap value
     };
     SparseMatrix {
       values: values,
@@ -130,9 +130,9 @@ impl Drop for SparseMatrix {
   #[inline(never)]
   fn drop(&mut self) {
     unsafe {
-      lapack::free_doubles(transmute(self.values.get(0)));
-      lapack::free_ints(transmute(self.row_first_value_ixs.get(0)));
-      lapack::free_ints(transmute(self.value_cols.get(0)));
+      la::free_doubles(transmute(self.values.get(0)));
+      la::free_ints(transmute(self.row_first_value_ixs.get(0)));
+      la::free_ints(transmute(self.value_cols.get(0)));
     }
   }
 }

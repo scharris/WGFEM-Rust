@@ -5,8 +5,8 @@ use monomial::{Monomial, DegLim, MaxMonDeg, MaxMonFactorDeg};
 use polynomial::{PolyBorrowing};
 use mesh::{Mesh, OShape, SideFace};
 use dense_matrix::DenseMatrix;
-use lapack;
-use lapack::lapack_int;
+use la;
+use la::lapack_int;
 
 use std::vec;
 
@@ -52,10 +52,10 @@ pub struct WeakGradSolver<Mon> {
   ips_basis_vmons_by_oshape: ~[DenseMatrix], // Basis inner products are in upper triangular parts of the matrices.
 
   // Work matrices for lapack to avoid allocations and because lapack enjoys writing over its inputs.
-  lapack_ips_basis_vmons: DenseMatrix,
-  lapack_pivots: ~[lapack_int],
-  lapack_pivots_buf: *mut lapack_int,
-  lapack_rhs: DenseMatrix,
+  la_ips_basis_vmons: DenseMatrix,
+  la_pivots: ~[lapack_int],
+  la_pivots_buf: *mut lapack_int,
+  la_rhs: DenseMatrix,
 }
 
 impl <Mon:Monomial> WeakGradSolver<Mon> {
@@ -74,18 +74,18 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
       })
     });
 
-    let mut lapack_pivots = vec::from_elem(num_vmons, 0 as lapack_int);
-    let lapack_pivots_buf = lapack_pivots.as_mut_ptr();
+    let mut la_pivots = vec::from_elem(num_vmons, 0 as lapack_int);
+    let la_pivots_buf = la_pivots.as_mut_ptr();
 
     WeakGradSolver {
       wgrad_comp_mons_deg_lim: comp_mons_deg_lim,
       wgrad_comp_mons: comp_mons,
       basis_vmons: vmons,
       ips_basis_vmons_by_oshape: ips,
-      lapack_ips_basis_vmons: DenseMatrix::from_elem(num_vmons, num_vmons, 0 as R),
-      lapack_pivots: lapack_pivots,
-      lapack_pivots_buf: lapack_pivots_buf,
-      lapack_rhs: DenseMatrix::from_elem(num_vmons, 200, 0 as R) // Initially allocate for up to 200 shape funs per oshape -
+      la_ips_basis_vmons: DenseMatrix::from_elem(num_vmons, num_vmons, 0 as R),
+      la_pivots: la_pivots,
+      la_pivots_buf: la_pivots_buf,
+      la_rhs: DenseMatrix::from_elem(num_vmons, 200, 0 as R) // Initially allocate for up to 200 shape funs per oshape -
                                                                   // will reallocate if necessary.
     }
   }
@@ -116,8 +116,8 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
       unsafe {
         // a - The system matrix of vmon inner products [in] linearized in column-major order.
         let a = {
-          self.ips_basis_vmons_by_oshape[*oshape].copy_upper_triangle_into(&mut self.lapack_ips_basis_vmons); 
-          self.lapack_ips_basis_vmons.mut_col_maj_data_ptr()
+          self.ips_basis_vmons_by_oshape[*oshape].copy_upper_triangle_into(&mut self.la_ips_basis_vmons); 
+          self.la_ips_basis_vmons.mut_col_maj_data_ptr()
         };
         
         // b - The WGRAD_DEF system right hand side column vectors matrix [in], solution columns [out], both
@@ -127,9 +127,9 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
           (rhss.mut_col_maj_data_ptr(), rhss.num_cols())
         };
 
-        lapack::solve_symmetric_as_col_maj_with_ut_sys(a, num_vmons as lapack_int,
-                                                       b, num_rhs_cols as lapack_int,
-                                                       self.lapack_pivots_buf);
+        la::solve_symmetric_as_col_maj_with_ut_sys(a, num_vmons as lapack_int,
+                                                   b, num_rhs_cols as lapack_int,
+                                                   self.la_pivots_buf);
         
         vec::from_buf(b as *R, num_vmons * num_rhs_cols)
       };
@@ -160,17 +160,17 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
       int_mons.len() + total_side_mons_all_sides
     };
 
-    if self.lapack_rhs.capacity_cols() < num_rhs_cols {
-      self.lapack_rhs = DenseMatrix::of_size_with_cols_capacity(num_vmons, num_rhs_cols, 2*num_rhs_cols);
+    if self.la_rhs.capacity_cols() < num_rhs_cols {
+      self.la_rhs = DenseMatrix::of_size_with_cols_capacity(num_vmons, num_rhs_cols, 2*num_rhs_cols);
     } else {
-      self.lapack_rhs.set_num_cols(num_rhs_cols);
+      self.la_rhs.set_num_cols(num_rhs_cols);
     }
 
     for c in range(0, int_mons.len()) {
       let mon = int_mons[c].clone();
       for r in range(0, num_vmons) {
         let rhs_val = self.wgrad_def_rhs_for_int_mon(mon.clone(), oshape, &self.basis_vmons[r], mesh);
-        self.lapack_rhs.set(r, c, rhs_val);
+        self.la_rhs.set(r, c, rhs_val);
       }
     }
     let mut c = int_mons.len();
@@ -182,13 +182,13 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
         let mon = side_mons[mon_num].clone();
         for r in range(0, num_vmons) {
           let rhs_val = self.wgrad_def_rhs_for_side_mon(mon.clone(), oshape, side_face, &self.basis_vmons[r], mesh);
-          self.lapack_rhs.set(r, c, rhs_val);
+          self.la_rhs.set(r, c, rhs_val);
         }
         c += 1;
       }
     }
     
-    &mut self.lapack_rhs
+    &mut self.la_rhs
   }
  
   // Unpack slice of solution coefficients for interior monomials from LAPACK solver as weak gradients.

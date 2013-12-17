@@ -1,12 +1,12 @@
-use lapack;
+use la;
 use common::R;
 use sparse_matrix::{SparseMatrix, Symmetric, StructurallySymmetric};
 use dense_matrix::DenseMatrix;
 use std::num::abs;
 
 #[test]
-fn test_do_lapack_init() {
-  lapack::init(); // TODO: Do this somewhere else, where it's gauranteed to be run before other tests as part of each test setup.
+fn test_do_la_init() {
+  la::init(); // TODO: Do this somewhere else, where it's gauranteed to be run before other tests as part of each test setup.
 }
 
 
@@ -30,7 +30,7 @@ fn test_sparse_symmetric_solve1() {
   
   let b = DenseMatrix::from_rows(3,1, [~[3.],~[2.],~[1.]]);
   
-  let sol = lapack::solve_sparse(&A, &b);
+  let sol = la::solve_sparse(&A, &b);
 
   approx_eq(sol, [3., 1., 1./3.], 1e-15);
 }
@@ -53,7 +53,7 @@ fn test_sparse_symmetric_solve2() {
   
   let b = DenseMatrix::from_rows(3,1, [~[3.],~[2.],~[1.]]);
 
-  let sol = lapack::solve_sparse(&A, &b);
+  let sol = la::solve_sparse(&A, &b);
 
   approx_eq(sol, [0., 1., 1./3.], 1e-15);
 }
@@ -77,7 +77,7 @@ fn test_sparse_symmetric_solve_bad_entry() {
   
   let b = DenseMatrix::from_rows(3,1, [~[3.],~[2.],~[1.]]);
 
-  lapack::solve_sparse(&A, &b);
+  la::solve_sparse(&A, &b);
 }
 
 #[test]
@@ -98,7 +98,7 @@ fn test_sparse_asymmetric_solve() {
   
   let b = DenseMatrix::from_rows(3,1, [~[3.],~[2.],~[1.]]);
 
-  let sol = lapack::solve_sparse(&A, &b);
+  let sol = la::solve_sparse(&A, &b);
 
   approx_eq(sol, [1./3., 4./3., 0.], 1e-15);
 }

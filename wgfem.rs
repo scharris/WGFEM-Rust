@@ -15,7 +15,8 @@ pub mod monomial;
 pub mod polynomial;
 pub mod vector_monomial;
 mod quadrature;
-mod lapack;
+#[path="linear_algebra.rs"]
+mod la;
 pub mod dense_matrix;
 pub mod sparse_matrix;
 pub mod tensor;
@@ -40,7 +41,7 @@ mod tests {
   mod test_dense_matrix;
   mod test_sparse_matrix;
   mod test_tensor;
-  mod test_lapack;
+  mod test_la;
   // no tests for quadrature
   // no tests for abstract mesh
   mod test_rectangle_mesh;

@@ -5,11 +5,11 @@ use monomial::{Monomial, Mon2d, MaxMonDeg};
 use mesh::{FENum, OShape, SideFace};
 use rectangle_mesh::{RectMesh, MeshCoord};
 use wg_basis::{WGBasis};
-use lapack;
+use la;
 
 #[test]
-fn test_do_lapack_init() {
-  lapack::init(); // TODO: Do this somewhere else, where it's gauranteed to be run before other tests as part of each test setup.
+fn test_do_la_init() {
+  la::init(); // TODO: Do this somewhere else, where it's gauranteed to be run before other tests as part of each test setup.
 }
 
 

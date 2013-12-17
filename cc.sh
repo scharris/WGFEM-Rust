@@ -18,5 +18,5 @@ else
 fi
 
 echo "Compiling linear algebra wrapper functions."
-gcc -m64 -w -I"${MKLROOT}/include" -o lib/lapack.o -c lapack.c 
+gcc -m64 -w -I"${MKLROOT}/include" -o lib/linear_algebra.o -c linear_algebra.c 
 

@@ -1,5 +1,5 @@
 use common::*;
-use lapack;
+use la;
 
 use std::libc::{c_ulong};
 use std::ptr;
@@ -144,7 +144,7 @@ impl DenseMatrix {
       fail!("Matrix layouts not compatible for dense matrix copy-into operation.");
     }
     unsafe {
-      lapack::copy_matrix(transmute(self.data.get(0)), self.num_rows as c_ulong, self.num_cols as c_ulong, transmute(m.data.get(0)));
+      la::copy_matrix(transmute(self.data.get(0)), self.num_rows as c_ulong, self.num_cols as c_ulong, transmute(m.data.get(0)));
     }
   }
   
@@ -154,7 +154,7 @@ impl DenseMatrix {
       fail!("Matrix layouts not compatible for dense matrix copy-into operation.");
     }
     unsafe {
-      lapack::copy_upper_triangle(transmute(self.data.get(0)), self.num_rows as c_ulong, self.num_cols as c_ulong, transmute(m.data.get(0)));
+      la::copy_upper_triangle(transmute(self.data.get(0)), self.num_rows as c_ulong, self.num_cols as c_ulong, transmute(m.data.get(0)));
     }
   }
   
@@ -164,7 +164,7 @@ impl DenseMatrix {
       fail!("Matrix layouts not compatible for dense matrix copy-into operation.");
     }
     unsafe {
-      lapack::copy_upper_triangle(transmute(m.data.get(0)), m.num_rows as c_ulong, m.num_cols as c_ulong, transmute(self.data.get(0)));
+      la::copy_upper_triangle(transmute(m.data.get(0)), m.num_rows as c_ulong, m.num_cols as c_ulong, transmute(self.data.get(0)));
     }
   }
 
@@ -219,7 +219,7 @@ unsafe fn unsafe_get(v: &CVec<R>, i: uint) -> R {
 
 #[inline(never)]
 pub unsafe fn alloc_data(num_doubles: uint) -> CVec<R> {
-  let doubles = lapack::alloc_doubles(num_doubles as c_ulong);
+  let doubles = la::alloc_doubles(num_doubles as c_ulong);
   CVec::new(doubles, num_doubles)
 }
 
@@ -228,7 +228,7 @@ impl Drop for DenseMatrix {
   #[inline(never)]
   fn drop(&mut self) {
     unsafe {
-      lapack::free_doubles(transmute(self.data.get(0)))
+      la::free_doubles(transmute(self.data.get(0)))
     }
   }
 }

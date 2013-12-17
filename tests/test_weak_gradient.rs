@@ -5,14 +5,14 @@ use monomial::{Mon2d, MaxMonDeg};
 use mesh::{OShape};
 use rectangle_mesh::{RectMesh, MeshCoord};
 use dense_matrix::DenseMatrix;
-use lapack;
+use la;
 
 use common::*;
 use std::vec;
 
 #[test]
-fn test_do_lapack_init() {
-  lapack::init(); // TODO: Do this somewhere else, where it's gauranteed to be run before other tests as part of each test setup.
+fn test_do_la_init() {
+  la::init(); // TODO: Do this somewhere else, where it's gauranteed to be run before other tests as part of each test setup.
 }
 
 #[test]
