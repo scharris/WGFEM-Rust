@@ -16,8 +16,8 @@ pub fn quadrature(f: & |&[R]| -> R,
     let f_range_space_dims = 1 as c_uint;
     let f_pv: *c_void = cast::transmute(f); 
     let integrand_caller_pv: *c_void = cast::transmute(integrand_caller);
-    let min_bounds = vec::raw::to_ptr(min_corner);
-    let max_bounds = vec::raw::to_ptr(max_corner);
+    let min_bounds = min_corner.as_ptr();
+    let max_bounds = max_corner.as_ptr();
     let max_evals = 0 as size_t;
     let norm_unused = 0u32;
     let mut val = 0 as R;

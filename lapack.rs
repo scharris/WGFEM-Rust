@@ -31,12 +31,12 @@ pub fn solve_sparse(sys: &SparseMatrix, rhs: &DenseMatrix) -> ~[R] {
       Symmetric => 
         solve_sparse_symmetric_as_ut_csr3(n as mkl_int, ia, ja, a,
                                           rhs.col_maj_data_ptr(), rhs.num_cols() as mkl_int,
-                                          vec::raw::to_mut_ptr(sol),
+                                          sol.as_mut_ptr(),
                                           cpu_cores),
       StructurallySymmetric =>
         solve_sparse_structurally_symmetric_csr3(n as mkl_int, ia, ja, a,
                                                  rhs.col_maj_data_ptr(), rhs.num_cols() as mkl_int,
-                                                 vec::raw::to_mut_ptr(sol),
+                                                 sol.as_mut_ptr(),
                                                  cpu_cores),
       _ => fail!("Only symmetric and structurally symmetric matrices are currently supported in solve_sparse()."),
     };

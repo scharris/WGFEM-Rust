@@ -18,9 +18,9 @@ use std::vec;
  * which we solve for the a_j.
  */
 
-pub struct Projector<'self,Mon,MeshT> {
+pub struct Projector<'a,Mon,MeshT> {
  
-  basis: &'self WGBasis<Mon,MeshT>,
+  basis: &'a WGBasis<Mon,MeshT>,
 
   // Work matrices for lapack to avoid allocations and because lapack enjoys writing over its inputs.
   lapack_ips_int_mons: DenseMatrix,
@@ -31,18 +31,18 @@ pub struct Projector<'self,Mon,MeshT> {
   lapack_side_proj_rhs: DenseMatrix,
 }
 
-impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
+impl <'a,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'a,Mon,MeshT> {
 
-  pub fn new(basis: &'self WGBasis<Mon,MeshT>) -> Projector<'self,Mon,MeshT> {
+  pub fn new(basis: &'a WGBasis<Mon,MeshT>) -> Projector<'a,Mon,MeshT> {
     Projector::with_rhs_cols_capacity(basis, 1000u)
   }
   
-  pub fn with_rhs_cols_capacity(basis: &'self WGBasis<Mon,MeshT>, init_rhs_cols_capacity: uint) -> Projector<'self,Mon,MeshT> {
+  pub fn with_rhs_cols_capacity(basis: &'a WGBasis<Mon,MeshT>, init_rhs_cols_capacity: uint) -> Projector<'a,Mon,MeshT> {
     let (num_int_mons, num_side_mons) = (basis.mons_per_fe_int(), basis.mons_per_fe_side());
     let lapack_ips_int_mons = DenseMatrix::from_elem(num_int_mons, num_int_mons, 0 as R);  
     let lapack_ips_side_mons = DenseMatrix::from_elem(num_side_mons, num_side_mons, 0 as R);  
     let mut lapack_pivots = vec::from_elem(num::max(num_int_mons, num_side_mons), 0 as lapack_int);
-    let lapack_pivots_buf = vec::raw::to_mut_ptr(lapack_pivots);
+    let lapack_pivots_buf = lapack_pivots.as_mut_ptr();
     let init_num_rhs_cols = init_rhs_cols_capacity;
     let lapack_int_proj_rhs = DenseMatrix::from_elem(num_int_mons, init_num_rhs_cols, 0 as R);
     let lapack_side_proj_rhs = DenseMatrix::from_elem(num_side_mons, init_num_rhs_cols, 0 as R);
@@ -59,7 +59,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
   }
  
   #[inline]
-  pub fn basis(&self) -> &'self WGBasis<Mon,MeshT> {
+  pub fn basis(&self) -> &'a WGBasis<Mon,MeshT> {
     self.basis
   }
 
@@ -72,7 +72,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
   pub fn projs_to_int_supp_approx_spaces(&mut self,
                                          g: |&[R]| -> R,
                                          fes: &[FENum],
-                                         fes_oshape: OShape) -> ~[PolyBorrowingMons<'self,Mon>] {
+                                         fes_oshape: OShape) -> ~[PolyBorrowingMons<'a,Mon>] {
 
     let int_mons = self.basis.ref_int_mons();
 
@@ -123,7 +123,7 @@ impl <'self,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'self,Mon,MeshT> {
                                           g: |&[R]| -> R,
                                           fes: &[FENum],
                                           fes_oshape: OShape,
-                                          side_face: SideFace) -> ~[PolyBorrowingMons<'self,Mon>] {
+                                          side_face: SideFace) -> ~[PolyBorrowingMons<'a,Mon>] {
 
     let side_mons = self.basis.side_mons_for_oshape_side(fes_oshape, side_face);
 

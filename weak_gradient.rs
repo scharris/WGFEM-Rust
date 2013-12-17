@@ -75,7 +75,7 @@ impl <Mon:Monomial> WeakGradSolver<Mon> {
     });
 
     let mut lapack_pivots = vec::from_elem(num_vmons, 0 as lapack_int);
-    let lapack_pivots_buf = vec::raw::to_mut_ptr(lapack_pivots);
+    let lapack_pivots_buf = lapack_pivots.as_mut_ptr();
 
     WeakGradSolver {
       wgrad_comp_mons_deg_lim: comp_mons_deg_lim,

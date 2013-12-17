@@ -7,17 +7,17 @@ use wg_basis::{WGBasis, FaceMonNum};
 use std::hashmap::HashMap;
 
 
-pub type BoundaryProjections<'self,Mon> = HashMap<(FENum,SideFace), PolyBorrowingMons<'self,Mon>>;
+pub type BoundaryProjections<'a,Mon> = HashMap<(FENum,SideFace), PolyBorrowingMons<'a,Mon>>;
 
-pub struct WGSolution<'self,Mon,MeshT> {
+pub struct WGSolution<'a,Mon,MeshT> {
   basis_coefs: ~[R],
-  basis: &'self WGBasis<Mon,MeshT>,
-  bnd_projs: BoundaryProjections<'self,Mon>
+  basis: &'a WGBasis<Mon,MeshT>,
+  bnd_projs: BoundaryProjections<'a,Mon>
 }
 
-impl<'self,Mon:Monomial,MeshT:Mesh<Mon>> WGSolution<'self,Mon,MeshT> {
+impl<'a, Mon:Monomial, MeshT:Mesh<Mon>> WGSolution<'a,Mon,MeshT> {
 
-  pub fn new(basis_coefs: ~[R], basis: &'self WGBasis<Mon,MeshT>, bnd_projs: BoundaryProjections<'self,Mon>) -> WGSolution<'self,Mon,MeshT> {
+  pub fn new(basis_coefs: ~[R], basis: &'a WGBasis<Mon,MeshT>, bnd_projs: BoundaryProjections<'a,Mon>) -> WGSolution<'a,Mon,MeshT> {
     WGSolution {
       basis_coefs: basis_coefs,
       basis: basis,
@@ -26,17 +26,17 @@ impl<'self,Mon:Monomial,MeshT:Mesh<Mon>> WGSolution<'self,Mon,MeshT> {
   }
   
   #[inline]
-  pub fn basis(&self) -> &'self WGBasis<Mon,MeshT> {
+  pub fn basis(&self) -> &'a WGBasis<Mon,MeshT> {
     self.basis
   }
   
   #[inline]
-  pub fn basis_coefs<'a>(&'a self) -> &'a [R] {
+  pub fn basis_coefs<'b>(&'b self) -> &'b [R] {
     self.basis_coefs.as_slice()
   }
 
   #[inline]
-  pub fn bnd_projs<'a>(&'a self) -> &'a BoundaryProjections<'self,Mon> {
+  pub fn bnd_projs<'b>(&'b self) -> &'b BoundaryProjections<'a,Mon> {
     &self.bnd_projs
   }
 
@@ -50,16 +50,15 @@ impl<'self,Mon:Monomial,MeshT:Mesh<Mon>> WGSolution<'self,Mon,MeshT> {
 
   /// Get the polynomial representing the passed full WG solution restricted to a particular finite element interior.
   #[inline]
-  pub fn fe_int_poly<'a>(&'a self, fe: FENum) -> PolyBorrowing<'a,Mon> {
+  pub fn fe_int_poly<'b>(&'b self, fe: FENum) -> PolyBorrowing<'b,Mon> {
     self.basis.fe_int_poly(fe, self.basis_coefs)
   }
 
   /// Get the polynomial representing the passed full WG solution restricted to a particular finite element interior.
   #[inline]
-  pub fn fe_side_poly<'a>(&'a self, fe: FENum, side_face: SideFace) -> PolyBorrowing<'a,Mon> {
+  pub fn fe_side_poly<'b>(&'b self, fe: FENum, side_face: SideFace) -> PolyBorrowing<'b,Mon> {
     self.basis.fe_side_poly(fe, side_face, self.basis_coefs)
   }
 
 }
-
 

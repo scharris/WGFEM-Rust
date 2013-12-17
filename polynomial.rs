@@ -13,15 +13,15 @@ pub struct PolyOwning<Mon> {
 }
 
 #[deriving(Eq, Clone)]
-pub struct PolyBorrowing<'self,Mon> {
-  coefs: &'self [R],
-  mons: &'self [Mon]
+pub struct PolyBorrowing<'a,Mon> {
+  coefs: &'a [R],
+  mons: &'a [Mon]
 }
 
 #[deriving(Eq, Clone)]
-pub struct PolyBorrowingMons<'self,Mon> {
+pub struct PolyBorrowingMons<'a,Mon> {
   coefs: ~[R],
-  mons: &'self [Mon]
+  mons: &'a [Mon]
 }
 
 
@@ -76,9 +76,9 @@ impl<Mon:Monomial> PolyOwning<Mon> {
 
 }
 
-impl<'self,Mon:Monomial> PolyBorrowing<'self,Mon> {
+impl<'a,Mon:Monomial> PolyBorrowing<'a,Mon> {
   
-  pub fn new(coefs: &'self [R], mons: &'self [Mon]) -> PolyBorrowing<'self,Mon> {
+  pub fn new(coefs: &'a [R], mons: &'a [Mon]) -> PolyBorrowing<'a,Mon> {
     match (coefs.len(), mons.len()) {
       (0,0) => fail!("Empty arrays passed to polynomial constructor."),
       (x,y) if x != y => fail!("Arrays of different lengths passed to polynomial constructor."),
@@ -87,9 +87,9 @@ impl<'self,Mon:Monomial> PolyBorrowing<'self,Mon> {
   }
 }
 
-impl<'self,Mon:Monomial> PolyBorrowingMons<'self,Mon> {
+impl<'a,Mon:Monomial> PolyBorrowingMons<'a,Mon> {
   
-  pub fn new(coefs: ~[R], mons: &'self [Mon]) -> PolyBorrowingMons<'self,Mon> {
+  pub fn new(coefs: ~[R], mons: &'a [Mon]) -> PolyBorrowingMons<'a,Mon> {
     match (coefs.len(), mons.len()) {
       (0,0) => fail!("Empty arrays passed to polynomial constructor."),
       (x,y) if x != y => fail!("Arrays of different lengths passed to polynomial constructor."),
@@ -155,14 +155,14 @@ impl<Mon:Monomial> Polynomial<Mon>
   #[inline]
   fn term(&self, n: uint) -> (R,Mon) {
     let coef = self.coefs[n];
-    let mon = unsafe { self.mons.unsafe_get(n) }; // bounds-checked already in coef access
+    let mon = unsafe { (*self.mons.unsafe_ref(n)).clone() }; // bounds-checked already in coef access
     (coef,mon)
   }
   
   fn foldl_terms<A>(&self, z: A, f: |a: A, term: (R,Mon)| -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.mons.len()) {
-      let term = unsafe { (self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
+      let term = unsafe { (*self.coefs.unsafe_ref(n), (*self.mons.unsafe_ref(n)).clone()) };
       acc_val = f(acc_val, term);
     }
     acc_val
@@ -171,7 +171,7 @@ impl<Mon:Monomial> Polynomial<Mon>
   fn foldl_numbered_terms<A>(&self, z: A, f: |a: A, term: (uint,R,Mon)| -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.num_terms()) {
-      let term = unsafe { (n, self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
+      let term = unsafe { (n, *self.coefs.unsafe_ref(n), (*self.mons.unsafe_ref(n)).clone()) };
       acc_val = f(acc_val, term);
     }
     acc_val
@@ -185,7 +185,7 @@ impl<Mon:Monomial> Polynomial<Mon>
   #[inline]
   fn each_term(&self, f: |term: (R,Mon)| -> ()) ->  () {
     for n in range(0, self.mons.len()) {
-      unsafe { f((self.coefs.unsafe_get(n), self.mons.unsafe_get(n))) };
+      unsafe { f((*self.coefs.unsafe_ref(n), (*self.mons.unsafe_ref(n)).clone())) };
     }
   }
 
@@ -205,8 +205,8 @@ impl<Mon:Monomial> Polynomial<Mon>
 
 }
 
-impl<'self,Mon:Monomial> Polynomial<Mon>
-                     for PolyBorrowing<'self,Mon> {
+impl<'a,Mon:Monomial> Polynomial<Mon>
+                  for PolyBorrowing<'a,Mon> {
 
   #[inline]
   fn num_terms(&self) -> uint {
@@ -216,14 +216,14 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
   #[inline]
   fn term(&self, n: uint) -> (R,Mon) {
     let coef = self.coefs[n];
-    let mon = unsafe { self.mons.unsafe_get(n) }; // bounds-checked already in coef access
+    let mon = unsafe { (*self.mons.unsafe_ref(n)).clone() }; // bounds-checked already in coef access
     (coef,mon)
   }
   
   fn foldl_terms<A>(&self, z: A, f: |a: A, term: (R,Mon)| -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.mons.len()) {
-      let term = unsafe { (self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
+      let term = unsafe { (*self.coefs.unsafe_ref(n), (*self.mons.unsafe_ref(n)).clone()) };
       acc_val = f(acc_val, term);
     }
     acc_val
@@ -232,7 +232,7 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
   fn foldl_numbered_terms<A>(&self, z: A, f: |a: A, term: (uint,R,Mon)| -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.num_terms()) {
-      let term = unsafe { (n, self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
+      let term = unsafe { (n, *self.coefs.unsafe_ref(n), (*self.mons.unsafe_ref(n)).clone()) };
       acc_val = f(acc_val, term);
     }
     acc_val
@@ -246,7 +246,7 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
   #[inline]
   fn each_term(&self, f: |term: (R,Mon)| -> ()) ->  () {
     for n in range(0, self.mons.len()) {
-      unsafe { f((self.coefs.unsafe_get(n), self.mons.unsafe_get(n))) };
+      unsafe { f((*self.coefs.unsafe_ref(n), (*self.mons.unsafe_ref(n)).clone())) };
     }
   }
 
@@ -266,8 +266,8 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
  
 }
 
-impl<'self,Mon:Monomial> Polynomial<Mon>
-                     for PolyBorrowingMons<'self,Mon> {
+impl<'a,Mon:Monomial> Polynomial<Mon>
+                  for PolyBorrowingMons<'a,Mon> {
 
   #[inline]
   fn num_terms(&self) -> uint {
@@ -277,14 +277,14 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
   #[inline]
   fn term(&self, n: uint) -> (R,Mon) {
     let coef = self.coefs[n];
-    let mon = unsafe { self.mons.unsafe_get(n) }; // bounds-checked already in coef access
+    let mon = unsafe { (*self.mons.unsafe_ref(n)).clone() }; // bounds-checked already in coef access
     (coef,mon)
   }
   
   fn foldl_terms<A>(&self, z: A, f: |a: A, term: (R,Mon)| -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.mons.len()) {
-      let term = unsafe { (self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
+      let term = unsafe { (*self.coefs.unsafe_ref(n), (*self.mons.unsafe_ref(n)).clone()) };
       acc_val = f(acc_val, term);
     }
     acc_val
@@ -293,7 +293,7 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
   fn foldl_numbered_terms<A>(&self, z: A, f: |a: A, term: (uint,R,Mon)| -> A) -> A {
     let mut acc_val = z;
     for n in range(0, self.num_terms()) {
-      let term = unsafe { (n, self.coefs.unsafe_get(n), self.mons.unsafe_get(n)) };
+      let term = unsafe { (n, *self.coefs.unsafe_ref(n), (*self.mons.unsafe_ref(n)).clone()) };
       acc_val = f(acc_val, term);
     }
     acc_val
@@ -307,7 +307,7 @@ impl<'self,Mon:Monomial> Polynomial<Mon>
   #[inline]
   fn each_term(&self, f: |term: (R,Mon)| -> ()) ->  () {
     for n in range(0, self.mons.len()) {
-      unsafe { f((self.coefs.unsafe_get(n), self.mons.unsafe_get(n))) };
+      unsafe { f((*self.coefs.unsafe_ref(n), (*self.mons.unsafe_ref(n)).clone())) };
     }
   }
 
@@ -337,21 +337,21 @@ fn to_str_impl<Mon: Monomial>(coefs: &[R], mons: &[Mon]) -> ~str {
 }
 
 impl<Mon:Monomial> ToStr
-             for PolyOwning<Mon> {
+               for PolyOwning<Mon> {
   fn to_str(&self) -> ~str {
     to_str_impl(self.coefs, self.mons)
   }
 }
 
-impl<'self,Mon:Monomial> ToStr
-                   for PolyBorrowing<'self,Mon> {
+impl<'a,Mon:Monomial> ToStr
+                  for PolyBorrowing<'a,Mon> {
   fn to_str(&self) -> ~str {
     to_str_impl(self.coefs, self.mons)
   }
 }
 
-impl<'self,Mon:Monomial> ToStr
-                   for PolyBorrowingMons<'self,Mon> {
+impl<'a,Mon:Monomial> ToStr
+                  for PolyBorrowingMons<'a,Mon> {
   fn to_str(&self) -> ~str {
     to_str_impl(self.coefs, self.mons)
   }
@@ -365,10 +365,10 @@ pub trait Scalable {
 
 }
 
-impl<'self,Mon:Monomial> Scalable
-                   for PolyBorrowingMons<'self,Mon> {
+impl<'a,Mon:Monomial> Scalable
+                  for PolyBorrowingMons<'a,Mon> {
   #[inline]
-  fn scaled(&self, r: R) -> PolyBorrowingMons<'self, Mon> {
+  fn scaled(&self, r: R) -> PolyBorrowingMons<'a, Mon> {
     let scaled_coefs = vec::from_fn(self.coefs.len(), |i| r * self.coefs[i]);
     PolyBorrowingMons { coefs: scaled_coefs, mons: self.mons }
   }
@@ -382,7 +382,7 @@ impl<'self,Mon:Monomial> Scalable
 }
 
 impl<Mon:Monomial> Scalable
-             for PolyOwning<Mon> {
+               for PolyOwning<Mon> {
   #[inline]
   fn scaled(&self, r: R) -> PolyOwning<Mon> {
     let scaled_coefs = vec::from_fn(self.coefs.len(), |i| r * self.coefs[i]);
