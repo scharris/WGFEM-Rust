@@ -5,6 +5,7 @@ use sparse_matrix::{SparseMatrix, Symmetric, StructurallySymmetric};
 use std::libc::{c_double, c_ulong, c_int, c_uint, c_void, malloc, calloc, realloc, free};
 use std::cast;
 use std::vec;
+use std::libc;
 
 
 pub type lapack_int = c_int; // Adjust according to whether LP64 or ILP64 libraries are being linked.
@@ -24,7 +25,7 @@ pub fn solve_sparse(sys: &SparseMatrix, rhs: &DenseMatrix) -> ~[R] {
   unsafe {
     let (a, ia, ja) = sys.csr3_ptrs();  
     let mut sol = vec::from_elem(n, 0 as R);
-    let cpu_cores = 4; // TODO
+    let cpu_cores = num_cpus() as c_uint;
 
     let stat = match sys.matrix_type() {
       Symmetric => 
@@ -86,5 +87,15 @@ extern {
                                                   b: *c_double, nrhs: mkl_int,
                                                   x: *mut c_double,
                                                   num_cpu_cores: c_uint) -> mkl_int;
+}
+
+fn num_cpus() -> uint {
+  unsafe {
+    return rust_get_num_cpus();
+  }
+
+  extern {
+    fn rust_get_num_cpus() -> libc::uintptr_t;
+  }
 }
 
