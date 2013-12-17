@@ -1465,7 +1465,6 @@ fn test_intg_global_fn_x_facerel_mon_on_fe16_int_4d() -> () {
                 pow(1./3.,3)/3. * pow(1./4.,5)/5. * pow(1./5.,2)/2. * pow(1./6.,2)/2.);
 }
 
-// TODO >>>
 #[test]
 fn test_intg_mixed_global_and_facerel_fn_on_fe4_int_2d() {
   let rmesh3x4: ~RectMesh<Mon2d> = ~RectMesh::new(~[1f64, 2.],
