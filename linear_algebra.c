@@ -6,7 +6,7 @@
 #include "mkl_pardiso.h"
 #include "mkl_types.h"
 #include "i_malloc.h"
-
+#include "suitesparse/umfpack.h"
 
 void init_allocator(void* malloc_fn, void* calloc_fn, void* realloc_fn, void* free_fn) {
   i_malloc = malloc_fn;
@@ -72,17 +72,16 @@ void copy_upper_triangle(const double* from_data, unsigned long num_rows, unsign
 }
 
 /* Dense matrix system solver. */
-lapack_int solve_symmetric_as_col_maj_with_ut_sys
-           (double* a, lapack_int n, double* b, lapack_int nrhs, lapack_int* ipiv) {
+lapack_int solve_symmetric_as_col_maj_with_ut_sys(double* a, lapack_int n, double* b, lapack_int nrhs, lapack_int* ipiv) {
   return LAPACKE_dsysv(LAPACK_COL_MAJOR, 'U', n, nrhs, a, n, ipiv, b, n);
 } 
 
 
 /* Sparse symmetric matrix system solver. */
-MKL_INT solve_sparse_symmetric_as_ut_csr3(MKL_INT n, const MKL_INT* ia, const MKL_INT* ja, const double* a,
-                                          const double* b, MKL_INT nrhs,
-                                          double* x,
-                                          unsigned num_cpu_cores) {
+MKL_INT mkl_solve_sparse_symmetric_as_ut_csr3(MKL_INT n, const MKL_INT* ia, const MKL_INT* ja, const double* a,
+                                              const double* b, MKL_INT nrhs,
+                                              double* x,
+                                              unsigned num_cpu_cores) {
 
   MKL_INT mtype = -2; /* symmetric indefinite */
   void *pt[64];
@@ -137,10 +136,10 @@ MKL_INT solve_sparse_symmetric_as_ut_csr3(MKL_INT n, const MKL_INT* ia, const MK
 }
 
 /* Sparse structurally symmetric matrix system solver. */
-MKL_INT solve_sparse_structurally_symmetric_csr3(MKL_INT n, const MKL_INT* ia, const MKL_INT* ja, const double* a,
-                                                 const double* b, MKL_INT nrhs,
-                                                 double* x,
-                                                 unsigned num_cpu_cores) {
+MKL_INT mkl_solve_sparse_structurally_symmetric_csr3(MKL_INT n, const MKL_INT* ia, const MKL_INT* ja, const double* a,
+                                                     const double* b, MKL_INT nrhs,
+                                                     double* x,
+                                                     unsigned num_cpu_cores) {
 
   MKL_INT mtype = 1; /*  1 == Real structurally symmetric matrix. */
   void *pt[64];
@@ -191,6 +190,35 @@ MKL_INT solve_sparse_structurally_symmetric_csr3(MKL_INT n, const MKL_INT* ia, c
   /* Release resources. */
   phase = -1;
   PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, &d_un, ia, ja, &i_un, &nrhs, iparm, &msglvl, &d_un, &d_un, &error);
+  return 0;
+}
+
+int umf_solve_sparse_csr3(int n, const int* ia, const int* ja, const double* a, const double* b, double* x) {
+  int status;
+  double *null = (double*)NULL;
+  void *Symbolic, *Numeric;
+
+  status = umfpack_di_symbolic(n, n, ia, ja, a, &Symbolic, null, null);
+  if (status != 0) { fprintf ("\nERROR during umf symbolic phase: %d", status); return status; }
+  
+  status = umfpack_di_numeric(ia, ja, a, Symbolic, &Numeric, null, null);
+  if (status != 0) { fprintf ("\nERROR during umf numeric phase: %d", status); return status; }
+  
+  umfpack_di_free_symbolic(&Symbolic);
+  
+  status = umfpack_di_solve(UMFPACK_Aat, // Solve transposed system (equiv. to converting passed CSR to the required CSC format).
+                            ia, // column begin indexes in a for the transpose
+                            ja, // row indexes of corresponding values in a for the transpose
+                            a,  // values for the transpose
+                            x, 
+                            b,
+                            Numeric,
+                            null,
+                            null);
+  if (status != 0) { fprintf ("\nERROR during umf solve phase: %d", status); return status; }
+  
+  umfpack_di_free_numeric (&Numeric);
+
   return 0;
 }
 
