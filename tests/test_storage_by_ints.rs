@@ -1,4 +1,4 @@
-use StorageByInts::*;
+use storage_by_ints::*;
 use common::R;
 
 #[test]
@@ -10,6 +10,22 @@ fn test_StorageByInts2_constr_from_fn() {
     }
   }
 }
+
+#[test]
+fn test_StorageByInts2_set() {
+  let mut t = StorageByInts2::from_fn(3,4, |i,j| 1000.*(i as R) + 100.*(j as R));
+  t.set(1,1, -99.);
+  for i in range(0u,3) {
+    for j in range(0u,4) {
+      if i == 1 && j == 1 {
+        assert_eq!(t.get(i,j), -99.);
+      } else {
+        assert_eq!(t.get(i,j), 1000.*(i as R) + 100.*(j as R));
+      }
+    }
+  }
+}
+
 
 #[test]
 fn test_StorageByInts3_constr_from_fn() {

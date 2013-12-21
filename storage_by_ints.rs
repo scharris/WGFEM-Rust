@@ -28,6 +28,11 @@ impl <T:Clone> StorageByInts2<T> {
     self.data[i0 * self.size_1 + i1].clone()
   }
   
+  #[inline]
+  pub fn set(&mut self, i0: uint, i1: uint, val: T) {
+    self.data[i0 * self.size_1 + i1] = val;
+  }
+  
 }
 
 struct StorageByInts3<T> {
