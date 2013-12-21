@@ -2,7 +2,7 @@ use common::{R, R_NaN};
 use mesh::{Mesh, FENum, OShape, SideFace, NBSideNum, NBSideInclusions};
 use wg_basis::{WGBasis, FaceMonNum};
 use monomial::Monomial;
-use tensor::{Tensor3, Tensor4, Tensor5};
+use storage_by_ints::{StorageByInts3, StorageByInts4, StorageByInts5};
 use sparse_matrix::{SparseMatrix, Symmetric, StructurallySymmetric};
 
 use std::vec;
@@ -59,7 +59,7 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
     // Create precomputed reference vbf values between monomials on single oriented shapes.
     let (int_vs_int_vbf_vals, int_vs_side_vbf_vals, side_vs_int_vbf_vals, side_vs_side_vbf_fe_contrs) = 
       (self.ref_int_vs_int_vbf_values(sym), 
-       if !sym { self.ref_int_vs_side_vbf_values() } else { Tensor4::from_elem(0,0,0,0,0 as R) },
+       if !sym { self.ref_int_vs_side_vbf_values() } else { StorageByInts4::from_elem(0,0,0,0,0 as R) },
        self.ref_side_vs_int_vbf_values(),
        self.ref_side_vs_side_vbf_fe_contrs(sym));
 
@@ -182,14 +182,14 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
     m
   }
 
-  /* Returns a tensor of interior monomial vs interior monomial vbf values.  Results are indexed by oshape,
+  /* Returns a collection of interior monomial vs interior monomial vbf values.  Results are indexed by oshape,
    * first monomial number, and second monomial number. If this variational form is symmetric, then only
    * values for which the first monomial is greater or equal to the second are provided.
    */
-  fn ref_int_vs_int_vbf_values(&self, sym: bool) -> Tensor3 { // indexed by oshape, monn, monn
+  fn ref_int_vs_int_vbf_values(&self, sym: bool) -> StorageByInts3<R> { // indexed by oshape, monn, monn
     let basis = self.basis();
     let num_int_mons = basis.mons_per_fe_int();
-    Tensor3::from_fn(basis.mesh().num_oriented_element_shapes(), num_int_mons, num_int_mons, |os, monn_1, monn_2| {
+    StorageByInts3::from_fn(basis.mesh().num_oriented_element_shapes(), num_int_mons, num_int_mons, |os, monn_1, monn_2| {
       if !sym || monn_1 >= monn_2 {
         self.int_mon_vs_int_mon(OShape(os), FaceMonNum(monn_1), FaceMonNum(monn_2))
       }
@@ -197,11 +197,11 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
     })
   }
 
-  /* Returns a tensor of vbf values indexed by oshape, side monomial number, side face, and interior monomial number.
+  /* Returns a collection of vbf values indexed by oshape, side monomial number, side face, and interior monomial number.
    */
-  fn ref_side_vs_int_vbf_values(&self) -> Tensor4 { // indexed by oshape, side monn, sf, int monn
+  fn ref_side_vs_int_vbf_values(&self) -> StorageByInts4<R> { // indexed by oshape, side monn, sf, int monn
     let basis = self.basis();
-    Tensor4::from_fn(basis.mesh().num_oriented_element_shapes(),
+    StorageByInts4::from_fn(basis.mesh().num_oriented_element_shapes(),
                      basis.mons_per_fe_side(),
                      basis.mesh().max_num_shape_sides(),
                      basis.mons_per_fe_int(),
@@ -213,11 +213,11 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
     })
   }
 
-  /* Returns a tensor of vbf values indexed by oshape, interior monomial number, side monomial number, and side face.
+  /* Returns a collection of vbf values indexed by oshape, interior monomial number, side monomial number, and side face.
    */
-  fn ref_int_vs_side_vbf_values(&self) -> Tensor4 { // indexed by oshape, int monn, side monn, sf
+  fn ref_int_vs_side_vbf_values(&self) -> StorageByInts4<R> { // indexed by oshape, int monn, side monn, sf
     let basis = self.basis();
-    Tensor4::from_fn(basis.mesh().num_oriented_element_shapes(),
+    StorageByInts4::from_fn(basis.mesh().num_oriented_element_shapes(),
                      basis.mons_per_fe_int(),
                      basis.mons_per_fe_side(),
                      basis.mesh().max_num_shape_sides(),
@@ -229,18 +229,18 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
     })
   }
 
-  /* Returns a tensor of contributions to side vs side vbf values on finite elements, indexed by finite element oshape,
+  /* Returns a collection of contributions to side vs side vbf values on finite elements, indexed by finite element oshape,
    * first and second side faces, and first and second monomial numbers.  If the vbf is symmetric, then values are only
    * defined where either the first side face is greater than the second, or the side faces are equal and the first
    * monomial number is greater or equal to the second.  Callers should use the auxillary get_side_vs_side_vbf_contr
    * function to obtain values from the returned data, which will find the proper value by reversing indexes as
    * necessary in the case that the vbf is symmetric.
    */
-  fn ref_side_vs_side_vbf_fe_contrs(&self, sym: bool) -> Tensor5 { // indexed by oshape, side monn, sf, side monn, sf
+  fn ref_side_vs_side_vbf_fe_contrs(&self, sym: bool) -> StorageByInts5<R> { // indexed by oshape, side monn, sf, side monn, sf
     let basis = self.basis();
     let num_oshapes = basis.mesh().num_oriented_element_shapes();
     let (max_sides, num_side_mons) = (basis.mesh().max_num_shape_sides(), basis.mons_per_fe_side());
-    Tensor5::from_fn(num_oshapes, num_side_mons, max_sides, num_side_mons, max_sides, |os, monn_1, sf_1, monn_2, sf_2| {
+    StorageByInts5::from_fn(num_oshapes, num_side_mons, max_sides, num_side_mons, max_sides, |os, monn_1, sf_1, monn_2, sf_2| {
       let num_sides = basis.mesh().num_side_faces_for_oshape(OShape(os));
       if sf_1 >= num_sides || sf_2 >= num_sides || // non-existent side
          sym && (sf_1 < sf_2 || sf_1 == sf_2 && monn_1 < monn_2) { // value should be obtained via other indexes by symmetry
@@ -258,7 +258,7 @@ pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
                                 monn_1: FaceMonNum, sf_1: SideFace,
                                 monn_2: FaceMonNum, sf_2: SideFace,
                                 sym: bool,
-                                side_vs_side_vbf_fe_contrs: &Tensor5) -> R {
+                                side_vs_side_vbf_fe_contrs: &StorageByInts5<R>) -> R {
     if !sym {
       side_vs_side_vbf_fe_contrs.get(*oshape, *monn_1, *sf_1, *monn_2, *sf_2)
     }

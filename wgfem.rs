@@ -19,7 +19,7 @@ mod quadrature;
 mod la;
 pub mod dense_matrix;
 pub mod sparse_matrix;
-pub mod tensor;
+pub mod storage_by_ints;
 pub mod mesh;
 pub mod rectangle_mesh;
 pub mod weak_gradient;
@@ -40,7 +40,7 @@ mod tests {
   mod test_vector_monomial;
   mod test_dense_matrix;
   mod test_sparse_matrix;
-  mod test_tensor;
+  mod test_storage_by_ints;
   mod test_la;
   // no tests for quadrature
   // no tests for abstract mesh
