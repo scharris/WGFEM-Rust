@@ -8,6 +8,21 @@ struct StorageByInts2<T> {
 
 impl <T:Clone> StorageByInts2<T> {
 
+  pub fn from_elem(size_0: uint, size_1: uint, elem: T) -> StorageByInts2<T> {
+    let sz = size_0 * size_1;
+    let mut data = vec::with_capacity(sz);
+    for i0 in range(0, size_0) {
+      for i1 in range(0, size_1) {
+        data.push(elem.clone());
+      }
+    }
+    StorageByInts2 {
+      data: data,
+      size_0: size_0,
+      size_1: size_1,
+    }
+  }
+
   pub fn from_fn(size_0: uint, size_1: uint,
                  f: |i0:uint, i1:uint| -> T) -> StorageByInts2<T> {
     let mut data = vec::with_capacity(size_0 * size_1);
