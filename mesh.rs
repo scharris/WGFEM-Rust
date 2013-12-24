@@ -35,6 +35,14 @@ pub struct NBSideInclusions {
   fe2: FENum,
   side_face_in_fe2: SideFace
 }
+impl NBSideInclusions {
+  pub fn new(nb_side_num: NBSideNum, fe1: FENum, side_face_in_fe1: SideFace, fe2: FENum, side_face_in_fe2: SideFace) -> NBSideInclusions
+  {
+    NBSideInclusions{ nb_side_num: nb_side_num,
+                      fe1: fe1, side_face_in_fe1: side_face_in_fe1,
+                      fe2: fe2, side_face_in_fe2: side_face_in_fe2 }
+  }
+}
 
 pub trait Mesh<Mon> {
 
