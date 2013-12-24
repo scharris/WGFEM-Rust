@@ -26,6 +26,16 @@ fn test_StorageByInts2_set() {
   }
 }
 
+#[test]
+fn test_StorageByInts2_constr_from_elem() {
+  let mut t = StorageByInts2::from_elem(3,4, 99.);
+  for i in range(0u,3) {
+    for j in range(0u,4) {
+      assert_eq!(t.get(i,j), .99);
+    }
+  }
+}
+
 
 #[test]
 fn test_StorageByInts3_constr_from_fn() {
