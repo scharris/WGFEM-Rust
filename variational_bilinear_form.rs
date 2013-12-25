@@ -7,8 +7,6 @@ use sparse_matrix::{SparseMatrix, Symmetric, StructurallySymmetric};
 
 use std::vec;
 use std::option::{Option};
-use extra::sort;
-
 
 pub trait VariationalBilinearForm<Mon:Monomial,MeshT:Mesh<Mon>> {
 
@@ -303,7 +301,7 @@ fn asc_nbsn_fe_sf_triplets_for_fes<'a, Mon:Monomial, MeshT:Mesh<Mon>>
   }
 
   let nb_sides = fe_nb_sides_buf.mut_slice(0, next_pos);
-  sort::quick_sort3(nb_sides);
+  nb_sides.sort();
   nb_sides.as_slice()
 }
 

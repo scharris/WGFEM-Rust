@@ -19,7 +19,7 @@ use std::iter::{AdditiveIterator};
  *    of basis elements supported on the boundary of T.
  */
 
-struct VBFLaplace<Mon,MeshT> {
+pub struct VBFLaplace<Mon,MeshT> {
 
   left_wgrad_multiplier: Option<DenseMatrix>, // post-multiplier matrix for left weak gradient in inner product
 
