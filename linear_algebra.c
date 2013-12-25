@@ -6,7 +6,7 @@
 #include "mkl_pardiso.h"
 #include "mkl_types.h"
 #include "i_malloc.h"
-#include "suitesparse/umfpack.h"
+/*TODO: Setup umfpack on OS X #include "suitesparse/umfpack.h"*/
 
 void init_allocator(void* malloc_fn, void* calloc_fn, void* realloc_fn, void* free_fn) {
   i_malloc = malloc_fn;
@@ -192,7 +192,7 @@ MKL_INT mkl_solve_sparse_structurally_symmetric_csr3(MKL_INT n, const MKL_INT* i
   PARDISO(pt, &maxfct, &mnum, &mtype, &phase, &n, &d_un, ia, ja, &i_un, &nrhs, iparm, &msglvl, &d_un, &d_un, &error);
   return 0;
 }
-
+/*
 int umf_solve_sparse_csr3(int n, const int* ia, const int* ja, const double* a, const double* b, double* x) {
   int status;
   double *null = (double*)NULL;
@@ -221,4 +221,4 @@ int umf_solve_sparse_csr3(int n, const int* ia, const int* ja, const double* a, 
 
   return 0;
 }
-
+*/
