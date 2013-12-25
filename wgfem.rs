@@ -1,6 +1,4 @@
-#[link(name = "wgfem",
-  vers = "0.8",
-  url = "https://github.com/scharris/WGFEM-Rust")];
+#[crate_id = "wgfem#0.8.1"];
 
 #[license = "MIT"];
 #[crate_type = "exe"];
