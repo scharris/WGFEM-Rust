@@ -80,7 +80,7 @@ pub struct FaceMonNum(uint);
 
 
 // A type representing a basis for Weak Galerkin approximating polynomials on an arbitrary mesh.
-struct WGBasis<Mon,Mesh> {
+pub struct WGBasis<Mon,Mesh> {
   
   // The mesh over which the Weak Galerkin basis is formed.
   mesh: ~Mesh,
