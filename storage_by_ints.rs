@@ -1,6 +1,6 @@
 use std::vec;
 
-struct StorageByInts2<T> {
+pub struct StorageByInts2<T> {
   data: ~[T],
   size_0: uint,
   size_1: uint,
@@ -35,7 +35,7 @@ impl <T:Clone> StorageByInts2<T> {
   
 }
 
-struct StorageByInts3<T> {
+pub struct StorageByInts3<T> {
   data: ~[T],
   size_0: uint,
   size_1: uint,
@@ -68,7 +68,7 @@ impl <T:Clone> StorageByInts3<T> {
   }
 }
 
-struct StorageByInts4<T> {
+pub struct StorageByInts4<T> {
   data: ~[T],
   size_0: uint,
   size_1: uint,
@@ -80,16 +80,7 @@ impl <T:Clone> StorageByInts4<T> {
 
   pub fn from_elem(size_0: uint, size_1: uint, size_2: uint, size_3: uint, elem: T) -> StorageByInts4<T> {
     let sz = size_0 * size_1 * size_2 * size_3;
-    let mut data = vec::with_capacity(sz);
-    for i0 in range(0, size_0) {
-      for i1 in range(0, size_1) {
-        for i2 in range(0, size_2) {
-          for i3 in range(0, size_3) {
-            data.push(elem.clone());
-          }
-        }
-      }
-    }
+    let data = vec::from_elem(sz, elem);
     StorageByInts4 {
       data: data,
       size_0: size_0,
@@ -128,7 +119,7 @@ impl <T:Clone> StorageByInts4<T> {
 }
 
 
-struct StorageByInts5<T> {
+pub struct StorageByInts5<T> {
   data: ~[T],
   size_0: uint,
   size_1: uint,
