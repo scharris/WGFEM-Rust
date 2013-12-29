@@ -483,7 +483,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
     let (fe_min_corner, fe_max_corner) = unsafe { // Mutate a work buffer to hold the fe min and max corners.
       cast::transmute_mut(self).fe_coord_min_max_corners(fe)
     };
-    quadrature(&f, fe_min_corner, fe_max_corner, self.integration_rel_err, self.integration_abs_err)
+    space_adaptive_quadrature(&f, fe_min_corner, fe_max_corner, self.integration_rel_err, self.integration_abs_err)
   }
 
   #[inline]
@@ -492,9 +492,9 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
       cast::transmute_mut(self).fe_coord_min_max_corners(fe)
     };
     let fe_int_origin = &fe_min_corner;
-    quadrature(&|x: &[R]| { f(x) * mon.value_at_for_origin(x, *fe_int_origin) },
-               fe_min_corner, fe_max_corner,
-               self.integration_rel_err, self.integration_abs_err)
+    space_adaptive_quadrature(&|x: &[R]| { f(x) * mon.value_at_for_origin(x, *fe_int_origin) },
+                            fe_min_corner, fe_max_corner,
+                            self.integration_rel_err, self.integration_abs_err)
   }
   
   #[inline]
@@ -513,9 +513,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
       f(x, x_rel)
     };
     
-    quadrature(&integrand,
-               fe_min_corner, fe_max_corner,
-               self.integration_rel_err, self.integration_abs_err)
+    space_adaptive_quadrature(&integrand, fe_min_corner, fe_max_corner, self.integration_rel_err, self.integration_abs_err)
   }
 
   
@@ -539,9 +537,7 @@ impl<Mon:Monomial+RectIntegrable> Mesh<Mon>
       g(x) * mon.value_at_reduced_dim_by_fixing(x_ss, a, 0 as R)
     };
     
-    quadrature(&integrand,
-               self.side_space_dims_zeros, self.fe_side_lens_wo_dim[*a],
-               self.integration_rel_err, self.integration_abs_err)
+    space_adaptive_quadrature(&integrand, self.side_space_dims_zeros, self.fe_side_lens_wo_dim[*a], self.integration_rel_err, self.integration_abs_err)
   }
 
   #[inline]
