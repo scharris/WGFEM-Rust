@@ -98,7 +98,7 @@ impl<'a,Mon:Monomial> PolyBorrowingMons<'a,Mon> {
   }
 }
 
-pub trait Polynomial<Mon>: ToStr {
+pub trait Polynomial<Mon: Monomial>: ToStr {
 
   fn num_terms(&self) -> uint;
   
@@ -108,7 +108,15 @@ pub trait Polynomial<Mon>: ToStr {
   
   fn foldl_numbered_terms<A>(&self, z: A, f: |a: A, term: (uint,R,Mon)| -> A) -> A;
 
-  fn value_at(&self, x: &[R]) -> R;
+  #[inline]
+  fn value_at(&self, x: &[R]) -> R {
+    self.foldl_terms(0 as R, |sum, (c,m)| sum + c * m.value_at(x))
+  }
+  
+  #[inline]
+  fn value_at_for_origin(&self, x: &[R], o: &[R]) -> R {
+    self.foldl_terms(0 as R, |sum, (c,m)| sum + c * m.value_at_for_origin(x, o))
+  }
   
   fn each_term(&self, f: |term: (R,Mon)| -> ()) ->  ();
 
@@ -178,11 +186,6 @@ impl<Mon:Monomial> Polynomial<Mon>
   }
  
   #[inline]
-  fn value_at(&self, x: &[R]) -> R {
-    self.foldl_terms(0 as R, |sum, (c,m)| sum + c * m.value_at(x))
-  }
-
-  #[inline]
   fn each_term(&self, f: |term: (R,Mon)| -> ()) ->  () {
     for n in range(0, self.mons.len()) {
       unsafe { f((*self.coefs.unsafe_ref(n), (*self.mons.unsafe_ref(n)).clone())) };
@@ -239,11 +242,6 @@ impl<'a,Mon:Monomial> Polynomial<Mon>
   }
   
   #[inline]
-  fn value_at(&self, x: &[R]) -> R {
-    self.foldl_terms(0 as R, |sum, (c,m)| sum + c * m.value_at(x))
-  }
-
-  #[inline]
   fn each_term(&self, f: |term: (R,Mon)| -> ()) ->  () {
     for n in range(0, self.mons.len()) {
       unsafe { f((*self.coefs.unsafe_ref(n), (*self.mons.unsafe_ref(n)).clone())) };
@@ -299,11 +297,6 @@ impl<'a,Mon:Monomial> Polynomial<Mon>
     acc_val
   }
   
-  #[inline]
-  fn value_at(&self, x: &[R]) -> R {
-    self.foldl_terms(0 as R, |sum, (c,m)| sum + c * m.value_at(x))
-  }
-
   #[inline]
   fn each_term(&self, f: |term: (R,Mon)| -> ()) ->  () {
     for n in range(0, self.mons.len()) {
