@@ -1,0 +1,13 @@
+External Libraries Setup
+------------------------
+Before compiling the project, some external libraries need to be compiled.
+
+Compile adaptive quadrature library.
+  cc -fPIC -O3 -c hquadrature.c -o adaptive_quadrature.o
+  Copy adaptive_quadrature.o into the lib/ subdirectory.
+
+Compile the Gaussian quadrature integration library.
+  cc -fPIC -O3 -c gauss_legendre.c -o gaussian_quadrature.o
+  Copy guassian_quadrature.o into the lib/ subdirectory.
+
+
