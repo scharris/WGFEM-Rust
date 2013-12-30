@@ -35,12 +35,22 @@ pub fn space_adaptive_quadrature(f: & |&[R]| -> R, min_corner: &[R], max_corner:
 }
 
 #[inline(never)]
-// Perform gaussian quadrature of f on [a,b]x[c,d] using the indicated number of points.
-pub fn gaussian_quadrature_2D_rect(num_pts: u8, f: & |x: R, y: R| -> R, a: R, b: R, c: R, d: R) -> R {
+// Perform gaussian quadrature of f on [a,b]x[c,d] using n weights per axis (for a total of 2n weights and n^2 evaluation points).
+pub fn gaussian_quadrature_2D_rect(n: uint, f: & |x: R, y: R| -> R, a: R, b: R, c: R, d: R) -> R {
+  let gq_order = {
+    if n <= 10 { 2*n as uint}
+    else if n <= 16 { 32 }
+    else if n <= 32 { 64 }
+    else if n <= 48 { 96 }
+    else if n <= 64 { 128 }
+    else if n <= 128 { 256 }
+    else if n <= 256 { 512 }
+    else { fail!("Degree limit exceeded for Gaussian quadrature.") }
+  };
   unsafe {
     let f_pv: *c_void = cast::transmute(f); 
     let gq_integrand_caller_pv: *c_void = cast::transmute(gq_integrand_caller);
-    gauss_legendre_2D_cube(num_pts as c_int, gq_integrand_caller_pv, f_pv, a, b, c, d)
+    gauss_legendre_2D_rect(gq_order as c_int, gq_integrand_caller_pv, f_pv, a, b, c, d)
   }
 }
 
@@ -80,7 +90,7 @@ extern {
                  norm: u32,
                  val: *mut R, err: *mut R) -> c_int;
 
-  fn gauss_legendre_2D_cube(n: c_int,
+  fn gauss_legendre_2D_rect(order: c_int,
                             f: *c_void,    // double (*f)(double,double,void*)
                             data: *c_void, // passed as last param to f for each evaluation
                             a: R, b: R, c: R, d: R) -> R;

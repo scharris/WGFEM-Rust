@@ -1,5 +1,5 @@
 use common::*;
-use monomial::{Monomial, Mon1d, Mon2d, Mon3d, Mon4d, domain_space_dims};
+use monomial::{Monomial, domain_space_dims};
 use polynomial::Polynomial;
 use vector_monomial::VectorMonomial;
 use mesh::*;
@@ -7,11 +7,12 @@ use quadrature::*;
 use storage_by_ints::StorageByInts2;
 
 use std::vec;
-use std::num::{sqrt, hypot, max, abs, pow_with_uint};
-use std::iter::{Iterator, range_inclusive, AdditiveIterator};
+use std::num::{hypot, min, max, abs, pow_with_uint};
+use std::iter::{Iterator, range_inclusive};
 use std::cast;
 use std::hashmap::{HashMap, HashSet};
 use std::util::swap;
+use std::cmp::{Less, Greater};
 
 
 // Tag for a mesh geometric region or physical entity, from the input data.
@@ -86,7 +87,7 @@ impl RefTri {
     let ((v0_x,v0_y), (v1_x,v1_y), (v2_x,v2_y)) = (v0,v1,v2);
     let scaled_v01 = (scale*(v1_x - v0_x), scale*(v1_y - v0_y));
     let scaled_v02 = (scale*(v2_x - v0_x), scale*(v2_y - v0_y));
-    let norm_scaled_v12 = scale * hypot(v2_x - v1_x, v2_y - v1_y);
+    let norm_scaled_v12 = scale * dist(v1, v2);
     let normals = RefTri::side_face_outward_normals(v0, v1, v2, nums_side_faces_btw_verts);
     let dep_dims_by_side_face = RefTri::side_face_dep_dims(v0,v1,v2, nums_side_faces_btw_verts);
     let diameter_inv = 1./max(norm(scaled_v01), max(norm(scaled_v02), norm_scaled_v12));
@@ -113,39 +114,25 @@ impl RefTri {
   */
   fn side_face_outward_normals(v0: Point, v1: Point, v2: Point, nums_side_faces_btw_verts: (u8,u8,u8)) -> ~[Vec]
   {
-    let ((v0_x, v0_y), (v1_x, v1_y), (v2_x, v2_y)) = (v0, v1, v2);
     let (sfs_v01, sfs_v12, sfs_v20) = nums_side_faces_btw_verts;
-    
     // inter-vertex vectors
-    let v01 = (v1_x - v0_x, v1_y - v0_y);
-    let v12 = (v2_x - v1_x, v2_y - v1_y);
-    let v20 = (v0_x - v2_x, v0_y - v2_y);
+    let (v01, v12, v20) = (vdiff(v1,v0), vdiff(v2,v1), vdiff(v0,v2));
     let ivvs = [(v01, sfs_v01),
                 (v12, sfs_v12),
                 (v20, sfs_v20)];
     
-    let cc = if RefTri::oriented_counterclockwise(v01, v12) { 1. as R } else { -1. as R };
+    let cc = if oriented_counterclockwise(v01, v12) { 1. as R } else { -1. as R };
     
     let mut normals = vec::with_capacity((sfs_v01 + sfs_v12 + sfs_v20) as uint);
     for &((ivv_x, ivv_y), sfs) in ivvs.iter()
     {
       let len = hypot(ivv_x, ivv_y);
       let n = (cc * ivv_y/len, -cc * ivv_x/len);
-      for sf in range(0, sfs as uint)
-      {
-        normals.push(n);
-      }
+      (sfs as uint).times(|| normals.push(n));
     }
     normals
   }
   
-  // Determine whether a counterclockwise rotation not exceeding 1/2 turn can transform the first vector to a positive multiple of the second.
-  fn oriented_counterclockwise((u_x,u_y): Vec, (v_x,v_y): Vec) -> bool
-  {
-    u_x*v_y - u_y*v_x > 0. as R
-  }
-
-
   fn side_face_dep_dims(v0: Point, v1: Point, v2: Point, nums_side_faces_btw_verts: (u8,u8,u8)) -> ~[Dim]
   {
     let (sfs_v01, sfs_v12, sfs_v20) = nums_side_faces_btw_verts;
@@ -158,10 +145,7 @@ impl RefTri {
     for &((va,vb), sfs) in vert_pairs.iter()
     {
       let dep_dim = RefTri::side_face_dep_dim(va, vb);
-      for i in range(0, sfs)
-      {
-        dep_dims.push(dep_dim);
-      }
+      (sfs as uint).times(|| dep_dims.push(dep_dim));
     }
     dep_dims
   }
@@ -208,6 +192,9 @@ pub struct TriMesh<Mon> {
   // number of boundary sides
   num_b_sides: uint,
 
+  // maximum number of side faces for any oriented shape
+  max_num_shape_sides: uint,
+
   // number of oriented shapes
   num_oshapes: uint,
 
@@ -224,7 +211,183 @@ pub struct TriMesh<Mon> {
 
 }
 
+impl<Mon:Monomial> TriMesh<Mon> {
 
+  // TODO: Put convenience constructors here.
+  
+  /*
+  # construction from rectangle mesh
+  function from_rect_mesh(rmesh::RMesh.RectMesh, subdiv_ops::Int)
+    assert(Mesh.space_dim(rmesh) == 2)
+    const EMPTY_TAGS_ARRAY = Array(Tag,0)
+
+    const num_rects = Mesh.num_fes(rmesh)
+    const rect_dims = RMesh.fe_dims(rmesh)
+    const num_points = uint64(num_rects + sum(RMesh.logical_dims(rmesh))+1)
+
+    const nodenums_by_mcoords = sizehint(Dict{(RMesh.MeshCoord, RMesh.MeshCoord), NodeNum}(), num_points)
+    const points_by_ptnum = sizehint(Array(Point, 0), num_points)
+
+    function register_point(pt_mcoords::(RMesh.MeshCoord, RMesh.MeshCoord))
+      const existing_ptnum = get(nodenums_by_mcoords, pt_mcoords, nodenum(0))
+      if existing_ptnum == 0
+        # Register the new point number with its mesh coordinates.
+        push!(points_by_ptnum,
+              Point(rmesh.min_bounds[1] + (pt_mcoords[1] - 1) * rect_dims[1],
+                    rmesh.min_bounds[2] + (pt_mcoords[2] - 1) * rect_dims[2]))
+        const new_ptnum = nodenum(length(points_by_ptnum))
+        nodenums_by_mcoords[pt_mcoords] = new_ptnum
+        new_ptnum
+      else
+        existing_ptnum
+      end
+    end
+
+    const base_tris = sizehint(Array(BaseTri, 0), 2*num_rects)
+    
+    const rect_mcoords = Array(RMesh.MeshCoord, Mesh.space_dim(rmesh))
+
+    for rect_fe=Mesh.fenum(1):num_rects
+      RMesh.fe_mesh_coords!(rect_fe, rect_mcoords, rmesh)
+
+      const ll_ptnum = register_point((rect_mcoords[1],   rect_mcoords[2]))
+      const lr_ptnum = register_point((rect_mcoords[1]+1, rect_mcoords[2]))
+      const ur_ptnum = register_point((rect_mcoords[1]+1, rect_mcoords[2]+1))
+      const ul_ptnum = register_point((rect_mcoords[1],   rect_mcoords[2]+1))
+
+      push!(base_tris, BaseTri((ll_ptnum, lr_ptnum, ur_ptnum), tag(rect_fe), tag(rect_fe), EMPTY_TAGS_ARRAY))
+      push!(base_tris, BaseTri((ll_ptnum, ur_ptnum, ul_ptnum), tag(rect_fe), tag(rect_fe), EMPTY_TAGS_ARRAY))
+    end
+
+    TriMesh(points_by_ptnum,
+            base_tris,
+            length(base_tris),
+            subdiv_ops,
+            rmesh.integration_rel_err, rmesh.integration_abs_err,
+            false, true) # load geom entity tags
+  end
+  */
+
+  // Reference triangle for a finite element.
+  fn ref_tri_for_fe<'a>(&'a self, fe: FENum) ->  &'a RefTri
+  { &self.oshapes[*self.fes[*fe].oshape] }
+
+
+  /* Integrate a function over the triangular region bounded on two sides by two non-vertical lines of
+   * indicated slopes which meet at a point q, and by the indicated vertical line as the remaining side.
+   */
+  fn intg_fn_btw_pt_and_vert_seg(& self,
+                                 f: |x: &[R]| -> R,
+                                 q: Point,
+                                 slope_1: R, slope_2: R,
+                                 vert_line_x: R) -> R
+  {
+    let (xminT, xmaxT) = (min(q.n0(), vert_line_x), max(q.n0(), vert_line_x));
+    let w = xmaxT - xminT; // width of triangular integration region
+
+    /* Method
+     * We will pull back the integration over the original triangular section T to an integration
+     * over the unit square, by change of variables via the bijection
+     *
+     * TODO: Check this.
+     *   t:[0,1]^2 -> T:  t(x,y) = (xminT + x w,  q_2 + m1 (xminT + x w - q_1) + y(m2 - m1)(xminT + x w - q_1))
+     * 
+     * Here m1 and m2 are the slopes of the non-vertical bounding lines (m1 != m2).
+     * The determinant of the derivative matrix Dt(x,y) is
+     *                     |          w                           0                |
+     *  det Dt(x,y)| = det |                                                       |
+     *                     | m1 w + y(m2 - m1) w      (m2 - m1)(xminT + x w - q_1) |
+     *               = w (m2 - m1) (xminT + x w - q_1).
+     *  Now by applying change of variables in the integral of f over the T via the mapping t,
+     *  we have
+     *    int_T f = int_0^1 int_0^1 f(t(x,y)) |det Dt(x,y)| dy dx
+     *            = int_0^1 int_0^1 f(t(x,y)) |w (m2 - m1) (xminT + x w - q_1)| dy dx
+     */
+    
+    let slopediff = slope_2 - slope_1;
+    let w_slopediff = w * slopediff;
+    
+    let t = unsafe { & mut cast::transmute_mut(self).integrand_work_array };
+
+    let integrand = |s: &[R]| { // unit square point
+      let xT = xminT + s[0] * w;     // triangle x
+      let xT_minus_qx = xT - q.n0(); // relative triangle x
+        
+      // Construct the triangle point t(x,y).
+      t[0] = xT;
+      t[1] = q.n1() + slope_1 * xT_minus_qx + s[1] * slopediff * xT_minus_qx;
+      let det_Dt = w_slopediff * xT_minus_qx;
+      f(*t) * abs(det_Dt)
+    };
+    
+    space_adaptive_quadrature(&integrand, [0 as R, 0 as R], [1 as R, 1 as R], self.integration_rel_err, self.integration_abs_err)
+  }
+  
+  /* Integrate an interior-relative polynomial over the triangular region bounded on two sides by two non-vertical lines
+   * of indicated slopes which meet at a point q, and by the indicated vertical line as the remaining side.
+   */
+  fn intg_poly_btw_pt_and_vert_seg<Mon:Monomial,P:Polynomial<Mon>>(& self, 
+                                                                   p: P, p_origin: Point,
+                                                                   q: Point,
+                                                                   slope_1: R, slope_2: R,
+                                                                   vert_line_x: R) -> R
+  {
+    let (xminT, xmaxT) = (min(q.n0(), vert_line_x), max(q.n0(), vert_line_x));
+    let w = xmaxT - xminT; // width of triangular integration region
+
+    let slopediff = slope_2 - slope_1;
+    let w_slopediff = w * slopediff;
+    
+    let t = unsafe { & mut cast::transmute_mut(self).integrand_work_array };
+
+    // The integrand after change of variables to pull back the integration to the unit square is:
+    //   (x,y) -> p(t(x,y)) |w (m2 - m1) (xminT + x w - q_1)|
+    //   where t:[0,1]^2 -> T:  t(x,y) = (xminT + x w,  q_2 + m1 (xminT + x w - q_1) + y(m2 - m1)(xminT + x w - q_1)).
+    // See comments in above function about the change of variables being used.
+    let unit_sq_integrand = |xS: R, yS: R| { // unit square point
+      let xT = xminT + xS * w;       // triangle x
+      let xT_minus_qx = xT - q.n0(); // relative triangle x
+        
+      // Construct the triangle point t(x,y).
+      t[0] = xT;
+      t[1] = q.n1() + slope_1 * xT_minus_qx + yS * slopediff * xT_minus_qx;
+      let det_Dt = w_slopediff * xT_minus_qx;
+      p.value_at_for_origin(*t, [p_origin.n0(), p_origin.n1()]) * abs(det_Dt)
+    };
+
+    /*
+     * The integrand is a polynomial because the RHS factor under the absolute value will not change sign
+     * for x in [0,1]: its non-constant factor will range either from 0 to w if q_1 = xminT, or from -w to
+     * 0 if q_1 = xmaxT.
+     *
+     * For the integral to be exact using repeated Gaussian quadrature, we need
+     *   k <= 2n - 1, [see e.g. http://math2.uncc.edu/~shaodeng/TEACHING/math5172/Lectures/Lect_15.PDF]
+     * where 
+     *   n is the number of weight values for each axis (2n weights, n^2 total points), and
+     *   k is the maximum individual variable degree in the integrand polynomial.
+     *
+     * The maximum variable degree in (x,y) -> p(t(x,y)) is no more than the maximum variable degree of p itself,
+     * because t's maximum variable degree is 1 in both components. Taking the right hand absolute value factor
+     * into account, which has a maximum variable degree of 1, then an upper bound on the maximum variable degree
+     * for the complete integrand is
+     *   k = 1 + max variable degree in p
+     */
+    
+    // The upper bound for maximum individual variable degree in the integrand polynomial.
+    let k = 1 + p.foldl_terms(0u, |max_over_terms, (_, mon)| {
+      let deg = max(*mon.exp(Dim(0)), *mon.exp(Dim(1))) as uint;
+      if deg > max_over_terms { deg } else { max_over_terms }
+    });
+    
+    // Choose the smallest number of weights per axis n where k <= 2n - 1.
+    let n = if k % 2 != 0 { (k+1)/2 } else { (k+1)/2 + 1 };
+    
+    gaussian_quadrature_2D_rect(n, &unit_sq_integrand, 0 as R, 0 as R, 1 as R, 1 as R)
+  }
+
+
+
+}
 
 /****************************************************************************
  * Mesh construction.
@@ -252,15 +415,14 @@ struct MeshBuilder {
 
 impl MeshBuilder {
   
-  pub fn make_mesh<Mon:Monomial,I:Iterator<BaseTri>>
-         (base_pts_by_nodenum: ~[Point],
-          mut base_tris_iter: &mut I,
-          est_base_tris: uint,
-          global_subdiv_iters: uint,
-          integration_rel_err: R,
-          integration_abs_err: R,
-          load_phys_reg_tags: bool,
-          load_geom_ent_tags: bool) -> TriMesh<Mon>
+  pub fn make_mesh<Mon:Monomial,I:Iterator<BaseTri>>(base_pts_by_nodenum: ~[Point],
+                                                     mut base_tris_iter: &mut I,
+                                                     est_base_tris: uint,
+                                                     global_subdiv_iters: uint,
+                                                     integration_rel_err: R,
+                                                     integration_abs_err: R,
+                                                     load_phys_reg_tags: bool,
+                                                     load_geom_ent_tags: bool) -> TriMesh<Mon>
   {
     // Make estimates of the number of finite elements and reference triangles for storage allocation.
     // This estimate ignores optional additional subdivisions that may be specified for some input elements.
@@ -295,6 +457,7 @@ impl MeshBuilder {
     let num_fes = bldr.fes.len(); 
     let num_oshapes = bldr.oshapes.len();
     let space_dims = domain_space_dims::<Mon>();
+    let max_num_shape_sides = bldr.oshapes.iter().map(|ref_tri| ref_tri.num_side_faces).max().unwrap();
 
     TriMesh {
       fes: bldr.take_fes(),
@@ -304,6 +467,7 @@ impl MeshBuilder {
       num_fes: num_fes,
       num_nb_sides: bldr.num_nb_sides as uint,
       num_b_sides: bldr.num_b_sides as uint,
+      max_num_shape_sides: max_num_shape_sides,
       num_oshapes: num_oshapes,
       integrand_work_array: vec::from_elem(space_dims, 0 as R),
       space_dim_zeros: vec::from_elem(space_dims, 0 as R),
@@ -428,16 +592,13 @@ impl MeshBuilder {
   // Register the single secondary (inverted) subdivision triangle for the given (primary) base triangle, and number of subdivisions
   // to be applied on the base (primary) triangle.
   fn register_secondary_ref_tri(& mut self,
-                                (pv0_x, pv0_y): Point, (pv1_x, pv1_y): Point, (pv2_x, pv2_y): Point, // base (primary) triangle vertexes
+                                pv0: Point, pv1: Point, pv2: Point, // base (primary) triangle vertexes
                                 subdiv_iters: uint) -> OShape
   {
     let sec_oshape = OShape(self.oshapes.len());
     let sec_ref_tri = {
-      let (sv0, sv1, sv2) = ((0.5*(pv0_x + pv1_x), 0.5*(pv0_y + pv1_y)),
-                             (0.5*(pv1_x + pv2_x), 0.5*(pv1_y + pv2_y)),
-                             (0.5*(pv2_x + pv0_x), 0.5*(pv2_y + pv0_y)));
-      let scale = { let p: uint = pow_with_uint(2u, subdiv_iters-1); 1./(p as R) }; // sv0, sv1, sv2 already represents one subdivision
-      RefTri::new(sv0,sv1,sv2, scale, (1u8,1u8,1u8))
+      let scale = { let p: uint = pow_with_uint(2u, subdiv_iters-1); 1./(p as R) }; // midpoints already represent one subdivision
+      RefTri::new(midpt(pv0, pv1), midpt(pv1, pv2), midpt(pv2, pv0), scale, (1u8,1u8,1u8))
     };
     self.oshapes.push(sec_ref_tri);
     sec_oshape
@@ -460,11 +621,7 @@ impl MeshBuilder {
     {
       let (sfs_v01, sfs_v12, sfs_v20) = nums_side_faces_btw_verts;
 
-      let ((v0_x,v0_y), (v1_x,v1_y), (v2_x,v2_y)) = (v0,v1,v2);
-      let midpt_v01 = (0.5*(v0_x + v1_x), 0.5*(v0_y + v1_y)); 
-      let midpt_v12 = (0.5*(v1_x + v2_x), 0.5*(v1_y + v2_y));
-      let midpt_v20 = (0.5*(v2_x + v0_x), 0.5*(v2_y + v0_y)); 
-
+      let (midpt_v01, midpt_v12, midpt_v20) = (midpt(v0,v1), midpt(v1,v2), midpt(v2,v0));
 
       // The sub-triangle including v0 has its first and last vertex pairs embedded in the original triangle's first and
       // third sides, and so inherits the corresponding numbers of faces between vertexes from nums_side_faces_btw_verts.
@@ -509,10 +666,7 @@ impl MeshBuilder {
     }
     else
     {
-      let ((v0_x,v0_y), (v1_x,v1_y), (v2_x,v2_y)) = (v0,v1,v2);
-      let midpt_v01 = (0.5*(v0_x + v1_x), 0.5*(v0_y + v1_y)); 
-      let midpt_v12 = (0.5*(v1_x + v2_x), 0.5*(v1_y + v2_y));
-      let midpt_v20 = (0.5*(v2_x + v0_x), 0.5*(v2_y + v0_y)); 
+      let (midpt_v01, midpt_v12, midpt_v20) = (midpt(v0,v1), midpt(v1,v2), midpt(v2,v0));
 
       // Corner subtriangles of this secondary triangle are secondary triangles needing one less subdivision iteration.
       self.subdivide_secondary(v0, midpt_v01, midpt_v20,
@@ -628,7 +782,7 @@ impl MeshBuilder {
       {
         1 => endpts_buf.push(mk_endpoint_pair(va, vb, endpoints_ordering)),
         2 => {
-          let midpt = { let ((va_x,va_y),(vb_x,vb_y)) = (va,vb); (0.5*(va_x + vb_x), 0.5*(va_y + vb_y)) };
+          let midpt = midpt(va, vb);
           endpts_buf.push(mk_endpoint_pair(va, midpt, endpoints_ordering));
           endpts_buf.push(mk_endpoint_pair(midpt, vb, endpoints_ordering));
         }
@@ -708,8 +862,7 @@ impl MeshBuilder {
   {
     let mut endpt_pairs_opt = None;
     swap(& mut endpt_pairs_opt, & mut self.sf_endpt_pairs_work_buf);
-    let mut endpt_pairs = endpt_pairs_opt.unwrap();
-    endpt_pairs
+    endpt_pairs_opt.unwrap()
   }
   
   fn return_side_face_endpoint_pairs_buf(& mut self, buf: ~[(Point,Point)])
@@ -747,58 +900,259 @@ impl SideReps {
 
 }
 
-/*
-# construction from rectangle mesh
-function from_rect_mesh(rmesh::RMesh.RectMesh, subdiv_ops::Int)
-  assert(Mesh.space_dim(rmesh) == 2)
-  const EMPTY_TAGS_ARRAY = Array(Tag,0)
 
-  const num_rects = Mesh.num_fes(rmesh)
-  const rect_dims = RMesh.fe_dims(rmesh)
-  const num_points = uint64(num_rects + sum(RMesh.logical_dims(rmesh))+1)
+impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
 
-  const nodenums_by_mcoords = sizehint(Dict{(RMesh.MeshCoord, RMesh.MeshCoord), NodeNum}(), num_points)
-  const points_by_ptnum = sizehint(Array(Point, 0), num_points)
+  #[inline]
+  fn num_fes(&self) -> uint
+  { self.num_fes }
 
-  function register_point(pt_mcoords::(RMesh.MeshCoord, RMesh.MeshCoord))
-    const existing_ptnum = get(nodenums_by_mcoords, pt_mcoords, nodenum(0))
-    if existing_ptnum == 0
-      # Register the new point number with its mesh coordinates.
-      push!(points_by_ptnum,
-            Point(rmesh.min_bounds[1] + (pt_mcoords[1] - 1) * rect_dims[1],
-                  rmesh.min_bounds[2] + (pt_mcoords[2] - 1) * rect_dims[2]))
-      const new_ptnum = nodenum(length(points_by_ptnum))
-      nodenums_by_mcoords[pt_mcoords] = new_ptnum
-      new_ptnum
-    else
-      existing_ptnum
-    end
-  end
+  #[inline]
+  fn num_nb_sides(&self) -> uint
+  { self.num_nb_sides }
 
-  const base_tris = sizehint(Array(BaseTri, 0), 2*num_rects)
+  #[inline]
+  fn num_oriented_element_shapes(&self) -> uint
+  { self.num_oshapes }
+
+  #[inline]
+  fn oriented_shape_for_fe(&self, fe: FENum) -> OShape
+  { self.fes[*fe].oshape }
+
+  #[inline]
+  fn num_side_faces_for_oshape(&self, os: OShape) -> uint
+  { self.oshapes[*os].num_side_faces }
+
+  #[inline]
+  fn dependent_dim_for_oshape_side(&self, os: OShape, sf: SideFace) -> Dim
+  { self.oshapes[*os].dep_dims_by_side_face[*sf] }
+
+  #[inline]
+  fn fe_inclusions_of_nb_side(&self, nbsn: NBSideNum) -> NBSideInclusions
+  { self.nbsideincls_by_nbsidenum[*nbsn] } 
+
+  #[inline]
+  // Return non-boundary side number of the indicated fe relative side.
+  fn nb_side_num_for_fe_side(&self, fe: FENum, sf: SideFace) -> NBSideNum
+  { self.nbsidenums_by_fe_face.get(*fe, *sf).unwrap() }
+
+  #[inline]
+  fn is_boundary_side(&self, fe: FENum, sf: SideFace) -> bool
+  { self.nbsidenums_by_fe_face.get(*fe, *sf).is_none() }
+
+  #[inline]
+  fn num_boundary_sides(&self) -> uint
+  { self.num_b_sides }
   
-  const rect_mcoords = Array(RMesh.MeshCoord, Mesh.space_dim(rmesh))
+  fn boundary_fes_by_oshape_side(&self) -> ~[~[~[FENum]]] // oshape, side face -> fes
+  {
+    let mut b_fes = vec::from_fn(self.num_oshapes, |os| vec::from_elem(self.num_side_faces_for_oshape(OShape(os)), ~[]));
 
-  for rect_fe=Mesh.fenum(1):num_rects
-    RMesh.fe_mesh_coords!(rect_fe, rect_mcoords, rmesh)
+    for fe in range(0, self.num_fes)
+    {
+      let fe = FENum(fe);
+      let os = self.oriented_shape_for_fe(fe);
+      for sf in range(0, self.num_side_faces_for_oshape(os))
+      {
+        if self.is_boundary_side(fe, SideFace(sf))
+        {
+          b_fes[*os][sf].push(fe);
+        }
+      }
+    }
+    
+    b_fes
+  }
+  
+  #[inline]
+  fn shape_diameter_inv(&self, os: OShape) -> R
+  { self.oshapes[*os].diameter_inv }
 
-    const ll_ptnum = register_point((rect_mcoords[1],   rect_mcoords[2]))
-    const lr_ptnum = register_point((rect_mcoords[1]+1, rect_mcoords[2]))
-    const ur_ptnum = register_point((rect_mcoords[1]+1, rect_mcoords[2]+1))
-    const ul_ptnum = register_point((rect_mcoords[1],   rect_mcoords[2]+1))
+  #[inline]
+  fn max_fe_diameter(&self) -> R
+  { self.oshapes.iter().map(|ref_tri|  1./ref_tri.diameter_inv).max().unwrap() }
 
-    push!(base_tris, BaseTri((ll_ptnum, lr_ptnum, ur_ptnum), tag(rect_fe), tag(rect_fe), EMPTY_TAGS_ARRAY))
-    push!(base_tris, BaseTri((ll_ptnum, ur_ptnum, ul_ptnum), tag(rect_fe), tag(rect_fe), EMPTY_TAGS_ARRAY))
-  end
+  #[inline]
+  fn num_nb_sides_for_fe(&self, fe: FENum) -> uint
+  {
+    range(0, self.num_side_faces_for_oshape(self.oriented_shape_for_fe(fe)))
+      .count(|sf| !self.is_boundary_side(fe, SideFace(sf))) 
+  }
 
-  TriMesh(points_by_ptnum,
-          base_tris,
-          length(base_tris),
-          subdiv_ops,
-          rmesh.integration_rel_err, rmesh.integration_abs_err,
-          false, true) # load geom entity tags
-end
+  #[inline]
+  fn max_num_shape_sides(&self) -> uint
+  { self.max_num_shape_sides }
 
+
+
+
+  // integration functions
+  
+  fn intg_global_fn_on_fe_int(&self, f: |&[R]| -> R, fe: FENum) -> R
+  {
+    // Sort the points so we can divide the triangle into regions between sloped lines diverging from a point and a vertical line.
+    let (p0, p1, p2) = {
+      let ref_tri = self.ref_tri_for_fe(fe);
+      let sorted_pts = {
+        let v0 = self.fes[*fe].v0;
+        let mut pts = [v0, vsum(v0, ref_tri.v01), vsum(v0, ref_tri.v02)];
+        pts.sort_by(|p,q| if p.n0() < q.n0() || p.n0() == q.n0() && p.n1() < q.n1() { Less } else { Greater }); // (we know points are not eq)
+        pts
+      };
+      (sorted_pts[0], sorted_pts[1], sorted_pts[2])
+    };
+    
+    let (slope_01, slope_02) = (slope_between(p0, p1), slope_between(p0, p2));
+
+    if p0.n0() == p1.n0() // Points 0 and 1 are on a vertical line on the left, point 2 on the right.
+    {
+      /*  p1
+       *  |\
+       *  | \ p2
+       *  | /
+       *  |/
+       *  p0
+       *
+       * Integrate over the area bounded above and below by the lines between points 0 and 2 and 1 and 2, and horizontally between
+       * the vertical left side formed by points 0 and 1, and point 2 on the right where the upper and lower bounding lines meet.
+       */
+      let slope_12 = slope_between(p1, p2);
+      self.intg_fn_btw_pt_and_vert_seg(f, p2, slope_02, slope_12, p0.n0())
+    }
+    else // Points 0 and 1 do not form a vertical line.
+    {
+      /*       
+       *      p1            p2
+       *     /|\           /|
+       *    / | \         / |
+       * p0/__|__\p2   p0/__|p1  (bottom lines not necessarily horizontal)
+       *
+       * Integrate between points 0 and 1, and between points 1 and 2 if points 1 and 2 don't lie on a vertical line.
+       */
+      let left_seg = self.intg_fn_btw_pt_and_vert_seg(|x| f(x), p0, slope_01, slope_02, p1.n0());
+      let right_seg = {
+        if p1.n0() == p2.n0() { 0 as R } // vertical right side, no second segment
+        else
+        {
+          let slope_12 = slope_between(p1, p2);
+          self.intg_fn_btw_pt_and_vert_seg(f, p2, slope_02, slope_12, p1.n0())
+        }
+      };
+      left_seg + right_seg
+    }
+  }
+
+  // Integrate a global function against an interior-relative monomial over a finite element interior.
+  fn intg_global_fn_x_facerel_mon_on_fe_int(&self, f: |&[R]| -> R, mon: Mon, fe: FENum) -> R
+  {
+    let int_origin_arr = { let int_origin = self.fes[*fe].v0; [int_origin.n0(), int_origin.n1()] };
+    self.intg_global_fn_on_fe_int(|x: &[R]| { f(x) * mon.value_at_for_origin(x, int_origin_arr) }, fe) 
+  }
+
+  fn intg_global_fn_x_facerel_mon_on_fe_side(&self, f: |&[R]| -> R, mon: Mon, fe: FENum, sf: SideFace) -> R
+  {
+    let ref_tri = self.ref_tri_for_fe(fe);
+    let v0 = self.fes[*fe].v0;
+    let (v1, v2) = (vsum(v0, ref_tri.v01), vsum(v0, ref_tri.v02));
+    
+    /* We want to compute int_0^1 f(p(t)) mon(p(t)-o) |p'(t)| dt, where p:[0,1] -> R^2
+       is a bijection traversing the side face smoothly with p(0) and p(1) being the side
+       endpoints, and o is the local origin for the side, which is the side's midpoint. */
+    let (a,b) = side_face_endpoint_pair(sf, v0,v1,v2, ref_tri.nums_side_faces_between_vertexes, FirstTraversedEndpointsFirst);
+    let o = { let mp = midpt(a, b); [mp.n0(), mp.n1()] }; // The local origin of each side face is the midpoint.
+    let side_len = dist(a,b);
+      
+    let p_t = unsafe { & mut cast::transmute_mut(self).integrand_work_array };
+    let integrand = |t: &[R]| { // compute f(p(t)) mon(p(t)-o) |p'(t)|
+      let t = t[0];
+      p_t[0] = a.n0() + (b.n0() - a.n0())*t;
+      p_t[1] = a.n1() + (b.n1() - a.n1())*t;
+      f(*p_t) * mon.value_at_for_origin(*p_t, o) * side_len  // side_len = |p'(t)|
+    };
+
+    space_adaptive_quadrature(&integrand, [0. as R], [1. as R], self.integration_rel_err, self.integration_abs_err)
+  }
+  
+  fn intg_mixed_global_and_facerel_fn_on_fe_int(&self, f: |&[R], &[R]| -> R, fe: FENum) -> R
+  {
+    let int_origin = self.fes[*fe].v0;
+
+    let mut x_rel = [0. as R, 0. as R]; 
+    
+    let integrand = |x: &[R]| {
+      x_rel[0] = x[0] - int_origin.n0();
+      x_rel[1] = x[1] - int_origin.n1();
+      f(x, x_rel)
+    };
+
+    self.intg_global_fn_on_fe_int(integrand, fe)
+  }
+
+  fn intg_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self, p: &P, os: OShape) -> R
+  {
+    /*
+    # Order the interior-relative vertex points by their first coordinate values.
+    const pts = sort!([zeroPt, ref_tri.v12, ref_tri.v13])
+    const slope_12, slope_13 = slope_between(pts[1], pts[2]), slope_between(pts[1], pts[3])
+
+    if pts[1]._1 == pts[2]._1 # vertical side on left between points 1 and 2
+      # Integrate over the area bounded above and below by the lines between points 1 and 3 and 2 and 3,
+      # and horizontally between the vertical left side formed by points 1 and 2, and point 3 on the right
+      # where the upper and lower bounding lines meet.
+      const slope_23 = slope_between(pts[2], pts[3])
+      intg_poly_btw_pt_and_vert_seg(mon, pts[3], slope_13, slope_23, pts[1]._1)
+    else
+      # Points 1 and 2 do not form a vertical line. Integrate between points 1 and 2, and between points 2 and 3 if
+      # points 2 and 3 don't lie on a vertical line.
+      const fst_seg = intg_poly_btw_pt_and_vert_seg(mon, pts[1], slope_12, slope_13, pts[2]._1)
+      const snd_seg =
+        if pts[2]._1 == pts[3]._1 # vertical right side, no second segment
+          zeroR
+        else
+          const slope_23 = slope_between(pts[3], pts[2])
+          intg_poly_btw_pt_and_vert_seg(mon, pts[3], slope_13, slope_23, pts[2]._1)
+        end
+      fst_seg + snd_seg
+    end
+    */
+    0 as R // TODO
+  }
+
+  fn intg_facerel_poly_x_facerel_poly_on_oshape_side<P:Polynomial<Mon>>(&self, p1: &P, p2: &P, os: OShape, sf: SideFace) -> R
+  {
+    0 as R // TODO
+  }
+
+  fn intg_facerel_mon_on_oshape_int(&self, mon: Mon, os: OShape) -> R
+  {
+    0 as R // TODO
+  }
+
+  fn intg_facerel_mon_on_oshape_side(&self, mon: Mon, os: OShape, sf: SideFace) -> R
+  {
+    0 as R // TODO
+  }
+
+  fn intg_facerel_mon_x_facerel_poly_on_oshape_side<P:Polynomial<Mon>>(&self, mon: Mon, p: &P, os: OShape, sf: SideFace) -> R
+  {
+    0 as R // TODO
+  }
+
+  fn intg_intrel_mon_x_siderel_mon_on_oshape_side(&self, int_mon: Mon, side_mon: Mon, os: OShape, sf: SideFace) -> R
+  {
+    0 as R // TODO
+  }
+  
+  fn intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(&self, mon: Mon, q: &VectorMonomial<Mon>, os: OShape, sf: SideFace) -> R
+  {
+    0 as R // TODO
+  }
+ 
+}
+
+
+
+/*
 
 # Mesh Construction
 ####################################################################
@@ -807,60 +1161,6 @@ end
 
 ####################################################################
 # implementations of required AbstractMesh functions
-
-import Mesh.space_dim
-space_dim(mesh::TriMesh) = SPACE_DIM
-
-import Mesh.one_mon
-one_mon(mesh::TriMesh) = mesh.one_mon
-
-import Mesh.num_fes
-num_fes(mesh::TriMesh) = mesh.num_fes
-
-import Mesh.num_nb_sides
-num_nb_sides(mesh::TriMesh) = mesh.num_nb_sides
-
-import Mesh.num_oriented_element_shapes
-num_oriented_element_shapes(mesh::TriMesh) = mesh.num_oshapes
-
-import Mesh.oriented_shape_for_fe
-oriented_shape_for_fe(fe::FENum, mesh::TriMesh) = mesh.fes[fe].oshape
-
-import Mesh.num_side_faces_for_fe
-num_side_faces_for_fe(fe::FENum, mesh::TriMesh) = ref_tri_for_fe(fe, mesh).num_side_faces
-
-import Mesh.num_side_faces_for_shape
-num_side_faces_for_shape(oshape::OShape, mesh::TriMesh) = mesh.oshapes[oshape].num_side_faces
-
-import Mesh.dependent_dim_for_oshape_side
-dependent_dim_for_oshape_side(oshape::OShape, sf::FEFaceNum, mesh::TriMesh) =
-  mesh.oshapes[oshape].dep_dims_by_side_face[sf]
-
-import Mesh.fe_inclusions_of_nb_side
-fe_inclusions_of_nb_side(nbsn::NBSideNum, mesh::TriMesh) = mesh.nbsideincls_by_nbsidenum[nbsn]
-
-import Mesh.nb_side_num_for_fe_side
-nb_side_num_for_fe_side(fe::FENum, sf::FEFaceNum, mesh::TriMesh) = mesh.nbsidenums_by_fe_face[fe, sf]
-
-import Mesh.is_boundary_side
-is_boundary_side(fe::FENum, face::FEFaceNum, mesh::TriMesh) = mesh.nbsidenums_by_fe_face[fe, face] == 0
-
-import Mesh.num_boundary_sides
-num_boundary_sides(mesh::TriMesh) = mesh.num_b_sides
-
-import Mesh.shape_diameter_inv
-shape_diameter_inv(oshape::OShape, mesh::TriMesh) = mesh.oshapes[oshape].diameter_inv
-
-import Mesh.max_fe_diameter
-max_fe_diameter(mesh::TriMesh) = mapreduce(rt -> 1./rt.diameter_inv, max, mesh.oshapes)
-
-import Mesh.fe_interior_origin!
-function fe_interior_origin!(fe::FENum, fill::Vector{R}, mesh::TriMesh)
-  const el_tri = mesh.fes[fe]
-  fill[1] = el_tri.v1._1
-  fill[2] = el_tri.v1._2
-end
-
 
 # Integration Functions
 
@@ -873,29 +1173,7 @@ function integral_face_rel_on_oshape_face(mon::Monomial,
   const ref_tri = mesh.oshapes[oshape]
 
   if face == Mesh.interior_face
-    # Order the interior-relative vertex points by their first coordinate values.
-    const pts = sort!([zeroPt, ref_tri.v12, ref_tri.v13])
-    const slope_12, slope_13 = slope_between(pts[1], pts[2]), slope_between(pts[1], pts[3])
-
-    if pts[1]._1 == pts[2]._1 # vertical side on left between points 1 and 2
-      # Integrate over the area bounded above and below by the lines between points 1 and 3 and 2 and 3,
-      # and horizontally between the vertical left side formed by points 1 and 2, and point 3 on the right
-      # where the upper and lower bounding lines meet.
-      const slope_23 = slope_between(pts[2], pts[3])
-      integral_mon_between_lines_meeting_at_point_and_vert_line(mon, pts[3], slope_13, slope_23, pts[1]._1)
-    else
-      # Points 1 and 2 do not form a vertical line. Integrate between points 1 and 2, and between points 2 and 3 if
-      # points 2 and 3 don't lie on a vertical line.
-      const fst_seg = integral_mon_between_lines_meeting_at_point_and_vert_line(mon, pts[1], slope_12, slope_13, pts[2]._1)
-      const snd_seg =
-        if pts[2]._1 == pts[3]._1 # vertical right side, no second segment
-          zeroR
-        else
-          const slope_23 = slope_between(pts[3], pts[2])
-          integral_mon_between_lines_meeting_at_point_and_vert_line(mon, pts[3], slope_13, slope_23, pts[2]._1)
-        end
-      fst_seg + snd_seg
-    end
+  ...
   else # line integral along side face
     # We want to compute int_{t=0..1} mon(p(t)-o) |p'(t)| dt, where p:[0,1] -> R^2
     # is a bijection traversing the side face smoothly, p(0) and p(1) being the side
@@ -954,17 +1232,17 @@ function integral_global_x_face_rel_on_fe_face(f::Function,
       # and horizontally between the vertical left side formed by points 1 and 2, and point 3 on the right
       # where the upper and lower bounding lines meet.
       const slope_23 = slope_between(pts[2], pts[3])
-      integral_fn_between_lines_meeting_at_point_and_vert_line(f_x_mon, pts[3], slope_13, slope_23, pts[1]._1, mesh)
+      intg_fn_btw_pt_and_vert_seg(f_x_mon, pts[3], slope_13, slope_23, pts[1]._1, mesh)
     else
       # Points 1 and 2 do not form a vertical line. Integrate between points 1 and 2, and between points 2 and 3 if
       # points 2 and 3 don't lie on a vertical line.
-      const fst_seg = integral_fn_between_lines_meeting_at_point_and_vert_line(f_x_mon, pts[1], slope_12, slope_13, pts[2]._1, mesh)
+      const fst_seg = intg_fn_btw_pt_and_vert_seg(f_x_mon, pts[1], slope_12, slope_13, pts[2]._1, mesh)
       const snd_seg =
         if pts[2]._1 == pts[3]._1 # vertical right side, no second segment
           zeroR
         else
           const slope_23 = slope_between(pts[3], pts[2])
-          integral_fn_between_lines_meeting_at_point_and_vert_line(f_x_mon, pts[3], slope_13, slope_23, pts[2]._1, mesh)
+          intg_fn_btw_pt_and_vert_seg(f_x_mon, pts[3], slope_13, slope_23, pts[2]._1, mesh)
         end
       fst_seg + snd_seg
     end
@@ -1087,97 +1365,17 @@ end
 
 # Integration Auxiliary Functions
 
-# Integrate a monomial over the triangular region bounded on two sides by two
-# non-vertical lines of indicated slopes which meet at a point p, and by the
-# indicated vertical line as the remaining side.
-function integral_mon_between_lines_meeting_at_point_and_vert_line(mon::Monomial,
-                                                                   p::Point,
-                                                                   slope_1::R, slope_2::R,
-                                                                   vert_line_x::R)
-  # slopes of the lower and upper lines
-  const m_l, m_u = p._1 < vert_line_x ? (min(slope_1, slope_2), max(slope_1, slope_2)) :
-                                        (max(slope_1, slope_2), min(slope_1, slope_2))
-  # polynomials representing the lower and upper lines for the inner (y) integral's bounds
-  const y_l, y_u = let x = MON_VAR_1D
-    p._2 + m_l*(x-p._1),
-    p._2 + m_u*(x-p._1)
-  end
 
-  # Compute inner integral, which is an integral over y with x held constant, as a polynomial in x.
-  const mon_antider = Poly.antideriv(dim(2), mon)
-  const inner_int = Poly.reduce_dim_by_subst(dim(2), y_u, mon_antider) - Poly.reduce_dim_by_subst(dim(2), y_l, mon_antider)
-
-  # Difference of anti-derivative of inner integral over 1st coordinate bounds is the final integral value.
-  const antider_inner_int = Poly.antideriv(dim(1), inner_int)
-  # bounds of integration for outer integral
-  const ib_l, ib_u = p._1 < vert_line_x ? (p._1, vert_line_x) : (vert_line_x, p._1)
-  Poly.value_at(antider_inner_int, ib_u) - Poly.value_at(antider_inner_int, ib_l)
-end
-
-# Integrate a function over the triangular region bounded on two sides by two
-# non-vertical lines of indicated slopes which meet at a point p, and by the
-# indicated vertical line as the remaining side.
-function integral_fn_between_lines_meeting_at_point_and_vert_line(g::Function,
-                                                                  p::Point,
-                                                                  slope_1::R, slope_2::R,
-                                                                  vert_line_x::R,
-                                                                  mesh::TriMesh)
-  const xmin, xmax = min(p._1, vert_line_x), max(p._1, vert_line_x)
-  const w = xmax - xmin # width of triangular integration region
-
-  # Method
-  # We will pull back the integration over the original triangular section T to an integration
-  # over the unit square, by change of variables via the bijection
-  #   t:[0,1]^2 -> T
-  #   t(x,y) = (xmin + x w,  p_2 + m1 (xmin + x w - p_1) + y(m2 - m1)(xmin + x w - p_1))
-  #     for (x,y) in [0,1]^2.  Here m1 and m2 are the slopes of the non-vertical bounding lines.
-  # The determinant of the derivative matrix Dt(x,y) is
-  #                     |          w                           0               |
-  #  det Dt(x,y)| = det |                                                      |
-  #                     | m1 w + y(m2 - m1) w      (m2 - m1)(xmin + x w - p_1) |
-  #               = w (m2 - m1) (xmin + x w - p_1).
-  # Now by applying change of variables in the integral of g over the T via the mapping t,
-  # we have
-  #   int_T g = int_0^1 int_0^1 g(t(x,y)) |det Dt(x,y)| dy dx
-  #            = int_0^1 int_0^1 g(t(x,y)) |w (m2 - m1) (xmin + x w - p_1)| dy dx
-
-  const slopediff = slope_2 - slope_1
-  const w_slopediff = w * slopediff
-
-  function gt_absdetDt(r::Vector{R}) # evaluate integrand at rectangle cubature point r
-    const x, y = r[1], r[2]
-    const xT = xmin + x * w      # (triangle x)
-    const xT_minus_p1 = xT - p._1
-    try
-      # Construct the triangle point t(x,y).
-      const t = r # reuse the rectangle point array temporarily for the triangle point
-      t[1] = xT
-      t[2] = p._2 + slope_1 * xT_minus_p1  +  y * slopediff * xT_minus_p1
-      const det_Dt = w_slopediff * xT_minus_p1
-      g(t) * abs(det_Dt)
-    finally
-      # restore input array to its original state
-      r[1] = x; r[2] = y
-    end
-  end
-
-  hcubature(gt_absdetDt,
-            mesh.space_dim_zeros, mesh.space_dim_ones, # unit square bounds
-            reltol=mesh.integration_rel_err, abstol=mesh.integration_abs_err)[1]
-end
 
 
 ###############
 # Etc
 
-const SPACE_DIM= dim(2)
 const zeroPt = Point(0.,0.)
 const singleZero = [zeroR]
 const singleOne = [oneR]
 const MON_VAR_1D = Monomial(1)
 
-# Reference triangle for a finite element.
-ref_tri_for_fe(fe::FENum, mesh::TriMesh) = mesh.oshapes[mesh.fes[fe].oshape]
 
 physical_region_tag(fe::FENum, mesh::TriMesh) = mesh.phys_reg_tags_by_FENum[fe]
 
@@ -1186,7 +1384,6 @@ geometric_entity_tag(fe::FENum, mesh::TriMesh) = mesh.geom_ent_tags_by_FENum[fe]
 
 # vector operations
 
-slope_between(p::Point, q::Point) = (q._2 - p._2)/(q._1 - p._1)
 
 */
 
@@ -1216,7 +1413,7 @@ fn side_face_endpoint_pair(sf: SideFace,
         cur_sf += 1;
       }
       2 => {
-        let midpt = { let ((va_x,va_y),(vb_x,vb_y)) = (va,vb); (0.5*(va_x + vb_x), 0.5*(va_y + vb_y)) };
+        let midpt = midpt(va, vb);
         if cur_sf == *sf { return mk_endpoint_pair(va, midpt, endpoints_ordering); }
         cur_sf += 1;
         if cur_sf == *sf { return mk_endpoint_pair(midpt, vb, endpoints_ordering); }
@@ -1229,6 +1426,7 @@ fn side_face_endpoint_pair(sf: SideFace,
   fail!("Side face $sf not found.");
 }
 
+#[inline]
 fn mk_endpoint_pair(pt1: Point, pt2: Point, endpoints_ordering: SideEndpointsOrdering) -> (Point, Point)
 {
   match endpoints_ordering
@@ -1240,5 +1438,25 @@ fn mk_endpoint_pair(pt1: Point, pt2: Point, endpoints_ordering: SideEndpointsOrd
 
 
 
+#[inline]
 fn norm((v_x, v_y): Vec) -> R { hypot(v_x, v_y) }
+
+#[inline]
+fn dist(p: Point, q: Point) -> R { hypot(q.n0() - p.n0(), q.n1() - p.n1()) }
+
+#[inline]
+fn slope_between(p: Point, q: Point) -> R { (p.n1() - q.n1())/(p.n0() - q.n0()) }
+
+#[inline]
+fn midpt(p: Point, q: Point) -> Point { (0.5*(p.n0() + q.n0()), 0.5*(p.n1() + q.n1())) }
+
+#[inline]
+fn vsum(p: Vec, q: Vec) -> Vec { (p.n0() + q.n0(), p.n1() + q.n1()) }
+
+#[inline]
+fn vdiff(p: Vec, q: Vec) -> Vec { (p.n0() - q.n0(), p.n1() - q.n1()) }
+  
+// Determine whether a counterclockwise rotation not exceeding 1/2 turn can transform the first vector to a positive multiple of the second.
+#[inline]
+fn oriented_counterclockwise((u_x,u_y): Vec, (v_x,v_y): Vec) -> bool { u_x*v_y - u_y*v_x > 0. as R }
 
