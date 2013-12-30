@@ -35,7 +35,8 @@ pub fn space_adaptive_quadrature(f: & |&[R]| -> R, min_corner: &[R], max_corner:
 }
 
 #[inline(never)]
-// Perform gaussian quadrature of f on [a,b]x[c,d] using n weights per axis (for a total of 2n weights and n^2 evaluation points).
+// Perform Gaussian-Legendre quadrature of f on [a,b]x[c,d] using n weights per axis, for a total of 2n weights and n^2
+// evaluation points.
 pub fn gaussian_quadrature_2D_rect(n: uint, f: & |x: R, y: R| -> R, a: R, b: R, c: R, d: R) -> R {
   let gq_order = {
     if n <= 10 { 2*n as uint}

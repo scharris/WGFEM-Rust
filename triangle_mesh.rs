@@ -43,18 +43,19 @@ struct BaseTri {
 
 impl BaseTri {
   
-  fn extra_subdiv_iters(&self) -> uint
+  fn extra_subdiv_iters(& self) -> uint
   {
     // TODO: Allow specifying extra iterations via a Gmsh tag.
     0u
   }
 
-  /* For each of the three sides of the indicated base mesh triangle to be subdivided, we can specify here the
-     number of faces that the generated subtriangles should have between their vertexes which lie on this side.
-     This allows these subdivision elements to meet those of a finer subdivision in a mesh element adjacent
-     to this element ("hanging nodes").  The numbers are returned as a triplet of integers, corresponding to
-     the face counts to be generated for elements' sides within sides v0v1, v1v2, and v2v0. */
-  fn nums_side_faces_between_vertexes(&self) -> (u8,u8,u8)
+ /* For each of the three sides of the indicated base mesh triangle to be subdivided, we can specify here the number
+  * of faces that the generated subtriangles should have between their vertexes which lie on this side. This allows
+  * these subdivision elements to meet those of a finer subdivision in a mesh element adjacent to this element
+  * ("hanging nodes").  The numbers are returned as a triplet of integers, corresponding to the face counts to be
+  * generated for elements' sides within sides v0v1, v1v2, and v2v0.
+  */
+  fn nums_side_faces_between_vertexes(& self) -> (u8,u8,u8)
   {
     // TODO: Allow specifying somewhere such as in mesh element tags.
     (1u8,1u8,1u8)
@@ -92,7 +93,10 @@ impl RefTri {
     let dep_dims_by_side_face = RefTri::side_face_dep_dims(v0,v1,v2, nums_side_faces_btw_verts);
     let diameter_inv = 1./max(norm(scaled_v01), max(norm(scaled_v02), norm_scaled_v12));
     
-    let num_side_faces = { let (sfs_v01, sfs_v12, sfs_v20) = nums_side_faces_btw_verts; (sfs_v01 + sfs_v12 + sfs_v20) as uint };
+    let num_side_faces = {
+      let (sfs_v01, sfs_v12, sfs_v20) = nums_side_faces_btw_verts;
+      (sfs_v01 + sfs_v12 + sfs_v20) as uint
+    };
     
     RefTri{ v01: scaled_v01,
             v02: scaled_v02,
@@ -103,14 +107,14 @@ impl RefTri {
             num_side_faces: num_side_faces }
   }
 
-  /*
-   Outward Normals for Side Faces
-   The outward normal for an inter-vertex vector w (extended to R^3 via 0 third component) is
-     n = (w x (0,0,cc)) / |w|
-       = cc (w_2, -w_1, 0) / |w|. // (using one based indexing on w)
-   where cc = 1 if w is part of a clockwise traversal of the triangle, and -1 otherwise.
-   For any pair of successive inter-vertex vectors v and w, cc can be computed as:
-     cc = sgn(z(v x w)), where z is projection of component 3.
+ /*
+  * Outward Normals for Side Faces
+  * The outward normal for an inter-vertex vector w (extended to R^3 via 0 third component) is
+  *   n = (w x (0,0,cc)) / |w|
+  *     = cc (w_2, -w_1, 0) / |w|. // (using one based indexing on w)
+  * where cc = 1 if w is part of a clockwise traversal of the triangle, and -1 otherwise.
+  * For any pair of successive inter-vertex vectors v and w, cc can be computed as:
+  *   cc = sgn(z(v x w)), where z is projection of component 3.
   */
   fn side_face_outward_normals(v0: Point, v1: Point, v2: Point, nums_side_faces_btw_verts: (u8,u8,u8)) -> ~[Vec]
   {
@@ -289,7 +293,6 @@ impl<Mon:Monomial> TriMesh<Mon> {
      * We will pull back the integration over the original triangular section T to an integration
      * over the unit square, by change of variables via the bijection
      *
-     * TODO: Check this.
      *   t:[0,1]^2 -> T:  t(x,y) = (xminT + x w,  q_2 + m1 (xminT + x w - q_1) + y(m2 - m1)(xminT + x w - q_1))
      * 
      * Here m1 and m2 are the slopes of the non-vertical bounding lines (m1 != m2).
@@ -320,12 +323,14 @@ impl<Mon:Monomial> TriMesh<Mon> {
       f(*t) * abs(det_Dt)
     };
     
-    space_adaptive_quadrature(&integrand, [0 as R, 0 as R], [1 as R, 1 as R], self.integration_rel_err, self.integration_abs_err)
+    space_adaptive_quadrature(&integrand,
+                              [0 as R, 0 as R], [1 as R, 1 as R],
+                              self.integration_rel_err, self.integration_abs_err)
   }
   
-  /* Integrate an interior-relative polynomial over the triangular region bounded on two sides by two non-vertical lines
-   * of indicated slopes which meet at a point q, and by the indicated vertical line as the remaining side.
-   */
+ /* Integrate an interior-relative polynomial over the triangular region bounded on two sides by two non-vertical lines
+  * of indicated slopes which meet at a point q, and by the indicated vertical line as the remaining side.
+  */
   fn intg_poly_btw_pt_and_vert_seg<Mon:Monomial,P:Polynomial<Mon>>(& self, 
                                                                    p: P, p_origin: Point,
                                                                    q: Point,
@@ -450,7 +455,7 @@ impl MeshBuilder {
       bldr.process_base_tri(&base_tri, base_pts_by_nodenum, global_subdiv_iters);
     }
 
-    //// Create the final non-boundary sides data structures based on the mapping of side endpoints to fe faces.
+    // Create the final non-boundary sides data structures based on the mapping of side endpoints to fe faces.
     let (nbsidenums_by_fe_face, nbsideincls_by_nbsidenum) = bldr.create_nb_sides_data();
     assert!(nbsideincls_by_nbsidenum.len() == bldr.num_nb_sides as uint);
 
@@ -488,19 +493,19 @@ impl MeshBuilder {
                         mesh_pts_by_nodenum[*base_tri.node_num_1],
                         mesh_pts_by_nodenum[*base_tri.node_num_2]);
 
-    // For each of the three sides of this mesh element to be subdivided, the generated subdivision
-    // elements can be made to have more than one face between their vertexes lying on the side.  This is
-    // useful to support "hanging" nodes where a finer subdivision is adjacent to this one.  The triplet
-    // returned represents the number of side faces that a generated element has if its vertexes lie between
-    // base triangle vertex pairs v0 and v1, v1 and v2, and v2 and v0, respectively.
+    // For each of the three sides of this mesh element to be subdivided, the generated subdivision elements
+    // can be made to have more than one face between their vertexes lying on the side.  This is useful to
+    // support "hanging" nodes where a finer subdivision is adjacent to this one.  The triplet returned
+    // represents the number of side faces that a generated element has if its vertexes lie between base
+    // triangle vertex pairs v0 and v1, v1 and v2, and v2 and v0, respectively.
     let nums_sfs_btw_verts = base_tri.nums_side_faces_between_vertexes();
     
     // Add any extra subdivision iterations to be done in this element.
     let subdiv_iters = global_subdiv_iters + base_tri.extra_subdiv_iters();
 
     // Register the primary reference triangles for our mesh element's subdivisions. Normally there will only be one
-    // such primary (ie. non-inverted) reference triangle, however when multiple side faces are present between two vertexes
-    // then additional reference triangles are required.
+    // such primary (ie. non-inverted) reference triangle, however when multiple side faces are present between two
+    // vertexes then additional reference triangles are required.
     let first_new_pri_oshape = self.register_primary_ref_tris(v0,v1,v2, nums_sfs_btw_verts, subdiv_iters);
     let last_new_pri_oshape = OShape(self.oshapes.len()-1);
 
@@ -527,20 +532,24 @@ impl MeshBuilder {
     }
     else // no subdivision to be done
     { 
-      // The base triangle itself is our finite element, with its own reference triangle (added in register_primary_ref_tris above).
+      // The base triangle itself is our finite element, with its own reference triangle.
       self.add_fe(first_new_pri_oshape, v0,v1,v2, base_tri.tag_phys_reg, base_tri.tag_geom_ent);
     }
   }
-
-  /* Create primary reference triangles for the given triangle to be subdivided. These reference triangles
-     are rescaled translations of the original undivided triangle. If nums_side_faces_btw_verts is other than
-     (1,1,1), then multiple reference triangles will be generated, differing in the number of side faces
-     between their vertexes for support of "hanging" nodes.  The function returns a function mapping the
-     numbers of side faces between vertexes to the newly registered reference triangle (oshape) number.
-     Pains are taken to not create more reference triangles than are actually used, so that some global
-     mesh properties such as maximum element diameter can be determined from only the reference elements.
-     Returns the first new oriented shape number that was created. */
-  fn register_primary_ref_tris(& mut self, v0: Point, v1: Point, v2: Point, nums_sfs_btw_verts: (u8,u8,u8), subdiv_iters: uint) -> OShape {
+ 
+ /* Create primary reference triangles for the given triangle to be subdivided. These reference triangles
+  * are rescaled translations of the original undivided triangle. If nums_side_faces_btw_verts is other
+  *  than (1,1,1), then multiple reference triangles will be generated, differing in the number of side
+  *  faces between their vertexes for support of "hanging" nodes.  The function returns a function mapping
+  *  the numbers of side faces between vertexes to the newly registered reference triangle (oshape) number.
+  *  Pains are taken to not create more reference triangles than are actually used, so that some global
+  *  mesh properties such as maximum element diameter can be determined from only the reference elements.
+  *  Returns the first new oriented shape number that was created.
+  */
+  fn register_primary_ref_tris(& mut self,
+                               v0: Point, v1: Point, v2: Point,
+                               nums_sfs_btw_verts: (u8,u8,u8),
+                               subdiv_iters: uint) -> OShape {
 
     let first_new_oshape = OShape(self.oshapes.len());
    
@@ -555,8 +564,8 @@ impl MeshBuilder {
       let (nums_sfs_btw_verts_0, nums_sfs_btw_verts_1, nums_sfs_btw_verts_2) = nums_sfs_btw_verts;
 
       // We need to add a separate primary reference triangle for each triplet representing the number of side
-      // faces between vertexes that occur in primary subdivision triangles of this base triangle.
-      // We use the set below to track the unique triplets of numbers of side faces between vertexes.
+      // faces between vertexes that occur in primary subdivision triangles of this base triangle.  We use the
+      // set below to track the unique triplets of numbers of side faces between vertexes.
       self.sfs_btw_verts_work_set.clear();
     
       // Handle subdivision triangles at one of the base triangle's corners, v0, v1 or v2.
@@ -568,9 +577,11 @@ impl MeshBuilder {
       self.sfs_btw_verts_work_set.insert((1u8, nums_sfs_btw_verts_1, nums_sfs_btw_verts_2)); // v2 corner element
 
       // If subdividing more than once, then we also need:
-      //  - a primary reference triangle with only one side face between each of its vertex pairs (within the central secondary triangle).
-      //  - primary reference triangles which only have one pair of vertexes contained in one of the original base triangle's sides,
-      //    so that one pair of vertexes may have multiple side faces between them but not so for the other two vertex pairs.
+      //  - a primary reference triangle with only one side face between each of its vertex pairs (within the central
+      //    secondary triangle).
+      //  - primary reference triangles which only have one pair of vertexes contained in one of the original base
+      //    triangle's sides, so that one pair of vertexes may have multiple side faces between them but not so for
+      //    the other two vertex pairs.
       if subdiv_iters > 1
       {
         self.sfs_btw_verts_work_set.insert((1u8, 1u8, 1u8));
@@ -589,15 +600,18 @@ impl MeshBuilder {
     first_new_oshape 
   }
 
-  // Register the single secondary (inverted) subdivision triangle for the given (primary) base triangle, and number of subdivisions
-  // to be applied on the base (primary) triangle.
+  // Register the single secondary (inverted) subdivision triangle for the given (primary) base triangle, and number of
+  // subdivisions to be applied on the base (primary) triangle.
   fn register_secondary_ref_tri(& mut self,
                                 pv0: Point, pv1: Point, pv2: Point, // base (primary) triangle vertexes
                                 subdiv_iters: uint) -> OShape
   {
     let sec_oshape = OShape(self.oshapes.len());
     let sec_ref_tri = {
-      let scale = { let p: uint = pow_with_uint(2u, subdiv_iters-1); 1./(p as R) }; // midpoints already represent one subdivision
+      let scale = { 
+        let p: uint = pow_with_uint(2u, subdiv_iters-1); // midpoints already represent one subdivision
+        1./(p as R)
+      }; 
       RefTri::new(midpt(pv0, pv1), midpt(pv1, pv2), midpt(pv2, pv0), scale, (1u8,1u8,1u8))
     };
     self.oshapes.push(sec_ref_tri);
@@ -623,10 +637,11 @@ impl MeshBuilder {
 
       let (midpt_v01, midpt_v12, midpt_v20) = (midpt(v0,v1), midpt(v1,v2), midpt(v2,v0));
 
-      // The sub-triangle including v0 has its first and last vertex pairs embedded in the original triangle's first and
-      // third sides, and so inherits the corresponding numbers of faces between vertexes from nums_side_faces_btw_verts.
-      // The middle vertex pair (midpt_v01 to midpt_v20) of this sub-triangle does not lie along an original side, however,
-      // so has only one face between these vertexes.  Similar arguments apply for the remaining sub-triangles.
+      // The sub-triangle including v0 has its first and last vertex pairs embedded in the original triangle's first
+      // and third sides, and so inherits the corresponding numbers of faces between vertexes from the first and third
+      // entries of nums_side_faces_btw_verts. The middle vertex pair (midpt_v01 to midpt_v20) of this sub-triangle
+      // does not lie along an original side, however, so has only one face between these vertexes.  Similar arguments
+      // apply for the remaining sub-triangles.
       self.subdivide_primary(v0, midpt_v01, midpt_v20,
                              iters-1,
                              (sfs_v01, 1, sfs_v20),
@@ -684,16 +699,16 @@ impl MeshBuilder {
                                |sfs| pri_oshapes_by_nums_sfs_btw_verts(sfs), sec_oshape,
                                tag_phys_reg, tag_geom_ent);
 
-      // The central sub-triangle is a primary triangle.  We need to order the vertexes properly, so that all primary and
-      // secondary triangles will have the same vertex orientations, in the sense that for any two subtriangles of the same
-      // type (primary or secondary), some translation can take the vertexes of one to the corresponding vertexes of the other.
-      // We do this by numbering the primary vertexes just as they were numbered in the original undivided primary triangle,
-      // and numbering all secondary vertexes just as in the original central secondary triangle of the undivided primary
-      // triangle.
-      // We shifted "forward" when numbering vertexes of a central secondary subtriangle from the enclosing primary triangle,
-      // so that e.g. the secondary's v0 is the midpoint of enclosing primary's v0 and v1. So now we must shift "back" for
-      // this enclosed primary triangle, so e.g. the central primary triangle's v0 is the midpoint of this enclosing secondary
-      // triangle's v2 and v0, and similarly for the other vertexes.
+      // The central sub-triangle is a primary triangle.  We need to order the vertexes properly, so that all primary
+      // and secondary triangles will have the same vertex orientations, in the sense that for any two subtriangles of
+      // the same type (primary or secondary), some translation can take the vertexes of one to the corresponding
+      // vertexes of the other. We do this by numbering the primary vertexes just as they were numbered in the original
+      // undivided primary triangle, and numbering all secondary vertexes just as in the original central secondary
+      // triangle of the undivided primary triangle.
+      // We shifted "forward" when numbering vertexes of a central secondary subtriangle from the enclosing primary
+      // triangle, so that e.g. the secondary's v0 is the midpoint of enclosing primary's v0 and v1. So now we must
+      // shift vertex numbers "back" for this enclosed primary triangle, so e.g. the central primary triangle's v0
+      // is the midpoint of this enclosing secondary triangle's v2 and v0, and similarly for the other vertexes.
       self.subdivide_primary(midpt_v20, midpt_v01, midpt_v12,
                              iters-1,
                              (1u8,1u8,1u8),
@@ -734,7 +749,9 @@ impl MeshBuilder {
     
     // Take the endpoint pairs work buffer, filled with the side face endpoint pairs.
     let endpt_pairs = MeshBuilder::fill_side_face_endpoint_pairs(self.take_side_face_endpoint_pairs_buf(),
-                                                                 v0,v1,v2, nums_side_faces_btw_verts, LesserEndpointsFirst);
+                                                                 v0,v1,v2, 
+                                                                 nums_side_faces_btw_verts,
+                                                                 LesserEndpointsFirst);
 
     // Register the side face representations for this element by their endpoints.
     for sf in range(0, endpt_pairs.len())
@@ -760,10 +777,11 @@ impl MeshBuilder {
     (nb_sides_delta, b_sides_delta)
   }
 
-  /* This function defines the side faces enumeration for a finite element of given vertexes and numbers
-     of faces between vertexes. Side faces are returned as an array of side endpoint pairs indexed by
-     side face number. If lesser_endpts_first is true, then each endpoint pair endpoint will have
-     the lesser point (compared lexicographically) in the first component of the pair. */
+ /* This function defines the side faces enumeration for a finite element of given vertexes and numbers of faces
+  * between vertexes. Side faces are returned as an array of side endpoint pairs indexed by side face number. If
+  * lesser_endpts_first is true, then each endpoint pair endpoint will have the lesser point (compared
+  * lexicographically) in the first component of the pair.
+  */
   fn fill_side_face_endpoint_pairs(mut endpts_buf: ~[(Point,Point)],
                                    v0: Point, v1: Point, v2: Point,
                                    nums_side_faces_btw_verts: (u8,u8,u8),
@@ -874,7 +892,7 @@ impl MeshBuilder {
 } // MeshBuilder impl
 
 
-// A structure to hold the one or two local representations of any side as fe/side face pairs, for use during mesh construction.
+// A structure to hold the one or two local representations of any side as fe/side face pairs.
 struct SideReps {
   fst_rep: (FENum, SideFace),
   snd_rep: Option<(FENum, SideFace)>,
@@ -904,49 +922,50 @@ impl SideReps {
 impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
 
   #[inline]
-  fn num_fes(&self) -> uint
+  fn num_fes(& self) -> uint
   { self.num_fes }
 
   #[inline]
-  fn num_nb_sides(&self) -> uint
+  fn num_nb_sides(& self) -> uint
   { self.num_nb_sides }
 
   #[inline]
-  fn num_oriented_element_shapes(&self) -> uint
+  fn num_oriented_element_shapes(& self) -> uint
   { self.num_oshapes }
 
   #[inline]
-  fn oriented_shape_for_fe(&self, fe: FENum) -> OShape
+  fn oriented_shape_for_fe(& self, fe: FENum) -> OShape
   { self.fes[*fe].oshape }
 
   #[inline]
-  fn num_side_faces_for_oshape(&self, os: OShape) -> uint
+  fn num_side_faces_for_oshape(& self, os: OShape) -> uint
   { self.oshapes[*os].num_side_faces }
 
   #[inline]
-  fn dependent_dim_for_oshape_side(&self, os: OShape, sf: SideFace) -> Dim
+  fn dependent_dim_for_oshape_side(& self, os: OShape, sf: SideFace) -> Dim
   { self.oshapes[*os].dep_dims_by_side_face[*sf] }
 
   #[inline]
-  fn fe_inclusions_of_nb_side(&self, nbsn: NBSideNum) -> NBSideInclusions
+  fn fe_inclusions_of_nb_side(& self, nbsn: NBSideNum) -> NBSideInclusions
   { self.nbsideincls_by_nbsidenum[*nbsn] } 
 
   #[inline]
   // Return non-boundary side number of the indicated fe relative side.
-  fn nb_side_num_for_fe_side(&self, fe: FENum, sf: SideFace) -> NBSideNum
+  fn nb_side_num_for_fe_side(& self, fe: FENum, sf: SideFace) -> NBSideNum
   { self.nbsidenums_by_fe_face.get(*fe, *sf).unwrap() }
 
   #[inline]
-  fn is_boundary_side(&self, fe: FENum, sf: SideFace) -> bool
+  fn is_boundary_side(& self, fe: FENum, sf: SideFace) -> bool
   { self.nbsidenums_by_fe_face.get(*fe, *sf).is_none() }
 
   #[inline]
-  fn num_boundary_sides(&self) -> uint
+  fn num_boundary_sides(& self) -> uint
   { self.num_b_sides }
   
-  fn boundary_fes_by_oshape_side(&self) -> ~[~[~[FENum]]] // oshape, side face -> fes
+  fn boundary_fes_by_oshape_side(& self) -> ~[~[~[FENum]]] // oshape, side face -> fes
   {
-    let mut b_fes = vec::from_fn(self.num_oshapes, |os| vec::from_elem(self.num_side_faces_for_oshape(OShape(os)), ~[]));
+    let mut b_fes = vec::from_fn(self.num_oshapes, 
+                                 |os| vec::from_elem(self.num_side_faces_for_oshape(OShape(os)), ~[]));
 
     for fe in range(0, self.num_fes)
     {
@@ -965,22 +984,22 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
   }
   
   #[inline]
-  fn shape_diameter_inv(&self, os: OShape) -> R
+  fn shape_diameter_inv(& self, os: OShape) -> R
   { self.oshapes[*os].diameter_inv }
 
   #[inline]
-  fn max_fe_diameter(&self) -> R
+  fn max_fe_diameter(& self) -> R
   { self.oshapes.iter().map(|ref_tri|  1./ref_tri.diameter_inv).max().unwrap() }
 
   #[inline]
-  fn num_nb_sides_for_fe(&self, fe: FENum) -> uint
+  fn num_nb_sides_for_fe(& self, fe: FENum) -> uint
   {
     range(0, self.num_side_faces_for_oshape(self.oriented_shape_for_fe(fe)))
       .count(|sf| !self.is_boundary_side(fe, SideFace(sf))) 
   }
 
   #[inline]
-  fn max_num_shape_sides(&self) -> uint
+  fn max_num_shape_sides(& self) -> uint
   { self.max_num_shape_sides }
 
 
@@ -988,9 +1007,10 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
 
   // integration functions
   
-  fn intg_global_fn_on_fe_int(&self, f: |&[R]| -> R, fe: FENum) -> R
+  fn intg_global_fn_on_fe_int(& self, f: |&[R]| -> R, fe: FENum) -> R
   {
-    // Sort the points so we can divide the triangle into regions between sloped lines diverging from a point and a vertical line.
+    // Sort the points so we can divide the triangle into regions between sloped lines diverging from a point above
+    // and below and a vertical line on one side.
     let (p0, p1, p2) = {
       let ref_tri = self.ref_tri_for_fe(fe);
       let sorted_pts = {
@@ -1006,29 +1026,30 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
 
     if p0.n0() == p1.n0() // Points 0 and 1 are on a vertical line on the left, point 2 on the right.
     {
-      /*  p1
-       *  |\
-       *  | \ p2
-       *  | /
-       *  |/
-       *  p0
-       *
-       * Integrate over the area bounded above and below by the lines between points 0 and 2 and 1 and 2, and horizontally between
-       * the vertical left side formed by points 0 and 1, and point 2 on the right where the upper and lower bounding lines meet.
-       */
+     /*  p1
+      *  |\
+      *  | \ p2
+      *  | /
+      *  |/
+      *  p0
+      *
+      * Integrate over the area bounded above and below by the lines between points 0 and 2 and 1 and 2, and
+      * horizontally between the vertical left side formed by points 0 and 1, and point 2 on the right where
+      * the upper and lower bounding lines meet.
+      */
       let slope_12 = slope_between(p1, p2);
       self.intg_fn_btw_pt_and_vert_seg(f, p2, slope_02, slope_12, p0.n0())
     }
     else // Points 0 and 1 do not form a vertical line.
     {
-      /*       
-       *      p1            p2
-       *     /|\           /|
-       *    / | \         / |
-       * p0/__|__\p2   p0/__|p1  (bottom lines not necessarily horizontal)
-       *
-       * Integrate between points 0 and 1, and between points 1 and 2 if points 1 and 2 don't lie on a vertical line.
-       */
+     /*       
+      *      p1            p2
+      *     /|\           /|
+      *    / | \         / |
+      * p0/__|__\p2   p0/__|p1  (bottom lines not necessarily horizontal)
+      *
+      * Integrate between points 0 and 1, and between points 1 and 2 if points 1 and 2 don't lie on a vertical line.
+      */
       let left_seg = self.intg_fn_btw_pt_and_vert_seg(|x| f(x), p0, slope_01, slope_02, p1.n0());
       let right_seg = {
         if p1.n0() == p2.n0() { 0 as R } // vertical right side, no second segment
@@ -1043,22 +1064,22 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
   }
 
   // Integrate a global function against an interior-relative monomial over a finite element interior.
-  fn intg_global_fn_x_facerel_mon_on_fe_int(&self, f: |&[R]| -> R, mon: Mon, fe: FENum) -> R
+  fn intg_global_fn_x_facerel_mon_on_fe_int(& self, f: |&[R]| -> R, mon: Mon, fe: FENum) -> R
   {
     let int_origin_arr = { let int_origin = self.fes[*fe].v0; [int_origin.n0(), int_origin.n1()] };
     self.intg_global_fn_on_fe_int(|x: &[R]| { f(x) * mon.value_at_for_origin(x, int_origin_arr) }, fe) 
   }
 
-  fn intg_global_fn_x_facerel_mon_on_fe_side(&self, f: |&[R]| -> R, mon: Mon, fe: FENum, sf: SideFace) -> R
+  fn intg_global_fn_x_facerel_mon_on_fe_side(& self, f: |&[R]| -> R, mon: Mon, fe: FENum, sf: SideFace) -> R
   {
     let ref_tri = self.ref_tri_for_fe(fe);
     let v0 = self.fes[*fe].v0;
     let (v1, v2) = (vsum(v0, ref_tri.v01), vsum(v0, ref_tri.v02));
     
-    /* We want to compute int_0^1 f(p(t)) mon(p(t)-o) |p'(t)| dt, where p:[0,1] -> R^2
-       is a bijection traversing the side face smoothly with p(0) and p(1) being the side
-       endpoints, and o is the local origin for the side, which is the side's midpoint. */
-    let (a,b) = side_face_endpoint_pair(sf, v0,v1,v2, ref_tri.nums_side_faces_between_vertexes, FirstTraversedEndpointsFirst);
+    // We want to compute int_0^1 f(p(t)) mon(p(t)-o) |p'(t)| dt, where p:[0,1] -> R^2 is a bijection traversing the
+    // side face smoothly with p(0) and p(1) being the side endpoints, and o is the local origin for the side, which
+    // is the side's midpoint.
+    let (a,b) = side_face_endpoint_pair(sf, v0,v1,v2, ref_tri.nums_side_faces_between_vertexes, VertexOrder);
     let o = { let mp = midpt(a, b); [mp.n0(), mp.n1()] }; // The local origin of each side face is the midpoint.
     let side_len = dist(a,b);
       
@@ -1070,10 +1091,12 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
       f(*p_t) * mon.value_at_for_origin(*p_t, o) * side_len  // side_len = |p'(t)|
     };
 
-    space_adaptive_quadrature(&integrand, [0. as R], [1. as R], self.integration_rel_err, self.integration_abs_err)
+    space_adaptive_quadrature(&integrand,
+                              [0. as R], [1. as R],
+                              self.integration_rel_err, self.integration_abs_err)
   }
   
-  fn intg_mixed_global_and_facerel_fn_on_fe_int(&self, f: |&[R], &[R]| -> R, fe: FENum) -> R
+  fn intg_mixed_global_and_facerel_fn_on_fe_int(& self, f: |&[R], &[R]| -> R, fe: FENum) -> R
   {
     let int_origin = self.fes[*fe].v0;
 
@@ -1088,7 +1111,7 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
     self.intg_global_fn_on_fe_int(integrand, fe)
   }
 
-  fn intg_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(&self, p: &P, os: OShape) -> R
+  fn intg_facerel_poly_on_oshape_int<P:Polynomial<Mon>>(& self, p: &P, os: OShape) -> R
   {
     /*
     # Order the interior-relative vertex points by their first coordinate values.
@@ -1118,32 +1141,40 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
     0 as R // TODO
   }
 
-  fn intg_facerel_poly_x_facerel_poly_on_oshape_side<P:Polynomial<Mon>>(&self, p1: &P, p2: &P, os: OShape, sf: SideFace) -> R
+  fn intg_facerel_poly_x_facerel_poly_on_oshape_side<P:Polynomial<Mon>>(& self,
+                                                                        p1: &P, p2: &P,
+                                                                        os: OShape, sf: SideFace) -> R
   {
     0 as R // TODO
   }
 
-  fn intg_facerel_mon_on_oshape_int(&self, mon: Mon, os: OShape) -> R
+  fn intg_facerel_mon_on_oshape_int(& self, mon: Mon, os: OShape) -> R
   {
     0 as R // TODO
   }
 
-  fn intg_facerel_mon_on_oshape_side(&self, mon: Mon, os: OShape, sf: SideFace) -> R
+  fn intg_facerel_mon_on_oshape_side(& self, mon: Mon, os: OShape, sf: SideFace) -> R
   {
     0 as R // TODO
   }
 
-  fn intg_facerel_mon_x_facerel_poly_on_oshape_side<P:Polynomial<Mon>>(&self, mon: Mon, p: &P, os: OShape, sf: SideFace) -> R
+  fn intg_facerel_mon_x_facerel_poly_on_oshape_side<P:Polynomial<Mon>>(& self,
+                                                                       mon: Mon, p: &P,
+                                                                       os: OShape, sf: SideFace) -> R
   {
     0 as R // TODO
   }
 
-  fn intg_intrel_mon_x_siderel_mon_on_oshape_side(&self, int_mon: Mon, side_mon: Mon, os: OShape, sf: SideFace) -> R
+  fn intg_intrel_mon_x_siderel_mon_on_oshape_side(& self,
+                                                  int_mon: Mon, side_mon: Mon,
+                                                  os: OShape, sf: SideFace) -> R
   {
     0 as R // TODO
   }
   
-  fn intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(&self, mon: Mon, q: &VectorMonomial<Mon>, os: OShape, sf: SideFace) -> R
+  fn intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side(& self,
+                                                              mon: Mon, q: &VectorMonomial<Mon>,
+                                                              os: OShape, sf: SideFace) -> R
   {
     0 as R // TODO
   }
@@ -1389,7 +1420,7 @@ geometric_entity_tag(fe::FENum, mesh::TriMesh) = mesh.geom_ent_tags_by_FENum[fe]
 
 enum SideEndpointsOrdering {
   LesserEndpointsFirst,
-  FirstTraversedEndpointsFirst,
+  VertexOrder,
 }
 
 fn side_face_endpoint_pair(sf: SideFace,
@@ -1432,7 +1463,7 @@ fn mk_endpoint_pair(pt1: Point, pt2: Point, endpoints_ordering: SideEndpointsOrd
   match endpoints_ordering
   {
     LesserEndpointsFirst => if pt1 < pt2 { (pt1, pt2) } else { (pt2, pt1) },
-    FirstTraversedEndpointsFirst => (pt1, pt2)
+    VertexOrder => (pt1, pt2)
   }
 }
 
@@ -1456,7 +1487,8 @@ fn vsum(p: Vec, q: Vec) -> Vec { (p.n0() + q.n0(), p.n1() + q.n1()) }
 #[inline]
 fn vdiff(p: Vec, q: Vec) -> Vec { (p.n0() - q.n0(), p.n1() - q.n1()) }
   
-// Determine whether a counterclockwise rotation not exceeding 1/2 turn can transform the first vector to a positive multiple of the second.
+// Determine whether a counterclockwise rotation not exceeding 1/2 turn can transform the first vector to a positive
+// multiple of the second.
 #[inline]
 fn oriented_counterclockwise((u_x,u_y): Vec, (v_x,v_y): Vec) -> bool { u_x*v_y - u_y*v_x > 0. as R }
 
