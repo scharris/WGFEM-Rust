@@ -127,7 +127,7 @@ pub trait Polynomial<Mon: Monomial>: ToStr {
   #[inline]
   fn deg(&self) -> Deg {
     Deg(self.foldl_terms(0, |max_over_terms, (_, mon)| {
-      let term_deg = mon.foldl_exps(0, |acc, e| acc + *e);
+      let term_deg = *mon.deg();
       if term_deg > max_over_terms { term_deg } else { max_over_terms }
     }))
   }
@@ -135,7 +135,7 @@ pub trait Polynomial<Mon: Monomial>: ToStr {
   #[inline]
   fn max_var_deg(&self) -> Deg {
     Deg(self.foldl_terms(0, |max_over_terms, (_, mon)| {
-      let max_var_deg = mon.foldl_exps(0, |acc, e| if *e > acc { *e } else { acc } );
+      let max_var_deg = *mon.max_var_deg();
       if max_var_deg > max_over_terms { max_var_deg } else { max_over_terms }
     }))
   }
