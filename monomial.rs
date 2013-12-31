@@ -26,6 +26,8 @@ pub trait Monomial: Eq +
 
   fn map_exp(&self, coord: Dim, f: |Deg| -> Deg) -> Self;
 
+  fn foldl_exps<A>(&self, z: A, f: |a: A, exp: Deg| -> A) -> A;
+
   fn one() -> Self;
 
   fn mons_with_deg_lim_asc(deg_lim: DegLim) -> ~[Self];
@@ -86,6 +88,11 @@ impl Monomial for Mon1d {
       Mon1d { exps: [ f(self.exps[0]) ] }
     }
   }
+  
+  #[inline]
+  fn foldl_exps<A>(&self, z: A, f: |a: A, exp: Deg| -> A) -> A {
+    self.exps.iter().fold(z, |a,&e| f(a,e))
+  }
 
   #[inline]
   fn one() -> Mon1d {
@@ -143,6 +150,11 @@ impl Monomial for Mon2d {
       Dim(1) => Mon2d { exps: [  self.exps[0], f(self.exps[1])] },
       _ => fail!("Dimension number out of range in map_exp.") 
     }
+  }
+  
+  #[inline]
+  fn foldl_exps<A>(&self, z: A, f: |a: A, exp: Deg| -> A) -> A {
+    self.exps.iter().fold(z, |a,&e| f(a,e))
   }
 
   #[inline(always)]
@@ -227,6 +239,11 @@ impl Monomial for Mon3d {
       Dim(2) => Mon3d { exps: [  self.exps[0],   self.exps[1], f(self.exps[2])] },
       _ => fail!("Dimension number out of range in map_exp.") 
     }
+  }
+  
+  #[inline]
+  fn foldl_exps<A>(&self, z: A, f: |a: A, exp: Deg| -> A) -> A {
+    self.exps.iter().fold(z, |a,&e| f(a,e))
   }
 
   #[inline(always)]
@@ -326,6 +343,11 @@ impl Monomial for Mon4d {
       Dim(3) => Mon4d { exps: [  self.exps[0],   self.exps[1],   self.exps[2], f(self.exps[3])] },
       _ => fail!("Dimension number out of range in map_exp.") 
     }
+  }
+  
+  #[inline]
+  fn foldl_exps<A>(&self, z: A, f: |a: A, exp: Deg| -> A) -> A {
+    self.exps.iter().fold(z, |a,&e| f(a,e))
   }
 
   #[inline(always)]

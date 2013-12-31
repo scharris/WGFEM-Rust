@@ -605,6 +605,32 @@ fn test_map_exp_4d() {
 }
 
 #[test]
+fn test_foldl_exps_1d() {
+  let x = Mon1d { exps: [Deg(1)] };
+  assert_eq!(x.foldl_exps(0, |acc, e| acc + *e), 1);
+}
+
+#[test]
+fn test_foldl_exps_2d() {
+  let xy2 = Mon2d { exps: [Deg(1),Deg(2)] };
+  assert_eq!(xy2.foldl_exps(0, |acc, e| acc + *e), 3);
+}
+
+#[test]
+fn test_foldl_exps_3d() {
+  let xy2z3 = Mon3d { exps: [Deg(1), Deg(2), Deg(3)] };
+  assert_eq!(xy2z3.foldl_exps(0, |acc, e| acc + *e), 6);
+}
+
+#[test]
+fn test_foldl_exps_4d() {
+  let xy2z3t4 = Mon4d { exps: [Deg(1), Deg(2), Deg(3), Deg(4)] };
+  assert_eq!(xy2z3t4.foldl_exps(0, |acc, e| acc + *e), 10);
+}
+
+
+
+#[test]
 fn test_num_mons_with_deg_lim() {
   assert_eq!(monomial::num_mons_with_deg_lim(MaxMonDeg(2), 2), 6);
 
