@@ -27,6 +27,14 @@ pub trait Monomial: Eq +
   fn map_exp(&self, coord: Dim, f: |Deg| -> Deg) -> Self;
 
   fn foldl_exps<A>(&self, z: A, f: |a: A, exp: Deg| -> A) -> A;
+  
+  fn deg(&self) -> Deg {
+    Deg(self.foldl_exps(0, |acc, e| acc + *e))
+  }
+
+  fn max_var_deg(&self) -> Deg {
+    Deg(self.foldl_exps(0, |acc, e| if *e > acc { *e } else { acc } )) 
+  }
 
   fn one() -> Self;
 

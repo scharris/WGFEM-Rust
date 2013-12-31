@@ -704,3 +704,53 @@ fn test_mons_with_deg_lim_asc_4d() {
   assert_eq!(mons_4d_deg_le_2.len(), monomial::num_mons_with_deg_lim(MaxMonDeg(2), 4));
 }
 
+#[test]
+fn test_deg_1d() {
+  let m = Mon1d { exps: [Deg(1)] };
+  assert_eq!(m.deg(), Deg(1));
+}
+
+
+#[test]
+fn test_deg_2d() {
+  let m = Mon2d { exps: [Deg(1), Deg(2)] };
+  assert_eq!(m.deg(), Deg(3));
+}
+
+#[test]
+fn test_deg_3d() {
+  let m = Mon3d { exps: [Deg(1), Deg(2), Deg(3)] };
+  assert_eq!(m.deg(), Deg(6));
+}
+
+#[test]
+fn test_deg_4d() {
+  let m = Mon4d { exps: [Deg(1), Deg(2), Deg(3), Deg(4)] };
+  assert_eq!(m.deg(), Deg(10));
+}
+
+#[test]
+fn test_max_var_deg_1d() {
+  let m = Mon1d { exps: [Deg(1)] };
+  assert_eq!(m.max_var_deg(), Deg(1));
+}
+
+
+#[test]
+fn test_max_var_deg_2d() {
+  let m = Mon2d { exps: [Deg(1), Deg(2)] };
+  assert_eq!(m.max_var_deg(), Deg(2));
+}
+
+#[test]
+fn test_max_var_deg_3d() {
+  let m = Mon3d { exps: [Deg(1), Deg(2), Deg(3)] };
+  assert_eq!(m.max_var_deg(), Deg(3));
+}
+
+#[test]
+fn test_max_var_deg_4d() {
+  let m = Mon4d { exps: [Deg(1), Deg(2), Deg(3), Deg(4)] };
+  assert_eq!(m.max_var_deg(), Deg(4));
+}
+
