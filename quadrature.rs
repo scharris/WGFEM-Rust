@@ -34,9 +34,9 @@ pub fn space_adaptive_quadrature(f: & |&[R]| -> R, min_corner: &[R], max_corner:
   val
 }
 
-#[inline(never)]
 // Perform Gaussian-Legendre quadrature of f on [a,b]x[c,d] using n weights per axis, for a total of 2n weights and n^2
 // evaluation points.
+#[inline(never)]
 pub fn gaussian_quadrature_2D_rect(n: uint, f: & |x: R, y: R| -> R, a: R, b: R, c: R, d: R) -> R {
   let gq_order = {
     if n <= 10 { 2*n as uint}
@@ -50,8 +50,28 @@ pub fn gaussian_quadrature_2D_rect(n: uint, f: & |x: R, y: R| -> R, a: R, b: R, 
   };
   unsafe {
     let f_pv: *c_void = cast::transmute(f); 
-    let gq_integrand_caller_pv: *c_void = cast::transmute(gq_integrand_caller);
-    gauss_legendre_2D_rect(gq_order as c_int, gq_integrand_caller_pv, f_pv, a, b, c, d)
+    let gq_2D_integrand_caller_pv: *c_void = cast::transmute(gq_2D_integrand_caller);
+    gauss_legendre_2D_rect(gq_order as c_int, gq_2D_integrand_caller_pv, f_pv, a, b, c, d)
+  }
+}
+
+// Perform Gaussian-Legendre quadrature of f on [a,b] using n points.
+#[inline(never)]
+pub fn gaussian_quadrature(n: uint, f: & |R| -> R, a: R, b: R) -> R {
+  let gq_order = {
+    if n <= 10 { 2*n as uint}
+    else if n <= 16 { 32 }
+    else if n <= 32 { 64 }
+    else if n <= 48 { 96 }
+    else if n <= 64 { 128 }
+    else if n <= 128 { 256 }
+    else if n <= 256 { 512 }
+    else { fail!("Degree limit exceeded for Gaussian quadrature.") }
+  };
+  unsafe {
+    let f_pv: *c_void = cast::transmute(f); 
+    let gq_1D_integrand_caller_pv: *c_void = cast::transmute(gq_1D_integrand_caller);
+    gauss_legendre(gq_order as c_int, gq_1D_integrand_caller_pv, f_pv, a, b)
   }
 }
 
@@ -71,11 +91,18 @@ extern fn h_integrand_caller(ndim: c_uint, x: *R,
   0 as c_int
 }
 
-// This is the integrand callback function called directly by the C gaussian quadrature integration routine.
+// This is the integrand callback function called directly by the C 2D gaussian quadrature integration routine.
 #[inline(never)]
-extern fn gq_integrand_caller(x: R, y: R, f_ptr: *|x: R, y: R| -> R) -> R {
+extern fn gq_2D_integrand_caller(x: R, y: R, f_ptr: *|x: R, y: R| -> R) -> R {
   let f: |x: R, y: R| -> R = unsafe { ptr::read_ptr(f_ptr) };
   f(x, y)
+}
+
+// This is the integrand callback function called directly by the C 1D gaussian quadrature integration routine.
+#[inline(never)]
+extern fn gq_1D_integrand_caller(x: R, f_ptr: *|R| -> R) -> R {
+  let f: |R| -> R = unsafe { ptr::read_ptr(f_ptr) };
+  f(x)
 }
 
 
@@ -95,6 +122,11 @@ extern {
                             f: *c_void,    // double (*f)(double,double,void*)
                             data: *c_void, // passed as last param to f for each evaluation
                             a: R, b: R, c: R, d: R) -> R;
+  
+  fn gauss_legendre(order: c_int,
+                    f: *c_void,    // double (*f)(double,void*)
+                    data: *c_void, // passed as last param to f for each evaluation
+                    a: R, b: R) -> R;
 }
 
 
