@@ -84,6 +84,23 @@ fn test_1d_owned_tostr() {
              ~"1 x^2 + 2 x^0 + 3 x^1 + 4 x^1");
 }
 
+#[test]
+fn test_1d_owned_deg() {
+  let one_mon: Mon1d = Monomial::one();
+  let x_mon = Mon1d { exps: [Deg(1)] };
+  let one_plus_x = PolyOwning::new(~[1.,1.], ~[one_mon, x_mon]);
+
+  assert_eq!(one_plus_x.deg(), Deg(1));
+}
+
+#[test]
+fn test_1d_owned_max_var_deg() {
+  let one_mon: Mon1d = Monomial::one();
+  let x_mon = Mon1d { exps: [Deg(1)] };
+  let one_plus_x = PolyOwning::new(~[1.,1.], ~[one_mon, x_mon]);
+
+  assert_eq!(one_plus_x.max_var_deg(), Deg(1));
+}
 
 
 #[test]
@@ -230,6 +247,24 @@ fn test_2d_owned_tostr() {
 
   assert_eq!(PolyOwning::new(~[1.,2.,3.,4.], ~[x_mon*x_mon, x_mon*y_mon, x_mon, x_mon]).to_str(),
              ~"1 x^2y^0 + 2 x^1y^1 + 3 x^1y^0 + 4 x^1y^0");
+}
+
+#[test]
+fn test_2d_owned_deg() {
+  let one_mon: Mon2d = Monomial::one();
+  let xy2_mon = Mon2d { exps: [Deg(1), Deg(2)] };
+  let one_plus_xy2 = PolyOwning::new(~[1.,1.], ~[one_mon, xy2_mon]);
+
+  assert_eq!(one_plus_xy2.deg(), Deg(3));
+}
+
+#[test]
+fn test_2d_owned_max_var_deg() {
+  let one_mon: Mon2d = Monomial::one();
+  let xy2_mon = Mon2d { exps: [Deg(1), Deg(2)] };
+  let one_plus_xy2 = PolyOwning::new(~[1.,1.], ~[one_mon, xy2_mon]);
+
+  assert_eq!(one_plus_xy2.max_var_deg(), Deg(2));
 }
 
 
@@ -434,6 +469,23 @@ fn test_3d_owned_tostr() {
              ~"1 x^0y^0z^2 + 2 x^0y^1z^1 + 3 x^0y^0z^1 + 4 x^0y^0z^1");
 }
 
+#[test]
+fn test_3d_owned_deg() {
+  let one_mon: Mon3d = Monomial::one();
+  let xy2z3_mon = Mon3d { exps: [Deg(1), Deg(2), Deg(3)] };
+  let one_plus_xy2z3 = PolyOwning::new(~[1.,1.], ~[one_mon, xy2z3_mon]);
+
+  assert_eq!(one_plus_xy2z3.deg(), Deg(6));
+}
+
+#[test]
+fn test_3d_owned_max_var_deg() {
+  let one_mon: Mon3d = Monomial::one();
+  let xy2z3_mon = Mon3d { exps: [Deg(1), Deg(2), Deg(3)] };
+  let one_plus_xy2z3 = PolyOwning::new(~[1.,1.], ~[one_mon, xy2z3_mon]);
+
+  assert_eq!(one_plus_xy2z3.max_var_deg(), Deg(3));
+}
 
 
 #[test]
@@ -568,4 +620,24 @@ fn test_4d_owned_tostr() {
   assert_eq!(PolyOwning::new(~[1.,2.,3.,4.], ~[x_mon*x_mon, x_mon*y_mon, x_mon, x_mon]).to_str(),
              ~"1 x1^2x2^0x3^0x4^0 + 2 x1^1x2^1x3^0x4^0 + 3 x1^1x2^0x3^0x4^0 + 4 x1^1x2^0x3^0x4^0");
 }
+
+#[test]
+fn test_4d_owned_deg() {
+  let one_mon: Mon4d = Monomial::one();
+  let xy2z3t4_mon = Mon4d { exps: [Deg(1), Deg(2), Deg(3), Deg(4)] };
+  let one_plus_xy2z3t4 = PolyOwning::new(~[1.,1.], ~[one_mon, xy2z3t4_mon]);
+
+  assert_eq!(one_plus_xy2z3t4.deg(), Deg(10));
+}
+
+#[test]
+fn test_4d_owned_max_var_deg() {
+  let one_mon: Mon4d = Monomial::one();
+  let xy2z3t4_mon = Mon4d { exps: [Deg(1), Deg(2), Deg(3), Deg(4)] };
+  let one_plus_xy2z3t4 = PolyOwning::new(~[1.,1.], ~[one_mon, xy2z3t4_mon]);
+
+  assert_eq!(one_plus_xy2z3t4.max_var_deg(), Deg(4));
+}
+
+
 
