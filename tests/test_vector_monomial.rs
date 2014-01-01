@@ -38,6 +38,32 @@ fn test_divergence() {
 }
 
 #[test]
+fn test_dot_at() {
+  let one = Mon2d { exps: [Deg(0), Deg(0)] };
+  let x = Mon2d { exps: [Deg(1), Deg(0)] };
+  let y = Mon2d { exps: [Deg(0), Deg(1)] };
+ 
+  let p = [1., 2.];
+  let v = [3., 4.];
+
+  let x_dim0_vmon: VectorMonomial<Mon2d> = VectorMonomial::new(Dim(0), x);
+  assert_eq!(x_dim0_vmon.dot_at(v, p), 3.);
+  
+  let y_dim0_vmon: VectorMonomial<Mon2d> = VectorMonomial::new(Dim(0), y);
+  assert_eq!(y_dim0_vmon.dot_at(v, p), 6.);
+  
+  let y_dim1_vmon: VectorMonomial<Mon2d> = VectorMonomial::new(Dim(1), y);
+  assert_eq!(y_dim1_vmon.dot_at(v, p), 8.);
+  
+  let xy_dim0_vmon: VectorMonomial<Mon2d> = VectorMonomial::new(Dim(0), x*y);
+  assert_eq!(xy_dim0_vmon.dot_at(v, p), 6.);
+
+  let x2y3_dim1_vmon: VectorMonomial<Mon2d> = VectorMonomial::new(Dim(1), x*x*y*y*y);
+  assert_eq!(x2y3_dim1_vmon.dot_at(v, p), 32.);
+}
+
+
+#[test]
 fn test_ordered_by_comp_mon_of_deg_le_2d() {
   let one = Mon2d { exps: [Deg(0), Deg(0)] };
   let x = Mon2d { exps: [Deg(1), Deg(0)] };

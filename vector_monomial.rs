@@ -40,6 +40,12 @@ impl<Mon:Monomial> VectorMonomial<Mon> {
     }
   }
 
+  #[inline]
+  pub fn dot_at(&self, v: & [R], p: & [R]) -> R {
+    let mon_val = self.mon.value_at(p);
+    mon_val * v[*self.mon_dim]
+  }
+
   /// All vector monomials with the indicated component monomials, ordered by component dimension in ascending order,
   /// and then by monomial in increasing lexicographical order of exponents.
   pub fn with_comp_mons_ordered_by_comp_and_mon(comp_mons: &[Mon]) -> ~[VectorMonomial<Mon>] {
