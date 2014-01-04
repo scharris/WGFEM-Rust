@@ -21,7 +21,6 @@ pub mod mesh;
 pub mod rectangle_mesh;
 pub mod triangle_mesh;
 pub mod triangle_mesh_builder;
-pub mod gmsh_reader;
 pub mod weak_gradient;
 pub mod wg_basis;
 pub mod projection;

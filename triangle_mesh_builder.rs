@@ -9,9 +9,10 @@ use std::num::{pow_with_uint};
 use std::iter::{Iterator, range_inclusive};
 use std::hashmap::{HashMap, HashSet};
 use std::util::swap;
+use std::io::buffered::BufferedReader;
 
-// Mesh Builder
-pub struct MeshBuilder {
+// Triangle mesh builder type.
+pub struct TriMeshBuilder {
   
   oshapes: ~[RefTri],
   fes: ~[ElTri],
@@ -27,29 +28,77 @@ pub struct MeshBuilder {
   // work buffers
   sfs_btw_verts_work_set: HashSet<(u8,u8,u8)>,
   sf_endpt_pairs_work_buf: Option<~[(Point,Point)]>,
+
 }
 
+impl TriMeshBuilder {
 
-impl MeshBuilder {
-  
-  pub fn make_mesh<Mon:Monomial,I:Iterator<BaseTri>>(base_pts_by_nodenum: ~[Point],
-                                                     mut base_tris_iter: &mut I,
-                                                     est_base_tris: uint,
-                                                     global_subdiv_iters: uint,
-                                                     integration_rel_err: R,
-                                                     integration_abs_err: R,
-                                                     load_phys_reg_tags: bool,
-                                                     load_geom_ent_tags: bool) -> TriMesh<Mon> {
+  // Construct a triangle mesh from a Gmsh msh formatted stream.
+  pub fn from_gmsh_msh_stream <Mon: Monomial, I: Reader>
+         ( msh_is: &mut BufferedReader<I>,
+           subdiv_iters: uint,
+           integration_rel_err: R, integration_abs_err: R,
+           load_phys_reg_tags: bool, load_geom_ent_tags: bool )
+         -> TriMesh<Mon>
+  {
+    let base_pts_by_nodeix = read_msh_nodes(msh_is);
 
+    // Iterate lines beginning at the Elements section.
+    let mut lines = msh_is.lines().skip_while(|line| !line.starts_with("$Elements"));
+
+    if lines.next().is_none() {
+      fail!("$Elements section not found in msh file.");
+    }
+
+    // Estimate number of input mesh triangles from the number of elements declared and the number of skipped lower
+    // order elements (points and lines) before the first triangle element.
+    let mut est_base_tris: uint = from_str(lines.next().unwrap()).unwrap(); // This count can include unwanted lower order elements.
+
+    // Skip lower order elements such as points and lines, revising estimate of number of elements in the process.
+    let mut first_tri_line = vec::with_capacity(1);
+    loop {
+      match lines.next() {
+        Some(line) => {
+          let el_type: uint = extract_field(line, TOKIX_ELLINE_ELTYPE);
+          if is_lower_order_el_type(el_type) {
+            if est_base_tris > 0 { est_base_tris -= 1 };
+          } else {
+            first_tri_line.push(line);
+            break;
+          }
+        }
+        None => fail!("No triangle elements found.")
+      }
+    }
+   
+    let mut base_tris_iter = first_tri_line.move_iter().chain(lines)
+                               .take_while(|line| !line.starts_with("$EndElements"))
+                               .filter_map(|el_line| base_tri(el_line, base_pts_by_nodeix));
+
+    TriMeshBuilder::from_els_iter(&mut base_tris_iter,
+                               est_base_tris,
+                               subdiv_iters,
+                               integration_rel_err, integration_abs_err,
+                               load_phys_reg_tags, load_geom_ent_tags)
+  }
+
+
+  pub fn from_els_iter <Mon: Monomial, I: Iterator<BaseTri>>
+         ( mut base_tris_iter: &mut I,
+           est_base_tris: uint,
+           global_subdiv_iters: uint,
+           integration_rel_err: R, integration_abs_err: R,
+           load_phys_reg_tags: bool, load_geom_ent_tags: bool )
+         -> TriMesh<Mon>
+  {
     // Make estimates of the number of finite elements and reference triangles for storage allocation.
     // This estimate ignores optional additional subdivisions that may be specified for some input elements.
     let est_fes = est_base_tris * pow_with_uint(4, global_subdiv_iters);
     // We'll estimate 2 reference triangles for each mesh element if we are subdividing, 1 if not.
     // We ignore for this estimate any additional reference triangles for additional subdivisions.
-    let est_ref_tris = (if global_subdiv_iters > 0 { 2 } else { 1 }) * est_base_tris;
+    let est_ref_tris = est_base_tris * (if global_subdiv_iters > 0 { 2 } else { 1 });
     
-    // The MeshBuilder structure holds data to be updated as base elements are processed.
-    let mut bldr = MeshBuilder {
+    let mut bldr = TriMeshBuilder {
       fes: vec::with_capacity(est_fes),
       oshapes: vec::with_capacity(est_ref_tris),
       side_reps_by_endpts: HashMap::with_capacity((est_fes * 3)/2 as uint), // estimate assumes most fes have 3 sides, each in 2 fes
@@ -63,7 +112,7 @@ impl MeshBuilder {
     
     // Process input mesh elements.
     for base_tri in base_tris_iter {
-      bldr.process_base_tri(&base_tri, base_pts_by_nodenum, global_subdiv_iters);
+      bldr.process_base_tri(&base_tri, global_subdiv_iters);
     }
 
     // Create the final non-boundary sides data structures based on the mapping of side endpoints to fe faces.
@@ -81,14 +130,12 @@ impl MeshBuilder {
                  bldr.take_geom_ent_tags())
   }
 
-  fn process_base_tri(& mut self,
-                      base_tri: &BaseTri,
-                      mesh_pts_by_nodenum: &[Point],
-                      global_subdiv_iters: uint) {
-
-    let (v0, v1, v2) = (mesh_pts_by_nodenum[*base_tri.node_num_0],
-                        mesh_pts_by_nodenum[*base_tri.node_num_1],
-                        mesh_pts_by_nodenum[*base_tri.node_num_2]);
+  fn process_base_tri
+     ( &mut self,
+       base_tri: &BaseTri,
+       global_subdiv_iters: uint )
+  {
+    let (v0, v1, v2) = (base_tri.v0, base_tri.v1, base_tri.v2);
 
     // For each of the three sides of this mesh element to be subdivided, the generated subdivision elements
     // can be made to have more than one face between their vertexes lying on the side.  This is useful to
@@ -141,18 +188,22 @@ impl MeshBuilder {
   *  mesh properties such as maximum element diameter can be determined from only the reference elements.
   *  Returns the first new oriented shape number that was created.
   */
-  fn register_primary_ref_tris(& mut self,
-                               v0: Point, v1: Point, v2: Point,
-                               nums_sfs_btw_verts: (u8,u8,u8),
-                               subdiv_iters: uint) -> OShape {
-
+  fn register_primary_ref_tris
+     ( &mut self,
+       v0: Point, v1: Point, v2: Point,
+       nums_sfs_btw_verts: (u8,u8,u8),
+       subdiv_iters: uint )
+     -> OShape
+  {
     let first_new_oshape = OShape(self.oshapes.len());
    
     let scale = { let p: uint = pow_with_uint(2u, subdiv_iters); 1./(p as R) };
 
     if subdiv_iters == 0 || nums_sfs_btw_verts == (1u8, 1u8, 1u8) {
       self.oshapes.push(RefTri::new(v0,v1,v2, scale, nums_sfs_btw_verts));
-    } else { // We are subdividing, and there is more than one side face between some vertex pair.
+    } else { 
+      // We are subdividing, and there is more than one side face between some vertex pair. 
+
       let (nums_sfs_btw_verts_0, nums_sfs_btw_verts_1, nums_sfs_btw_verts_2) = nums_sfs_btw_verts;
 
       // We need to add a separate primary reference triangle for each triplet representing the number of side
@@ -192,9 +243,12 @@ impl MeshBuilder {
 
   // Register the single secondary (inverted) subdivision triangle for the given (primary) base triangle, and number of
   // subdivisions to be applied on the base (primary) triangle.
-  fn register_secondary_ref_tri(& mut self,
-                                pv0: Point, pv1: Point, pv2: Point, // base (primary) triangle vertexes
-                                subdiv_iters: uint) -> OShape {
+  fn register_secondary_ref_tri
+     ( &mut self,
+       pv0: Point, pv1: Point, pv2: Point, // base (primary) triangle vertexes
+       subdiv_iters: uint ) 
+     -> OShape
+  {
     let sec_oshape = OShape(self.oshapes.len());
     let sec_ref_tri = {
       let scale = { 
@@ -207,13 +261,15 @@ impl MeshBuilder {
     sec_oshape
   }
 
-  fn subdivide_primary(& mut self,
-                       v0: Point, v1: Point, v2: Point,
-                       iters: uint,
-                       nums_side_faces_btw_verts: (u8,u8,u8),
-                       pri_oshapes_by_nums_sfs_btw_verts: |(u8,u8,u8)| -> OShape,
-                       sec_oshape: OShape,
-                       tag_phys_reg: Tag, tag_geom_ent: Tag) {
+  fn subdivide_primary
+     ( &mut self,
+       v0: Point, v1: Point, v2: Point,
+       iters: uint,
+       nums_side_faces_btw_verts: (u8,u8,u8),
+       pri_oshapes_by_nums_sfs_btw_verts: |(u8,u8,u8)| -> OShape,
+       sec_oshape: OShape,
+       tag_phys_reg: Tag, tag_geom_ent: Tag )
+  {
     if iters == 0 {
       let oshape = pri_oshapes_by_nums_sfs_btw_verts(nums_side_faces_btw_verts);
       self.add_fe(oshape, v0,v1,v2, tag_phys_reg, tag_geom_ent);
@@ -252,12 +308,14 @@ impl MeshBuilder {
     }
   }
 
-  fn subdivide_secondary(& mut self,
-                         v0: Point, v1: Point, v2: Point, // secondary triangle vertexes
-                         iters: uint,
-                         pri_oshapes_by_nums_sfs_btw_verts: |(u8,u8,u8)| -> OShape,
-                         sec_oshape: OShape,
-                         tag_phys_reg: Tag, tag_geom_ent: Tag) {
+  fn subdivide_secondary
+     ( &mut self,
+       v0: Point, v1: Point, v2: Point, // secondary triangle vertexes
+       iters: uint,
+       pri_oshapes_by_nums_sfs_btw_verts: |(u8,u8,u8)| -> OShape,
+       sec_oshape: OShape,
+       tag_phys_reg: Tag, tag_geom_ent: Tag )
+  {
     if iters == 0 { 
       self.add_fe(sec_oshape, v0,v1,v2, tag_phys_reg, tag_geom_ent);
     } else {
@@ -298,8 +356,12 @@ impl MeshBuilder {
   }
 
   // This procedure will be used to create all finite elements during the processing of the input base triangles.
-  fn add_fe(& mut self, oshape: OShape, v0: Point, v1: Point, v2: Point, tag_phys_reg: Tag, tag_geom_ent: Tag) {
-
+  fn add_fe
+     ( &mut self,
+       oshape: OShape,
+       v0: Point, v1: Point, v2: Point,
+       tag_phys_reg: Tag, tag_geom_ent: Tag )
+  {
     // Create the finite element.
     let fe = FENum(self.fes.len());
     self.fes.push(ElTri{oshape: oshape, v0: v0});
@@ -319,30 +381,34 @@ impl MeshBuilder {
   }
   
   // Register the given finite element's side faces by their endpoints in the passed registry.
-  fn register_fe_side_reps_by_endpoints(& mut self, 
-                                        fe: FENum,
-                                        v0: Point, v1: Point, v2: Point,
-                                        nums_side_faces_btw_verts: (u8,u8,u8)) -> (int, int) {
+  // Returns the pair of changes in the number of non-boundary sides and boundary sides.
+  fn register_fe_side_reps_by_endpoints
+     ( &mut self, 
+       fe: FENum,
+       v0: Point, v1: Point, v2: Point,
+       nums_side_faces_btw_verts: (u8,u8,u8) )
+     -> (int, int)
+  {
     let mut nb_sides_delta = 0;
     let mut b_sides_delta = 0;
     
     // Take the endpoint pairs work buffer, filled with the side face endpoint pairs.
-    let endpt_pairs = MeshBuilder::fill_side_face_endpoint_pairs(self.take_side_face_endpoint_pairs_buf(),
+    let endpt_pairs = TriMeshBuilder::fill_side_face_endpoint_pairs(self.take_side_face_endpoint_pairs_buf(),
                                                                  v0,v1,v2, 
                                                                  nums_side_faces_btw_verts,
                                                                  LesserEndpointsFirst);
 
     // Register the side face representations for this element by their endpoints.
     for sf in range(0, endpt_pairs.len()) {
-      let new_rep = (fe, SideFace(sf));
+      let fe_sf = (fe, SideFace(sf));
       self.side_reps_by_endpts.mangle(endpt_pairs[sf], (/*no context value*/),
         |_k, _ctx| { // no existing side rep found: insert
           b_sides_delta += 1;
-          SideReps::new(new_rep) // new value to insert
+          SideReps::new(fe_sf) // new value to insert
         },
         |_k, side_reps, _ctx| { // existing side rep found: mutate
           assert!(side_reps.snd_rep.is_none());
-          side_reps.add(new_rep);
+          side_reps.add(fe_sf);
           b_sides_delta -= 1;
           nb_sides_delta += 1;
         }
@@ -360,10 +426,13 @@ impl MeshBuilder {
   * lesser_endpts_first is true, then each endpoint pair endpoint will have the lesser point (compared
   * lexicographically) in the first component of the pair.
   */
-  fn fill_side_face_endpoint_pairs(mut endpts_buf: ~[(Point,Point)],
-                                   v0: Point, v1: Point, v2: Point,
-                                   nums_side_faces_btw_verts: (u8,u8,u8),
-                                   endpoints_ordering: SideEndpointsOrdering) -> ~[(Point,Point)] {
+  fn fill_side_face_endpoint_pairs
+     ( mut endpts_buf: ~[(Point,Point)],
+       v0: Point, v1: Point, v2: Point,
+       nums_side_faces_btw_verts: (u8,u8,u8),
+       endpoints_ordering: SideEndpointsOrdering )
+     -> ~[(Point,Point)]
+  {
     endpts_buf.clear();
 
     let (sfs_v01, sfs_v12, sfs_v20) = nums_side_faces_btw_verts;
@@ -389,8 +458,8 @@ impl MeshBuilder {
   // Based on the fe/side-face representations by endpoints (ignoring the endpoints), return:
   //   1) nb side numbers by (fe,face), newly assigned here
   //   2) an array of NBSideInclusions indexed by nb side number.
-  fn create_nb_sides_data(& mut self) -> (StorageByInts2<Option<NBSideNum>>, ~[NBSideInclusions]) {
-
+  fn create_nb_sides_data(&mut self) -> (StorageByInts2<Option<NBSideNum>>, ~[NBSideInclusions])
+  {
     let max_sides_per_fe = self.oshapes.iter().map(|rt| rt.num_side_faces).max().unwrap();
     
     let mut nbsidenums_by_fe_face = StorageByInts2::from_elem(self.fes.len(), max_sides_per_fe, None);
@@ -421,110 +490,50 @@ impl MeshBuilder {
 
   // Functions for taking completed data from the builder, and borrowing/returning work buffers.
 
-  fn take_fes(& mut self) -> ~[ElTri] {
+  fn take_fes(&mut self) -> ~[ElTri] {
     let mut fes = ~[];
-    swap(& mut fes, & mut self.fes);
+    swap(&mut fes, &mut self.fes);
     fes
   }
   
-  fn take_oshapes(& mut self) -> ~[RefTri] {
+  fn take_oshapes(&mut self) -> ~[RefTri] {
     let mut oshapes = ~[];
-    swap(& mut oshapes, & mut self.oshapes);
+    swap(&mut oshapes, &mut self.oshapes);
     oshapes
   }
   
-  fn take_phys_reg_tags(& mut self) -> Option<~[Tag]> {
+  fn take_phys_reg_tags(&mut self) -> Option<~[Tag]> {
     let mut tags = None;
-    swap(& mut tags, & mut self.phys_reg_tags_by_fenum);
+    swap(&mut tags, &mut self.phys_reg_tags_by_fenum);
     tags 
   }
   
-  fn take_geom_ent_tags(& mut self) -> Option<~[Tag]> {
+  fn take_geom_ent_tags(&mut self) -> Option<~[Tag]> {
     let mut tags = None;
-    swap(& mut tags, & mut self.geom_ent_tags_by_fenum);
+    swap(&mut tags, &mut self.geom_ent_tags_by_fenum);
     tags 
   }
 
-  fn take_side_face_endpoint_pairs_buf(& mut self) -> ~[(Point,Point)] {
+  fn take_side_face_endpoint_pairs_buf(&mut self) -> ~[(Point,Point)] {
     let mut endpt_pairs_opt = None;
-    swap(& mut endpt_pairs_opt, & mut self.sf_endpt_pairs_work_buf);
+    swap(&mut endpt_pairs_opt, &mut self.sf_endpt_pairs_work_buf);
     endpt_pairs_opt.unwrap()
   }
   
-  fn return_side_face_endpoint_pairs_buf(& mut self, buf: ~[(Point,Point)]) {
+  fn return_side_face_endpoint_pairs_buf(&mut self, buf: ~[(Point,Point)]) {
     let mut ret_buf_opt = Some(buf);
-    swap(& mut ret_buf_opt, & mut self.sf_endpt_pairs_work_buf);
+    swap(&mut ret_buf_opt, &mut self.sf_endpt_pairs_work_buf);
   }
 
-/*
-  # construction from rectangle mesh
-  function from_rect_mesh(rmesh::RMesh.RectMesh, subdiv_ops::Int)
-    assert(Mesh.space_dim(rmesh) == 2)
-    const EMPTY_TAGS_ARRAY = Array(Tag,0)
-
-    const num_rects = Mesh.num_fes(rmesh)
-    const rect_dims = RMesh.fe_dims(rmesh)
-    const num_points = uint64(num_rects + sum(RMesh.logical_dims(rmesh))+1)
-
-    const nodenums_by_mcoords = sizehint(Dict{(RMesh.MeshCoord, RMesh.MeshCoord), NodeNum}(), num_points)
-    const points_by_ptnum = sizehint(Array(Point, 0), num_points)
-
-    function register_point(pt_mcoords::(RMesh.MeshCoord, RMesh.MeshCoord))
-      const existing_ptnum = get(nodenums_by_mcoords, pt_mcoords, nodenum(0))
-      if existing_ptnum == 0
-        # Register the new point number with its mesh coordinates.
-        push!(points_by_ptnum,
-              Point(rmesh.min_bounds[1] + (pt_mcoords[1] - 1) * rect_dims[1],
-                    rmesh.min_bounds[2] + (pt_mcoords[2] - 1) * rect_dims[2]))
-        const new_ptnum = nodenum(length(points_by_ptnum))
-        nodenums_by_mcoords[pt_mcoords] = new_ptnum
-        new_ptnum
-      else
-        existing_ptnum
-      end
-    end
-
-    const base_tris = sizehint(Array(BaseTri, 0), 2*num_rects)
-    
-    const rect_mcoords = Array(RMesh.MeshCoord, Mesh.space_dim(rmesh))
-
-    for rect_fe=Mesh.fenum(1):num_rects
-      RMesh.fe_mesh_coords!(rect_fe, rect_mcoords, rmesh)
-
-      const ll_ptnum = register_point((rect_mcoords[1],   rect_mcoords[2]))
-      const lr_ptnum = register_point((rect_mcoords[1]+1, rect_mcoords[2]))
-      const ur_ptnum = register_point((rect_mcoords[1]+1, rect_mcoords[2]+1))
-      const ul_ptnum = register_point((rect_mcoords[1],   rect_mcoords[2]+1))
-
-      push!(base_tris, BaseTri((ll_ptnum, lr_ptnum, ur_ptnum), tag(rect_fe), tag(rect_fe), EMPTY_TAGS_ARRAY))
-      push!(base_tris, BaseTri((ll_ptnum, ur_ptnum, ul_ptnum), tag(rect_fe), tag(rect_fe), EMPTY_TAGS_ARRAY))
-    end
-
-    TriMesh(points_by_ptnum,
-            base_tris,
-            length(base_tris),
-            subdiv_ops,
-            rmesh.integration_rel_err, rmesh.integration_abs_err,
-            false, true) # load geom entity tags
-  end
-  */
-
-} // MeshBuilder impl
-
-
-// A structure to hold the one or two local representations of any side as fe/side face pairs.
-struct SideReps {
-  fst_rep: (FENum, SideFace),
-  snd_rep: Option<(FENum, SideFace)>,
-}
+} // TriMeshBuilder impl
 
 
 // Represents an element in the input which may be subdivided to contribute elements to the final mesh.
 struct BaseTri {
 
-  node_num_0: NodeNum,
-  node_num_1: NodeNum,
-  node_num_2: NodeNum,
+  v0: Point,
+  v1: Point,
+  v2: Point,
   
   tag_phys_reg: Tag,
   tag_geom_ent: Tag,
@@ -534,7 +543,7 @@ struct BaseTri {
 
 impl BaseTri {
   
-  fn extra_subdiv_iters(& self) -> uint {
+  fn extra_subdiv_iters(&self) -> uint {
     0u // TODO: Allow specifying extra iterations via a Gmsh tag.
   }
 
@@ -544,17 +553,24 @@ impl BaseTri {
   * ("hanging nodes").  The numbers are returned as a triplet of integers, corresponding to the face counts to be
   * generated for elements' sides within sides v0v1, v1v2, and v2v0.
   */
-  fn nums_side_faces_between_vertexes(& self) -> (u8,u8,u8) {
+  fn nums_side_faces_between_vertexes(&self) -> (u8,u8,u8) {
     (1u8,1u8,1u8) // TODO: Allow specifying somewhere such as in mesh element tags.
   }
   
 } // BaseTri impl
 
+
+// A structure to hold the one or two local representations of any side as fe/side face pairs.
+struct SideReps {
+  fst_rep: (FENum, SideFace),
+  snd_rep: Option<(FENum, SideFace)>,
+}
+
 impl SideReps {
   
   fn new(fe_sf: (FENum,SideFace)) -> SideReps { SideReps { fst_rep: fe_sf, snd_rep: None } } 
 
-  fn add(& mut self, (fe,sf): (FENum,SideFace)) {
+  fn add(&mut self, (fe,sf): (FENum,SideFace)) {
     // Keep the representations in fe order.
     match self.fst_rep {
       (fe1,_) if fe1 < fe => { self.snd_rep = Some((fe,sf)); }
@@ -567,202 +583,128 @@ impl SideReps {
   }
 
 }
-/*
-# Construct from Gmsh .msh formatted input stream.
-function TriMesh(is::IO, subdiv_iters::Integer,
-                 integration_rel_err::R = 1e-12, integration_abs_err::R = 1e-12,
-                 load_phys_reg_tags::Bool = false, load_geom_ent_tags::Bool = false)
-
-  const base_pts_by_nodenum = read_gmsh_nodes(is)
-
-  # Read to the beginning of the elements section.
-  if !read_through_line_starting(is, "\$Elements")
-    error("Could not find beginning of elements section in mesh file.")
-  end
-
-  # Estimate number of input mesh triangles from the number of elements declared and the number
-  # of skipped lower order elements (points and lines) before the first triangle element.
-  const decl_num_els = uint64(readline(is)) # This count can include unwanted lower order elements.
-  const line, lines_read = read_until(is, is_polytope_or_endmarker)
-  if line == "" || beginswith(line, "\$EndElements")
-    error("No elements found in \$Elements section.")
-  end
-  const est_base_tris = decl_num_els - (lines_read - 1)
-
-  const base_tris_iter = GmshElementsIter(line, is)
-
-  TriMesh(base_pts_by_nodenum,
-          base_tris_iter,
-          est_base_tris,
-          subdiv_iters,
-          integration_rel_err, integration_abs_err,
-          load_phys_reg_tags, load_geom_ent_tags)
-end
 
 
+fn read_msh_nodes <I: Reader>
+   ( msh_is: &mut BufferedReader<I> )
+   -> ~[Point]
+{
+  // Position to the first line under the Nodes section.
+  let mut lines = msh_is.lines().skip_while(|line| !line.starts_with("$Nodes")).skip(1);
+  
+  // First line in Nodes section should be the node count.
+  let point_count: uint = match lines.next().map(|line| from_str::<uint>(line)) {
+    Some(Some(n)) => n,
+    _ => fail!("Expected Nodes section beginning with node count - one of these was not found.")
+  };
+  
+  let mut nodes = vec::from_elem(point_count, (R_NaN, R_NaN));  
+ 
+  for line in lines.take_while(|line| !line.starts_with("$EndNodes")) {
+    let node: Point = (extract_field(line, TOKIX_NODELINE_COORD1), extract_field(line, TOKIX_NODELINE_COORD2));
+    let coord_3: Option<R> = maybe_extract_field(line, TOKIX_NODELINE_COORD3);
+    match coord_3 {
+      Some(nz) if nz != 0. => {
+        fail!("Nodes with non-zero third coordinates are not supported in this 2D mesh reader.");
+      }
+      _ => {} // OK, no non-zero 3rd coordinate
+    }
+    let nodenum: uint = extract_field(line, TOKIX_NODELINE_NODENUM);
+    nodes[nodenum-1] = node;
+  }
 
+  nodes
+}
 
+fn base_tri
+   ( el_line: &str, points_by_nodeix: &[Point] )
+   -> Option<BaseTri>
+{
+  let el_type: uint = extract_field(el_line, TOKIX_ELLINE_ELTYPE);
 
-# ----------------------------------
-# Gmsh msh format reading support
+  match el_type {
+    ELTYPE_3_NODE_TRIANGLE => {
+      let num_tags: uint = extract_field(el_line, TOKIX_ELLINE_NUMTAGS);
+      assert!(num_tags >= 2);
+      let last_tag_tokix = TOKIX_ELLINE_NUMTAGS + num_tags;
 
-typealias ElTypeNum Uint8
-eltypenum(i::Integer) = if i>=1 && i<=typemax(ElTypeNum) convert(ElTypeNum, i) else error("invalid element type: $i") end
-eltypenum(s::String) = eltypenum(int(s))
+      let physreg_tag = Tag(extract_field(el_line, TOKIX_ELLINE_NUMTAGS+1));
+      let geoment_tag = Tag(extract_field(el_line, TOKIX_ELLINE_NUMTAGS+2));
 
-# Gmsh triangle type codes
-const ELTYPE_3_NODE_TRIANGLE = eltypenum(2)
-# lower order elements, which can be ignored
-const ELTYPE_POINT = eltypenum(15)
-const ELTYPE_2_NODE_LINE = eltypenum(1)
-const ELTYPE_3_NODE_LINE = eltypenum(8)
-const ELTYPE_4_NODE_LINE = eltypenum(26)
-const ELTYPE_5_NODE_LINE = eltypenum(27)
-const ELTYPE_6_NODE_LINE = eltypenum(28)
+      let other_tags = None;
+      /* TODO: Read other tags here if ever necessary.
+      let other_tags = if num_tags >= 3 {
+        Some(toks.slice(TOKIX_ELLINE_NUMTAGS+3, last_tag_tokix).map(|tok| Tag(from_str(tok))))
+      } else { None };
+      */
 
-function is_3_node_triangle_el_type(el_type::ElTypeNum)
-  el_type == ELTYPE_3_NODE_TRIANGLE
-end
+      let nodenums = (extract_field::<uint>(el_line, last_tag_tokix + 1),
+                      extract_field::<uint>(el_line, last_tag_tokix + 2),
+                      extract_field::<uint>(el_line, last_tag_tokix + 3));
+      
+      let (v0, v1, v2) = (points_by_nodeix[nodenums.n0()-1],
+                          points_by_nodeix[nodenums.n1()-1],
+                          points_by_nodeix[nodenums.n2()-1]);
+      
+      Some(BaseTri{v0:v0, v1:v1, v2:v2, tag_phys_reg: physreg_tag, tag_geom_ent: geoment_tag, other_tags: other_tags})
+    }
+    el_type if is_lower_order_el_type(el_type) => None,
+    _ => fail!("Element type not supported.")
+  }
+}
 
-function is_lower_order_el_type(el_type::ElTypeNum)
-  el_type == ELTYPE_POINT ||
-  el_type == ELTYPE_2_NODE_LINE ||
-  el_type == ELTYPE_3_NODE_LINE ||
-  el_type == ELTYPE_4_NODE_LINE ||
-  el_type == ELTYPE_5_NODE_LINE ||
-  el_type == ELTYPE_6_NODE_LINE
-end
+// Return the index of occurrence n of char c in string s, if any.
+fn str_char_occur
+   ( s: &str, c: char, n: uint )
+   -> Option<uint>
+{
+  assert!(n > 0);
+  let mut count = 0;
+  for i in range(0, s.len()) {
+    if s.char_at(i) == c {
+      count += 1;
+      if count == n { return Some(i); }
+    }
+  }
+  None
+}
 
-const TOKN_NODELINE_ELNUM = 1
-const TOKN_NODELINE_POINT1 = 2
-const TOKN_NODELINE_POINT2 = 3
-const TOKN_NODELINE_POINT3 = 4
+#[inline]
+fn extract_field <A: FromStr>
+   ( line: &str, i: uint )
+   -> A
+{
+  maybe_extract_field(line, i).unwrap()
+}
 
-# Gmsh element line format:
-# elm-number elm-type number-of-tags < tag > ... vert-number-list
-const TOKN_ELLINE_ELTYPE = 2
-const TOKN_ELLINE_NUMTAGS = 3
+#[inline]
+fn maybe_extract_field <A: FromStr>
+   ( line: &str, i: uint )
+   -> Option<A>
+{
+  let start = if i == 0 { 1 } else { 1 + str_char_occur(line, ' ', i).unwrap() };
+  let end = match str_char_occur(line, ' ', i+1) { Some(e) => e, None => line.len() };
+  from_str(line.slice(start, end))
+}
 
+fn is_lower_order_el_type
+   ( el_type: uint )
+   -> bool
+{
+  el_type == 15 || // point
+  el_type == 1  || // 2 node line
+  el_type == 8  || // 3 node line
+  el_type == 26 || // 4 node line
+  el_type == 27 || // 5 node line
+  el_type == 28    // 6 node line
+}
 
-# Gmsh base elements iterator
+static ELTYPE_3_NODE_TRIANGLE: uint = 2;
+static TOKIX_NODELINE_NODENUM: uint = 0;
+static TOKIX_NODELINE_COORD1: uint = 1;
+static TOKIX_NODELINE_COORD2: uint = 2;
+static TOKIX_NODELINE_COORD3: uint = 3;
+// Gmsh element line format: elm-number elm-type number-of-tags < tag > ... vert-number-list
+static TOKIX_ELLINE_ELTYPE: uint = 1;
+static TOKIX_ELLINE_NUMTAGS: uint = 2;
 
-immutable GmshElementsIter
-  first_base_tri_line::String
-  is::IO # stream should be positioned after first base element line
-end
-
-import Base.start, Base.done, Base.next
-function start(gmsh_els_iter::GmshElementsIter)
-  base_tri_from_gmsh_el(split(gmsh_els_iter.first_base_tri_line, ' '))
-end
-
-function done(gmsh_els_iter::GmshElementsIter, next_base_tri)
-  next_base_tri == nothing
-end
-
-function next(gmsh_els_iter::GmshElementsIter, next_base_tri)
-  while true
-    const line = readline(gmsh_els_iter.is)
-    if beginswith(line, "\$EndElements")
-      return (next_base_tri, nothing)
-    elseif line == ""
-      error("No EndElements marker found.")
-    else
-      const toks = split(line, ' ')
-      const el_type = eltypenum(toks[TOKN_ELLINE_ELTYPE])
-      if is_lower_order_el_type(el_type)
-        continue
-      elseif is_3_node_triangle_el_type(el_type)
-        return (next_base_tri, base_tri_from_gmsh_el(toks))
-      else
-        error("Element type $el_type is not supported.")
-      end
-    end
-  end
-end
-
-const EMPTY_OTHER_TAGS = Array(Tag,0)
-
-function base_tri_from_gmsh_el(toks::Array{String,1})
-  const num_tags = int(toks[TOKN_ELLINE_NUMTAGS])
-  assert(num_tags >= 2)
-  const physreg_tag = tag(int64(toks[TOKN_ELLINE_NUMTAGS+1]))
-  const geoment_tag = tag(int64(toks[TOKN_ELLINE_NUMTAGS+2]))
-  const other_tags = num_tags >= 3 ? map(t -> tag(int64(t)), toks[TOKN_ELLINE_NUMTAGS+3:TOKN_ELLINE_NUMTAGS+num_tags]) :
-                                     EMPTY_OTHER_TAGS
-  const point_nums = let last_tag_tokn = TOKN_ELLINE_NUMTAGS + num_tags;
-    (nodenum(toks[last_tag_tokn + 1]),
-     nodenum(toks[last_tag_tokn + 2]),
-     nodenum(toks[last_tag_tokn + 3]))
-  end
-
-  BaseTri(point_nums,
-          physreg_tag,
-          geoment_tag,
-          other_tags)
-end
-
-
-###############################################
-# Mesh File Reading Utilities
-
-function read_gmsh_nodes(is::IO)
-  if !read_through_line_starting(is, "\$Nodes")
-    error("Nodes section not found in mesh input file.")
-  else
-    # Next line should be the vert count.
-    const count = int(readline(is))
-    const pts = Array(Point, count)
-    l = readline(is)
-    while !beginswith(l, "\$EndNodes") && l != ""
-      const toks = split(l, ' ')
-      const pt = Point(convert(R, float64(toks[TOKN_NODELINE_POINT1])), convert(R, float64(toks[TOKN_NODELINE_POINT2])))
-      if length(toks) >= TOKN_NODELINE_POINT3 && float64(toks[TOKN_NODELINE_POINT3]) != 0.0
-        error("Nodes with non-zero third coordinates are not supported in this 2D mesh reader.")
-      end
-      pts[uint64(toks[TOKN_NODELINE_ELNUM])] = pt
-      l = readline(is)
-    end
-    if !beginswith(l, "\$EndNodes") error("End of nodes section not found in mesh file.") end
-    pts
-  end
-end
-
-function is_polytope_or_endmarker(line::ASCIIString)
-  if beginswith(line, "\$EndElements")
-    true
-  else
-    const toks = split(line, ' ')
-    !is_lower_order_el_type(eltypenum(toks[TOKN_ELLINE_ELTYPE]))
-  end
-end
-
-function read_through_line_starting(io::IO, line_start::ASCIIString)
-  l = readline(io)
-  while l != "" && !beginswith(l, line_start)
-    l = readline(io)
-  end
-  l != ""
-end
-
-# Read the stream until the line condition function returns true or the stream is exhausted, returning
-# either the line passing the condition, or "" if the stream was exhausted, and (in either case)
-# the number of lines read including the successful line if any.
-function read_until(io::IO, line_cond_fn::Function)
-  l = readline(io)
-  lines_read = 1
-  while l != "" && !line_cond_fn(l)
-    l = readline(io)
-    lines_read += 1
-  end
-  l, lines_read
-end
-
-# Mesh File Reading Utilities
-###############################################
-
-
-
-# Gmsh msh format reading support
-# ----------------------------------
-*/
