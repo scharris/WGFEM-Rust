@@ -54,7 +54,7 @@ impl TriMeshBuilder {
     // order elements (points and lines) before the first triangle element.
     let mut est_base_tris: uint = from_str(lines.next().unwrap()).unwrap(); // This count can include unwanted lower order elements.
 
-    // Skip lower order elements such as points and lines, revising estimate of number of elements in the process.
+    // Skip leading lower order elements such as points and lines, revising estimate of number of elements in the process.
     let mut first_tri_line = vec::with_capacity(1);
     loop {
       match lines.next() {
@@ -73,13 +73,13 @@ impl TriMeshBuilder {
    
     let mut base_tris_iter = first_tri_line.move_iter().chain(lines)
                                .take_while(|line| !line.starts_with("$EndElements"))
-                               .filter_map(|el_line| base_tri(el_line, base_pts_by_nodeix));
+                               .filter_map(|el_line| base_tri_from_line(el_line, base_pts_by_nodeix));
 
     TriMeshBuilder::from_els_iter(&mut base_tris_iter,
-                               est_base_tris,
-                               subdiv_iters,
-                               integration_rel_err, integration_abs_err,
-                               load_phys_reg_tags, load_geom_ent_tags)
+                                  est_base_tris,
+                                  subdiv_iters,
+                                  integration_rel_err, integration_abs_err,
+                                  load_phys_reg_tags, load_geom_ent_tags)
   }
 
 
@@ -135,22 +135,20 @@ impl TriMeshBuilder {
        base_tri: &BaseTri,
        global_subdiv_iters: uint )
   {
-    let (v0, v1, v2) = (base_tri.v0, base_tri.v1, base_tri.v2);
-
-    // For each of the three sides of this mesh element to be subdivided, the generated subdivision elements
+    // For each of the three sides of this input element to be subdivided, the generated subdivision elements
     // can be made to have more than one face between their vertexes lying on the side.  This is useful to
     // support "hanging" nodes where a finer subdivision is adjacent to this one.  The triplet returned
     // represents the number of side faces that a generated element has if its vertexes lie between base
     // triangle vertex pairs v0 and v1, v1 and v2, and v2 and v0, respectively.
-    let nums_sfs_btw_verts = base_tri.nums_side_faces_between_vertexes();
+    let (v0, v1, v2, nums_sfs) = (base_tri.v0, base_tri.v1, base_tri.v2, base_tri.nums_side_faces_between_vertexes());
     
     // Add any extra subdivision iterations to be done in this element.
     let subdiv_iters = global_subdiv_iters + base_tri.extra_subdiv_iters();
 
-    // Register the primary reference triangles for our mesh element's subdivisions. Normally there will only be one
-    // such primary (ie. non-inverted) reference triangle, however when multiple side faces are present between two
-    // vertexes then additional reference triangles are required.
-    let first_new_pri_oshape = self.register_primary_ref_tris(v0,v1,v2, nums_sfs_btw_verts, subdiv_iters);
+    // Register the primary reference triangles for these subdivisions. Normally there will only be one such primary
+    // (ie. non-inverted) reference triangle, which is just a scaled-down image of the base triangle. However when
+    // multiple side faces are present between two vertexes, then additional reference triangles are required.
+    let first_new_pri_oshape = self.register_primary_ref_tris(v0, v1, v2, nums_sfs, subdiv_iters);
     let last_new_pri_oshape = OShape(self.oshapes.len()-1);
 
     // Create a lookup function for the new primary oshape numbers by their numbers of side faces between vertexes.
@@ -170,7 +168,7 @@ impl TriMeshBuilder {
       // Do the subdivisions.
       self.subdivide_primary(v0, v1, v2,
                              subdiv_iters,
-                             nums_sfs_btw_verts,
+                             nums_sfs,
                              pri_oshapes_by_nums_sfs_btw_verts, sec_oshape,
                              base_tri.tag_phys_reg, base_tri.tag_geom_ent);
     } else { // no subdivision to be done
@@ -394,9 +392,9 @@ impl TriMeshBuilder {
     
     // Take the endpoint pairs work buffer, filled with the side face endpoint pairs.
     let endpt_pairs = TriMeshBuilder::fill_side_face_endpoint_pairs(self.take_side_face_endpoint_pairs_buf(),
-                                                                 v0,v1,v2, 
-                                                                 nums_side_faces_btw_verts,
-                                                                 LesserEndpointsFirst);
+                                                                    v0,v1,v2, 
+                                                                    nums_side_faces_btw_verts,
+                                                                    LesserEndpointsFirst);
 
     // Register the side face representations for this element by their endpoints.
     for sf in range(0, endpt_pairs.len()) {
@@ -458,7 +456,9 @@ impl TriMeshBuilder {
   // Based on the fe/side-face representations by endpoints (ignoring the endpoints), return:
   //   1) nb side numbers by (fe,face), newly assigned here
   //   2) an array of NBSideInclusions indexed by nb side number.
-  fn create_nb_sides_data(&mut self) -> (StorageByInts2<Option<NBSideNum>>, ~[NBSideInclusions])
+  fn create_nb_sides_data
+     ( &mut self )
+     -> (StorageByInts2<Option<NBSideNum>>, ~[NBSideInclusions])
   {
     let max_sides_per_fe = self.oshapes.iter().map(|rt| rt.num_side_faces).max().unwrap();
     
@@ -584,6 +584,7 @@ impl SideReps {
 
 }
 
+// standalone utility functions
 
 fn read_msh_nodes <I: Reader>
    ( msh_is: &mut BufferedReader<I> )
@@ -616,8 +617,9 @@ fn read_msh_nodes <I: Reader>
   nodes
 }
 
-fn base_tri
-   ( el_line: &str, points_by_nodeix: &[Point] )
+fn base_tri_from_line
+   ( el_line:          &str,
+     points_by_nodeix: &[Point] )
    -> Option<BaseTri>
 {
   let el_type: uint = extract_field(el_line, TOKIX_ELLINE_ELTYPE);
