@@ -1,4 +1,4 @@
-use common::{R};
+use common::{R, vec_with_len};
 use la;
 use la::lapack_int;
 use dense_matrix::DenseMatrix;
@@ -39,13 +39,13 @@ impl <'a,Mon:Monomial,MeshT:Mesh<Mon>> Projector<'a,Mon,MeshT> {
   
   pub fn with_rhs_cols_capacity(basis: &'a WGBasis<Mon,MeshT>, init_rhs_cols_capacity: uint) -> Projector<'a,Mon,MeshT> {
     let (num_int_mons, num_side_mons) = (basis.mons_per_fe_int(), basis.mons_per_fe_side());
-    let la_ips_int_mons = DenseMatrix::from_elem(num_int_mons, num_int_mons, 0 as R);  
-    let la_ips_side_mons = DenseMatrix::from_elem(num_side_mons, num_side_mons, 0 as R);  
-    let mut la_pivots = vec::from_elem(num::max(num_int_mons, num_side_mons), 0 as lapack_int);
+    let la_ips_int_mons = DenseMatrix::of_size(num_int_mons, num_int_mons);  
+    let la_ips_side_mons = DenseMatrix::of_size(num_side_mons, num_side_mons);  
+    let mut la_pivots = vec_with_len(num::max(num_int_mons, num_side_mons));
     let la_pivots_buf = la_pivots.as_mut_ptr();
     let init_num_rhs_cols = init_rhs_cols_capacity;
-    let la_int_proj_rhs = DenseMatrix::from_elem(num_int_mons, init_num_rhs_cols, 0 as R);
-    let la_side_proj_rhs = DenseMatrix::from_elem(num_side_mons, init_num_rhs_cols, 0 as R);
+    let la_int_proj_rhs = DenseMatrix::of_size(num_int_mons, init_num_rhs_cols);
+    let la_side_proj_rhs = DenseMatrix::of_size(num_side_mons, init_num_rhs_cols);
 
     Projector {
       basis: basis,

@@ -1,4 +1,4 @@
-use common::R;
+use common::{R, vec_with_len};
 use dense_matrix::DenseMatrix;
 use sparse_matrix::{SparseMatrix, Symmetric, StructurallySymmetric};
 
@@ -25,7 +25,7 @@ pub fn solve_sparse(sys: &SparseMatrix, rhs: &DenseMatrix) -> ~[R] {
 
   unsafe {
     let (a, ia, ja) = sys.csr3_ptrs();  
-    let mut sol = vec::from_elem(n, 0 as R);
+    let mut sol = vec_with_len(n);
     let cpu_cores = num_cpus() as c_uint;
 
     let stat = match sys.matrix_type() {

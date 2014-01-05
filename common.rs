@@ -41,6 +41,15 @@ pub fn sq<T:Mul<T,T>>(x: T) -> T {
   x.mul(&x)
 }
 
+#[inline]
+pub fn vec_with_len<A>(len: uint) -> ~[A] {
+  let mut v = vec::with_capacity(len);
+  unsafe {
+    v.set_len(len);
+  }
+  v
+}
+
 pub fn cumulative_sums_prev_elems<T:Num+Clone>(xs: &[T]) -> ~[T] {
   let mut cum_sums = vec::with_capacity(xs.len());
   let mut sum: T =  Zero::zero();

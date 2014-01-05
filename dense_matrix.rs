@@ -32,6 +32,19 @@ impl DenseMatrix {
       capacity_cols: num_cols,
     }
   }
+
+  // Create dense matrix of indicated size, with unitialized entries.  This constructor should only be used if the
+  // part(s) of the matrix to be used are subsequently initialized, such as via the set() function.
+  pub fn of_size(num_rows: uint, num_cols: uint) -> DenseMatrix {
+    let n = num_rows * num_cols;
+    let mut data = unsafe { alloc_data(n) };
+    DenseMatrix {
+      data: data,
+      num_rows: num_rows,
+      num_cols: num_cols,
+      capacity_cols: num_cols,
+    }
+  }
   
   pub fn from_elem(num_rows: uint, num_cols: uint, elem: R) -> DenseMatrix {
     let n = num_rows * num_cols;

@@ -156,10 +156,10 @@ fn new_impl<Mon:Monomial>(min_bounds: ~[R],
     rect_diameter_inv: 1./rect_diameter,
     integration_rel_err: integration_rel_err,
     integration_abs_err: integration_abs_err,
-    fe_min_corner_buf: vec::from_elem(space_dims, 0 as R),
-    fe_max_corner_buf: vec::from_elem(space_dims, 0 as R),
-    intg_pt_trans_buf: vec::from_elem(space_dims, 0 as R),
-    mesh_coords_buf: vec::from_elem(space_dims, MeshCoord(0)),
+    fe_min_corner_buf: vec_with_len(space_dims),
+    fe_max_corner_buf: vec_with_len(space_dims),
+    intg_pt_trans_buf: vec_with_len(space_dims),
+    mesh_coords_buf: vec_with_len(space_dims),
   }
 }
 
