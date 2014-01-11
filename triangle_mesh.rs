@@ -69,19 +69,18 @@ pub struct TriMesh<Mon> {
   num_oshapes: uint,
 
   // integration support members
-  integration_rel_err: R,
-  integration_abs_err: R,
+  intg_rel_err: R,
+  intg_abs_err: R,
 
   // element -> Tag maps
-  phys_reg_tags_by_fenum: Option<~[Tag]>,
-  geom_ent_tags_by_fenum: Option<~[Tag]>,
+  tags_by_fenum: Option<~[Tag]>,
 
 }
 
 pub type Point = (R,R);
 pub type Vec = (R,R);
 
-// Tag for a mesh geometric region or physical entity which may be attributed to one or more elements.
+// Tag which may be attributed to one or more elements.
 #[deriving(Eq, TotalEq, Ord, TotalOrd, Clone)]
 pub struct Tag(int);
 
@@ -187,7 +186,7 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
   {
     // Sort the points so we can divide the triangle into regions between sloped lines diverging from a point above
     // and below and a vertical line on one side.
-    let (p0, p1, p2) = self.sorted_vertexes(self.ref_tri_for_fe(fe), self.fes[*fe].v0);
+    let (p0, p1, p2) = sorted_vertexes(self.ref_tri(fe), self.fes[*fe].v0);
     
     let (slope_01, slope_02) = (slope_between(p0, p1), slope_between(p0, p2));
 
@@ -203,7 +202,7 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
       * horizontally between the vertical left side formed by points 0 and 1, and point 2 on the right where
       * the upper and lower bounding lines meet.
       */
-      self.intg_fn_btw_pt_and_vert_seg(f, p2, slope_02, slope_between(p1, p2), p0.n0())
+      intg_fn_btw_pt_and_vert_seg(f, p2, slope_02, slope_between(p1,p2), p0.n0(), self.intg_rel_err, self.intg_abs_err)
     } else {
      /* Points 0 and 1 do not form a vertical line.
       *      p1            p2
@@ -213,11 +212,13 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
       *
       * Integrate between points 0 and 1, and between points 1 and 2 if points 1 and 2 don't lie on a vertical line.
       */
-      let left_seg = self.intg_fn_btw_pt_and_vert_seg(|x| f(x), p0, slope_01, slope_02, p1.n0());
+      let left_seg = intg_fn_btw_pt_and_vert_seg(|x| f(x), p0, slope_01, slope_02, p1.n0(),
+                                                 self.intg_rel_err, self.intg_abs_err);
       let right_seg = {
         if p1.n0() == p2.n0() { 0 as R } // vertical right side, no second segment
         else {
-          self.intg_fn_btw_pt_and_vert_seg(f, p2, slope_02, slope_between(p1, p2), p1.n0())
+          intg_fn_btw_pt_and_vert_seg(f, p2, slope_02, slope_between(p1, p2), p1.n0(),
+                                      self.intg_rel_err, self.intg_abs_err)
         }
       };
       left_seg + right_seg
@@ -246,7 +247,7 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
        sf:  SideFace )
      -> R
   {
-    let ref_tri = self.ref_tri_for_fe(fe);
+    let ref_tri = self.ref_tri(fe);
     let v0 = self.fes[*fe].v0;
     let (v1, v2) = (vsum(v0, ref_tri.v01), vsum(v0, ref_tri.v02));
     
@@ -265,9 +266,7 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
       f(s_t) * mon.value_at_for_origin(s_t, o) * side_len  // side_len = |s'(t)|
     };
 
-    space_adaptive_quadrature(&integrand,
-                              [0. as R], [1. as R],
-                              self.integration_rel_err, self.integration_abs_err)
+    space_adaptive_quadrature(&integrand, [0. as R], [1. as R], self.intg_rel_err, self.intg_abs_err)
   }
   
   fn intg_mixed_global_and_facerel_fn_on_fe_int
@@ -295,7 +294,7 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
        os: OShape)
      -> R
   {
-    self.intg_facerel_poly_fn_on_oshape_int(|x| p.value_at(x), p.max_var_deg(), os)
+    intg_facerel_poly_fn_on_reftri_int(|x| p.value_at(x), p.max_var_deg(), &self.oshapes[*os])
   }
   
   #[inline]
@@ -305,7 +304,7 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
        os:  OShape)
      -> R
   {
-    self.intg_facerel_poly_fn_on_oshape_int(|x| mon.value_at(x), mon.max_var_deg(), os)
+    intg_facerel_poly_fn_on_reftri_int(|x| mon.value_at(x), mon.max_var_deg(), &self.oshapes[*os])
   }
 
 
@@ -318,7 +317,8 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
        sf: SideFace )
      -> R
   {
-    self.intg_facerel_poly_fn_on_oshape_side(|x| p1.value_at(x) * p2.value_at(x), Deg(*p1.deg() + *p2.deg()), os, sf)
+    intg_facerel_poly_fn_on_oshape_side(|x| p1.value_at(x) * p2.value_at(x), Deg(*p1.deg() + *p2.deg()),
+                                        &self.oshapes[*os], sf)
   }
   
   #[inline]
@@ -329,7 +329,7 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
        sf:  SideFace )
      -> R
   {
-    self.intg_facerel_poly_fn_on_oshape_side(|x| mon.value_at(x), mon.deg(), os, sf)
+    intg_facerel_poly_fn_on_oshape_side(|x| mon.value_at(x), mon.deg(), &self.oshapes[*os], sf)
   }
 
 
@@ -342,7 +342,8 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
        sf:  SideFace)
      -> R
   {
-    self.intg_facerel_poly_fn_on_oshape_side(|x| mon.value_at(x) * p.value_at(x), Deg(*mon.deg() + *p.deg()), os, sf)
+    intg_facerel_poly_fn_on_oshape_side(|x| mon.value_at(x) * p.value_at(x), Deg(*mon.deg() + *p.deg()),
+                                        &self.oshapes[*os], sf)
   }
 
   fn intg_intrel_mon_x_siderel_mon_on_oshape_side
@@ -365,7 +366,7 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
     
     let p_deg = Deg(*int_mon.deg() + *side_mon.deg());
 
-    self.intg_facerel_poly_fn_on_oshape_side(p, p_deg, os, sf)
+    intg_facerel_poly_fn_on_oshape_side(p, p_deg, ref_tri, sf)
   }
   
   fn intg_siderel_mon_x_intrel_vmon_dot_normal_on_oshape_side
@@ -390,7 +391,7 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
 
     let ub_p_deg = Deg(*mon.deg() + *q.mon.deg());
 
-    self.intg_facerel_poly_fn_on_oshape_side(p, ub_p_deg, os, sf)
+    intg_facerel_poly_fn_on_oshape_side(p, ub_p_deg, ref_tri, sf)
   }
  
 } // Mesh<Mon> impl
@@ -404,10 +405,9 @@ impl<Mon:Monomial> TriMesh<Mon> {
            nbsidenums_by_fe_face: StorageByInts2<Option<NBSideNum>>,
            nbsideincls_by_nbsidenum: ~[NBSideInclusions],
            num_b_sides: uint,
-           integration_rel_err: R,
-           integration_abs_err: R,
-           phys_reg_tags_by_fenum: Option<~[Tag]>,
-           geom_ent_tags_by_fenum: Option<~[Tag]> )
+           intg_rel_err: R,
+           intg_abs_err: R,
+           tags_by_fenum: Option<~[Tag]> )
          -> TriMesh<Mon>
   {
     let num_fes = fes.len(); 
@@ -425,223 +425,26 @@ impl<Mon:Monomial> TriMesh<Mon> {
       num_b_sides: num_b_sides,
       max_num_shape_sides: max_num_shape_sides,
       num_oshapes: num_oshapes,
-      integration_rel_err: integration_rel_err,
-      integration_abs_err: integration_abs_err,
-      phys_reg_tags_by_fenum: phys_reg_tags_by_fenum,
-      geom_ent_tags_by_fenum: geom_ent_tags_by_fenum,
+      intg_rel_err: intg_rel_err,
+      intg_abs_err: intg_abs_err,
+      tags_by_fenum: tags_by_fenum,
     }
   }
     
-
   // Reference triangle for a finite element.
-  fn ref_tri_for_fe<'a>(&'a self, fe: FENum) -> &'a RefTri
+  #[inline]
+  pub fn el_tri<'a>(&'a self, fe: FENum) -> &'a ElTri
+  {
+    &self.fes[*fe]
+  }
+  
+  // Reference triangle for a finite element.
+  #[inline]
+  pub fn ref_tri<'a>(&'a self, fe: FENum) -> &'a RefTri
   {
     &self.oshapes[*self.fes[*fe].oshape]
   }
 
-
- /* Integrate a function over the triangular region bounded on two sides by two non-vertical lines of
-  * indicated slopes which meet at a point q, and by the indicated vertical line as the remaining side.
-  */
-  fn intg_fn_btw_pt_and_vert_seg
-     ( &self,
-       f:           |&[R]| -> R,
-       q:           Point,
-       slope_1:     R,
-       slope_2:     R,
-       vert_line_x: R )
-     -> R
-  {
-    let (xminT, xmaxT) = (min(q.n0(), vert_line_x), max(q.n0(), vert_line_x));
-    let w = xmaxT - xminT; // width of triangular integration region
-
-    // Method
-    // We will pull back the integration over the original triangular section T to an integration
-    // over the unit square, by change of variables via the bijection
-    // 
-    //   t:[0,1]^2 -> T:  t(x,y) = (xminT + x w,  q_2 + m1 (xminT + x w - q_1) + y(m2 - m1)(xminT + x w - q_1))
-    // 
-    // Here m1 and m2 are the slopes of the non-vertical bounding lines (m1 != m2).
-    // The determinant of the derivative matrix Dt(x,y) is
-    //                     |          w                           0                |
-    //  det Dt(x,y)| = det |                                                       |
-    //                     | m1 w + y(m2 - m1) w      (m2 - m1)(xminT + x w - q_1) |
-    //               = w (m2 - m1) (xminT + x w - q_1).
-    //  Now by applying change of variables in the integral of f over the T via the mapping t,
-    //  we have
-    //    int_T f = int_0^1 int_0^1 f(t(x,y)) |det Dt(x,y)| dy dx
-    //            = int_0^1 int_0^1 f(t(x,y)) |w (m2 - m1) (xminT + x w - q_1)| dy dx
-    
-    let slopediff = slope_2 - slope_1;
-    let w_slopediff = w * slopediff;
-    
-    let mut t = [0.,0.];
-    let integrand = |s: &[R]| { // unit square point
-      let xT = xminT + s[0] * w;     // triangle x
-      let xT_minus_qx = xT - q.n0(); // relative triangle x
-        
-      // Construct the triangle point t(x,y).
-      t[0] = xT;
-      t[1] = q.n1() + slope_1 * xT_minus_qx + s[1] * slopediff * xT_minus_qx;
-      let det_Dt = w_slopediff * xT_minus_qx;
-      f(t) * abs(det_Dt)
-    };
-    
-    space_adaptive_quadrature(&integrand,
-                              [0 as R, 0 as R], [1 as R, 1 as R],
-                              self.integration_rel_err, self.integration_abs_err)
-  }
-
-  fn intg_facerel_poly_fn_on_oshape_int
-     ( &self,
-       p:                   |&[R]| -> R,
-       ub_max_var_deg_in_p: Deg,
-       os:                  OShape )
-     -> R
-  {
-    // Sort the points so we can divide the triangle into regions between sloped lines diverging from a point above
-    // and below and a vertical line on one side.
-    let (p0, p1, p2) = self.sorted_vertexes(&self.oshapes[*os], (0.,0.)); // vertexes relative to interior origin, which is vertex 0.
-    let (slope_01, slope_02) = (slope_between(p0, p1), slope_between(p0, p2));
-   
-    if p0.n0() == p1.n0() { // Points 0 and 1 are on a vertical line on the left, point 2 on the right.
-     /*  p1
-      *  |\
-      *  | \ p2
-      *  | /
-      *  |/
-      *  p0
-      */
-      let slope_12 = slope_between(p1, p2);
-      self.intg_poly_fn_btw_pt_and_vert_seg(p, ub_max_var_deg_in_p, p2, slope_02, slope_12, p0.n0())
-    } else {
-     /*  Points 0 and 1 do not form a vertical line.      
-      *      p1            p2
-      *     /|\           /|
-      *    / | \         / |
-      * p0/__|__\p2   p0/__|p1  (bottom lines not necessarily horizontal)
-      */
-      let left_seg = self.intg_poly_fn_btw_pt_and_vert_seg(|x| p(x), ub_max_var_deg_in_p, p0, slope_01, slope_02, p1.n0());
-      let right_seg = {
-        if p1.n0() == p2.n0() { 0 as R } // vertical right side, no second segment
-        else
-        {
-          let slope_12 = slope_between(p1, p2);
-          self.intg_poly_fn_btw_pt_and_vert_seg(p, ub_max_var_deg_in_p, p2, slope_02, slope_12, p1.n0())
-        }
-      };
-      left_seg + right_seg
-    }
-  }
-
-
- /* Integrate a polynomial as a global function (without its own coordates origin) over the triangular region bounded on
-  * two sides by two non-vertical lines of indicated slopes which meet at a point q, and by the indicated vertical line
-  * as the remaining side.
-  */
-  fn intg_poly_fn_btw_pt_and_vert_seg
-     ( &self, 
-       p:                   |&[R]| -> R,
-       ub_max_var_deg_in_p: Deg,
-       q:                   Point,
-       slope_1:             R,
-       slope_2:             R,
-       vert_line_x:         R )
-     -> R
-  {
-    let (xminT, xmaxT) = (min(q.n0(), vert_line_x), max(q.n0(), vert_line_x));
-    let w = xmaxT - xminT; // width of triangular integration region
-
-    let slopediff = slope_2 - slope_1;
-    let w_slopediff = w * slopediff;
-    
-    // The integrand after change of variables to pull back the integration to the unit square is:
-    //   (x,y) -> p(t(x,y)) |w (m2 - m1) (xminT + x w - q_1)|
-    //   where t:[0,1]^2 -> T:  t(x,y) = (xminT + x w,  q_2 + m1 (xminT + x w - q_1) + y(m2 - m1)(xminT + x w - q_1)).
-    // See comments in above function about the change of variables being used.
-    let mut t = [0.,0.];
-    let unit_sq_integrand = |xS: R, yS: R| { // unit square point
-      let xT = xminT + xS * w;       // triangle x
-      let xT_minus_qx = xT - q.n0(); // relative triangle x
-      // Construct the triangle point t(x,y).
-      t[0] = xT;
-      t[1] = q.n1() + slope_1 * xT_minus_qx + yS * slopediff * xT_minus_qx;
-      let det_Dt = w_slopediff * xT_minus_qx;
-      p(t) * abs(det_Dt)
-    };
-    
-    // The integrand is a polynomial because the RHS factor under the absolute value will not change sign
-    // for x in [0,1]: its non-constant factor will range either from 0 to w if q_1 = xminT, or from -w to
-    // 0 if q_1 = xmaxT.
-    // 
-    // For the integral to be exact using repeated Gaussian quadrature, we need
-    //   k <= 2n - 1,
-    // where 
-    //   n is the number of weight values for each axis (2n weights, n^2 total points), and
-    //   k is the maximum individual variable degree in the integrand polynomial.
-    //   [See e.g. http://math2.uncc.edu/~shaodeng/TEACHING/math5172/Lectures/Lect_15.PDF]
-    // The maximum variable degree in (x,y) -> p(t(x,y)) is no more than the maximum variable degree of p itself,
-    // because t's maximum variable degree is 1 in both components. Taking the right hand absolute value factor
-    // into account, which has a maximum variable degree of 1, then an upper bound k on the maximum variable
-    // degree for the complete integrand is one more than the maximum variable degree in p.
-    let k = (1 + *ub_max_var_deg_in_p) as uint;
-    
-    // Choose the smallest number of weights per axis n such that k <= 2n - 1.
-    let n = if k % 2 != 0 { (k+1)/2 } else { (k+1)/2 + 1 };
-    
-    gaussian_quadrature_2D_rect(n, &unit_sq_integrand, 0 as R, 0 as R, 1 as R, 1 as R)
-  }
-
-  fn intg_facerel_poly_fn_on_oshape_side
-     ( &self,
-       p:        |&[R]| -> R,
-       ub_p_deg: Deg,
-       os:       OShape,
-       sf:       SideFace )
-     -> R
-  {
-    // We want to compute 
-    //   int_0^1 p(s(t)-o) |s'(t)| dt,
-    // where s:[0,1] -> R^2 is a bijection traversing the side face smoothly, s(0) and s(1) are the side endpoints,
-    // and o is the local origin for the side which is the side's midpoint.
-
-    let ref_tri = &self.oshapes[*os];
-    let (v0, v1, v2) = ((0.,0.), ref_tri.v01, ref_tri.v02);
-
-    let (a,b) = side_face_endpoint_pair(sf, v0,v1,v2, ref_tri.nums_side_faces_between_vertexes, VertexOrder);
-    let o = midpt(a, b); // The local origin of each side face is the midpoint.
-    let side_len = dist(a,b);
-     
-    let integrand = |t: R| { // compute p(s(t)-o) |s'(t)|
-      let s_t_minus_o = [a.n0() + (b.n0() - a.n0())*t - o.n0(),
-                         a.n1() + (b.n1() - a.n1())*t - o.n1()];
-      p(s_t_minus_o) * side_len  // side_len = |s'(t)|
-    };
-
-    // The integrand degree will be at most that of p itself, because the path s has a polynomial of degree at most 1
-    // in each of its output components.
-    let k = *ub_p_deg as uint;
-    
-    // For an exact result, we need a number of quadrature points n such that k <= 2n - 1.
-    let n = if k % 2 != 0 { (k+1)/2 } else { (k+1)/2 + 1 };
-    
-    gaussian_quadrature(n, &integrand, 0 as R, 1 as R)
-  }
-
-  #[inline]
-  fn sorted_vertexes
-     ( &self,
-       ref_tri: &RefTri,
-       v0:      Point )
-     -> (Point,Point,Point)
-  {
-    let sorted_pts = {
-      let mut pts = [v0, vsum(v0, ref_tri.v01), vsum(v0, ref_tri.v02)];
-      pts.sort_by(|p,q| if p.n0() < q.n0() || p.n0() == q.n0() && p.n1() < q.n1() { Less } else { Greater }); // (we know points are not eq)
-      pts
-    };
-    (sorted_pts[0], sorted_pts[1], sorted_pts[2])
-  }
 
 } // TriMesh<Mon> impl
 
@@ -667,6 +470,7 @@ impl RefTri {
       let (sfs_v01, sfs_v12, sfs_v20) = nums_side_faces_btw_verts;
       (sfs_v01 + sfs_v12 + sfs_v20) as uint
     };
+    
     RefTri{ v01: scaled_v01,
             v02: scaled_v02,
             nums_side_faces_between_vertexes: nums_side_faces_btw_verts,
@@ -738,14 +542,202 @@ impl RefTri {
 } // RefTri impl
 
 
-// standalone auxiliary functions and related types
+// auxiliary integration functions
+
+/* Integrate a function over the triangular region bounded on two sides by two non-vertical lines of
+ * indicated slopes which meet at a point q, and by the indicated vertical line as the remaining side.
+ */
+pub fn intg_fn_btw_pt_and_vert_seg
+       ( f:            |&[R]| -> R,
+         q:            Point,
+         slope_1:      R,
+         slope_2:      R,
+         vert_line_x:  R,
+         intg_rel_err: R,
+         intg_abs_err: R)
+       -> R
+{
+  let (xminT, xmaxT) = (min(q.n0(), vert_line_x), max(q.n0(), vert_line_x));
+  let w = xmaxT - xminT; // width of triangular integration region
+
+  // Method
+  // We will pull back the integration over the original triangular section T to an integration
+  // over the unit square, by change of variables via the bijection
+  // 
+  //   t:[0,1]^2 -> T:  t(x,y) = (xminT + x w,  q_2 + m1 (xminT + x w - q_1) + y(m2 - m1)(xminT + x w - q_1))
+  // 
+  // Here m1 and m2 are the slopes of the non-vertical bounding lines (m1 != m2).
+  // The determinant of the derivative matrix Dt(x,y) is
+  //                     |          w                           0                |
+  //  det Dt(x,y)| = det |                                                       |
+  //                     | m1 w + y(m2 - m1) w      (m2 - m1)(xminT + x w - q_1) |
+  //               = w (m2 - m1) (xminT + x w - q_1).
+  //  Now by applying change of variables in the integral of f over the T via the mapping t,
+  //  we have
+  //    int_T f = int_0^1 int_0^1 f(t(x,y)) |det Dt(x,y)| dy dx
+  //            = int_0^1 int_0^1 f(t(x,y)) |w (m2 - m1) (xminT + x w - q_1)| dy dx
+  
+  let slopediff = slope_2 - slope_1;
+  let w_slopediff = w * slopediff;
+  
+  let mut t = [0.,0.];
+  let integrand = |s: &[R]| { // unit square point
+    let xT = xminT + s[0] * w;     // triangle x
+    let xT_minus_qx = xT - q.n0(); // relative triangle x
+      
+    // Construct the triangle point t(x,y).
+    t[0] = xT;
+    t[1] = q.n1() + slope_1 * xT_minus_qx + s[1] * slopediff * xT_minus_qx;
+    let det_Dt = w_slopediff * xT_minus_qx;
+    f(t) * abs(det_Dt)
+  };
+  
+  space_adaptive_quadrature(&integrand,
+                            [0 as R, 0 as R], [1 as R, 1 as R],
+                            intg_rel_err, intg_abs_err)
+}
+
+fn intg_facerel_poly_fn_on_reftri_int
+   ( p:                   |&[R]| -> R,
+     ub_max_var_deg_in_p: Deg,
+     ref_tri:             &RefTri)
+   -> R
+{
+  // Sort the points so we can divide the triangle into regions between sloped lines diverging from a point above
+  // and below and a vertical line on one side.
+  let (p0, p1, p2) = sorted_vertexes(ref_tri, (0.,0.)); // vertexes relative to interior origin, which is vertex 0.
+  let (slope_01, slope_02) = (slope_between(p0, p1), slope_between(p0, p2));
+ 
+  if p0.n0() == p1.n0() { // Points 0 and 1 are on a vertical line on the left, point 2 on the right.
+   /*  p1
+    *  |\
+    *  | \ p2
+    *  | /
+    *  |/
+    *  p0
+    */
+    let slope_12 = slope_between(p1, p2);
+    intg_poly_fn_btw_pt_and_vert_seg(p, ub_max_var_deg_in_p, p2, slope_02, slope_12, p0.n0())
+  } else {
+   /*  Points 0 and 1 do not form a vertical line.      
+    *      p1            p2
+    *     /|\           /|
+    *    / | \         / |
+    * p0/__|__\p2   p0/__|p1  (bottom lines not necessarily horizontal)
+    */
+    let left_seg = intg_poly_fn_btw_pt_and_vert_seg(|x| p(x), ub_max_var_deg_in_p, p0, slope_01, slope_02, p1.n0());
+    let right_seg = {
+      if p1.n0() == p2.n0() { 0 as R } // vertical right side, no second segment
+      else
+      {
+        let slope_12 = slope_between(p1, p2);
+        intg_poly_fn_btw_pt_and_vert_seg(p, ub_max_var_deg_in_p, p2, slope_02, slope_12, p1.n0())
+      }
+    };
+    left_seg + right_seg
+  }
+}
+
+
+/* Integrate a polynomial as a global function (without its own coordates origin) over the triangular region bounded on
+ * two sides by two non-vertical lines of indicated slopes which meet at a point q, and by the indicated vertical line
+ * as the remaining side.
+ */
+pub fn intg_poly_fn_btw_pt_and_vert_seg
+       ( p:                   |&[R]| -> R,
+         ub_max_var_deg_in_p: Deg,
+         q:                   Point,
+         slope_1:             R,
+         slope_2:             R,
+         vert_line_x:         R )
+       -> R
+{
+  let (xminT, xmaxT) = (min(q.n0(), vert_line_x), max(q.n0(), vert_line_x));
+  let w = xmaxT - xminT; // width of triangular integration region
+
+  let slopediff = slope_2 - slope_1;
+  let w_slopediff = w * slopediff;
+  
+  // The integrand after change of variables to pull back the integration to the unit square is:
+  //   (x,y) -> p(t(x,y)) |w (m2 - m1) (xminT + x w - q_1)|
+  //   where t:[0,1]^2 -> T:  t(x,y) = (xminT + x w,  q_2 + m1 (xminT + x w - q_1) + y(m2 - m1)(xminT + x w - q_1)).
+  // See comments in above function about the change of variables being used.
+  let mut t = [0.,0.];
+  let unit_sq_integrand = |xS: R, yS: R| { // unit square point
+    let xT = xminT + xS * w;       // triangle x
+    let xT_minus_qx = xT - q.n0(); // relative triangle x
+    // Construct the triangle point t(x,y).
+    t[0] = xT;
+    t[1] = q.n1() + slope_1 * xT_minus_qx + yS * slopediff * xT_minus_qx;
+    let det_Dt = w_slopediff * xT_minus_qx;
+    p(t) * abs(det_Dt)
+  };
+  
+  // The integrand is a polynomial because the RHS factor under the absolute value will not change sign
+  // for x in [0,1]: its non-constant factor will range either from 0 to w if q_1 = xminT, or from -w to
+  // 0 if q_1 = xmaxT.
+  // 
+  // For the integral to be exact using repeated Gaussian quadrature, we need
+  //   k <= 2n - 1,
+  // where 
+  //   n is the number of weight values for each axis (2n weights, n^2 total points), and
+  //   k is the maximum individual variable degree in the integrand polynomial.
+  //   [See e.g. http://math2.uncc.edu/~shaodeng/TEACHING/math5172/Lectures/Lect_15.PDF]
+  // The maximum variable degree in (x,y) -> p(t(x,y)) is no more than the maximum variable degree of p itself,
+  // because t's maximum variable degree is 1 in both components. Taking the right hand absolute value factor
+  // into account, which has a maximum variable degree of 1, then an upper bound k on the maximum variable
+  // degree for the complete integrand is one more than the maximum variable degree in p.
+  let k = (1 + *ub_max_var_deg_in_p) as uint;
+  
+  // Choose the smallest number of weights per axis n such that k <= 2n - 1.
+  let n = if k % 2 != 0 { (k+1)/2 } else { (k+1)/2 + 1 };
+
+  gaussian_quadrature_2D_rect(n, &unit_sq_integrand, 0 as R, 1 as R, 0 as R, 1 as R)
+}
+
+fn intg_facerel_poly_fn_on_oshape_side
+   ( p:        |&[R]| -> R,
+     ub_p_deg: Deg,
+     ref_tri:  &RefTri,
+     sf:       SideFace )
+   -> R
+{
+  // We want to compute 
+  //   int_0^1 p(s(t)-o) |s'(t)| dt,
+  // where s:[0,1] -> R^2 is a bijection traversing the side face smoothly, s(0) and s(1) are the side endpoints,
+  // and o is the local origin for the side which is the side's midpoint.
+
+  let (v0, v1, v2) = ((0.,0.), ref_tri.v01, ref_tri.v02);
+
+  let (a,b) = side_face_endpoint_pair(sf, v0,v1,v2, ref_tri.nums_side_faces_between_vertexes, VertexOrder);
+  let o = midpt(a, b); // The local origin of each side face is the midpoint.
+  let side_len = dist(a,b);
+   
+  let integrand = |t: R| { // compute p(s(t)-o) |s'(t)|
+    let s_t_minus_o = [a.n0() + (b.n0() - a.n0())*t - o.n0(),
+                       a.n1() + (b.n1() - a.n1())*t - o.n1()];
+    p(s_t_minus_o) * side_len  // side_len = |s'(t)|
+  };
+
+  // The integrand degree will be at most that of p itself, because the path s has a polynomial of degree at most 1
+  // in each of its output components.
+  let k = *ub_p_deg as uint;
+  
+  // For an exact result, we need a number of quadrature points n such that k <= 2n - 1.
+  let n = if k % 2 != 0 { (k+1)/2 } else { (k+1)/2 + 1 };
+  
+  gaussian_quadrature(n, &integrand, 0 as R, 1 as R)
+}
+
+
+// finding side face endpoints
 
 pub enum SideEndpointsOrdering {
   LesserEndpointsFirst,
   VertexOrder,
 }
 
-fn side_face_endpoint_pair
+pub fn side_face_endpoint_pair
    ( sf: SideFace,
      v0: Point,
      v1: Point,
@@ -793,6 +785,22 @@ pub fn mk_endpoint_pair
     VertexOrder => (pt1, pt2)
   }
 }
+
+#[inline]
+fn sorted_vertexes
+   ( ref_tri: &RefTri,
+     v0:      Point )
+   -> (Point,Point,Point)
+{
+  let sorted_pts = {
+    let mut pts = [v0, vsum(v0, ref_tri.v01), vsum(v0, ref_tri.v02)];
+    pts.sort_by(|p,q| if p.n0() < q.n0() || p.n0() == q.n0() && p.n1() < q.n1() { Less } else { Greater }); // (we know points are not eq)
+    pts
+  };
+  (sorted_pts[0], sorted_pts[1], sorted_pts[2])
+}
+
+// misc
 
 #[inline]
 fn norm((v_x, v_y): Vec) -> R { hypot(v_x, v_y) }
