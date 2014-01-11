@@ -4,13 +4,11 @@ use sparse_matrix::{SparseMatrix, Symmetric, StructurallySymmetric};
 
 use std::libc::{c_double, c_ulong, c_int, c_uint, c_void, malloc, calloc, realloc, free};
 use std::cast;
-use std::vec;
 use std::libc;
 
 
 pub type lapack_int = c_int; // Adjust according to whether LP64 or ILP64 libraries are being linked.
 pub type mkl_int = c_int;    // Adjust according to whether LP64 or ILP64 libraries are being linked.
-//pub type umf_int = c_int;
 
 #[inline(never)]
 pub fn init() {
