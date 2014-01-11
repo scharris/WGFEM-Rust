@@ -34,44 +34,36 @@ pub fn space_adaptive_quadrature(f: & |&[R]| -> R, min_corner: &[R], max_corner:
   val
 }
 
+#[inline]
+fn gq_order(n: uint) -> c_int {
+  if n <= 20 { n as c_int }
+  else if n <= 32 { 32 }
+  else if n <= 64 { 64 }
+  else if n <= 96 { 96 }
+  else if n <= 128 { 128 }
+  else if n <= 256 { 256 }
+  else if n <= 512 { 512 }
+  else { fail!("Degree limit exceeded for Gaussian quadrature.") }
+}
+
 // Perform Gaussian-Legendre quadrature of f on [a,b]x[c,d] using n weights per axis, for a total of 2n weights and n^2
 // evaluation points.
 #[inline(never)]
 pub fn gaussian_quadrature_2D_rect(n: uint, f: & |x: R, y: R| -> R, a: R, b: R, c: R, d: R) -> R {
-  let gq_order = {
-    if n <= 10 { 2*n as uint}
-    else if n <= 16 { 32 }
-    else if n <= 32 { 64 }
-    else if n <= 48 { 96 }
-    else if n <= 64 { 128 }
-    else if n <= 128 { 256 }
-    else if n <= 256 { 512 }
-    else { fail!("Degree limit exceeded for Gaussian quadrature.") }
-  };
   unsafe {
     let f_pv: *c_void = cast::transmute(f); 
     let gq_2D_integrand_caller_pv: *c_void = cast::transmute(gq_2D_integrand_caller);
-    gauss_legendre_2D_rect(gq_order as c_int, gq_2D_integrand_caller_pv, f_pv, a, b, c, d)
+    gauss_legendre_2D_rect(gq_order(n), gq_2D_integrand_caller_pv, f_pv, a, b, c, d)
   }
 }
 
 // Perform Gaussian-Legendre quadrature of f on [a,b] using n points.
 #[inline(never)]
 pub fn gaussian_quadrature(n: uint, f: & |R| -> R, a: R, b: R) -> R {
-  let gq_order = {
-    if n <= 10 { 2*n as uint}
-    else if n <= 16 { 32 }
-    else if n <= 32 { 64 }
-    else if n <= 48 { 96 }
-    else if n <= 64 { 128 }
-    else if n <= 128 { 256 }
-    else if n <= 256 { 512 }
-    else { fail!("Degree limit exceeded for Gaussian quadrature.") }
-  };
   unsafe {
     let f_pv: *c_void = cast::transmute(f); 
     let gq_1D_integrand_caller_pv: *c_void = cast::transmute(gq_1D_integrand_caller);
-    gauss_legendre(gq_order as c_int, gq_1D_integrand_caller_pv, f_pv, a, b)
+    gauss_legendre(gq_order(n), gq_1D_integrand_caller_pv, f_pv, a, b)
   }
 }
 
