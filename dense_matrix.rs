@@ -37,7 +37,7 @@ impl DenseMatrix {
   // part(s) of the matrix to be used are subsequently initialized, such as via the set() function.
   pub fn of_size(num_rows: uint, num_cols: uint) -> DenseMatrix {
     let n = num_rows * num_cols;
-    let mut data = unsafe { alloc_data(n) };
+    let data = unsafe { alloc_data(n) };
     DenseMatrix {
       data: data,
       num_rows: num_rows,
