@@ -1,6 +1,7 @@
 use std::num::{Num,Zero};
 use std::vec;
 use std::f64;
+use std::num::abs;
 
 // types and type aliases
 
@@ -49,6 +50,18 @@ pub fn vec_with_len<A>(len: uint) -> ~[A] {
   }
   v
 }
+
+#[inline]
+pub fn approx_eq(a: R, b: R, tol: R) -> bool {
+  abs(b-a) <= tol
+}
+
+#[inline]
+pub fn approx_eqv(xs: &[R], ys: &[R], tol: R) -> bool {
+  xs.len() == ys.len() && 
+    xs.iter().zip(ys.iter()).all(|(&x,&y)| approx_eq(x,y,tol))
+}
+
 
 pub fn cumulative_sums_prev_elems<T:Num+Clone>(xs: &[T]) -> ~[T] {
   let mut cum_sums = vec::with_capacity(xs.len());
