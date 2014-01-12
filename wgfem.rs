@@ -44,6 +44,7 @@ mod tests {
   // no tests for quadrature
   // no tests for abstract mesh
   mod test_rectangle_mesh;
+  mod test_triangle_mesh;
   mod test_weak_gradient;
   mod test_wg_basis;
   mod test_projection;
