@@ -48,7 +48,7 @@ pub struct TriMesh<Mon> {
   oshapes: ~[RefTri],
 
   // non-boundary side numbers by fe and side face
-  nbsidenums_by_fe_face: StorageByInts2<Option<NBSideNum>>,
+  nbsidenums_by_fe_sf: StorageByInts2<Option<NBSideNum>>,
 
   // inclusions of non-boundary sides in fe's, indexed by non-boundary side number
   nbsideincls_by_nbsidenum: ~[NBSideInclusions],
@@ -125,12 +125,12 @@ impl<Mon:Monomial> Mesh<Mon> for TriMesh<Mon> {
   #[inline]
   // Return non-boundary side number of the indicated fe relative side.
   fn nb_side_num_for_fe_side(&self, fe: FENum, sf: SideFace) -> NBSideNum {
-    self.nbsidenums_by_fe_face.get(*fe, *sf).unwrap()
+    self.nbsidenums_by_fe_sf.get(*fe, *sf).unwrap()
   }
 
   #[inline]
   fn is_boundary_side(&self, fe: FENum, sf: SideFace) -> bool {
-    self.nbsidenums_by_fe_face.get(*fe, *sf).is_none()
+    self.nbsidenums_by_fe_sf.get(*fe, *sf).is_none()
   }
 
   #[inline]
@@ -402,7 +402,7 @@ impl<Mon:Monomial> TriMesh<Mon> {
   pub fn new
          ( fes: ~[ElTri],
            oshapes: ~[RefTri],
-           nbsidenums_by_fe_face: StorageByInts2<Option<NBSideNum>>,
+           nbsidenums_by_fe_sf: StorageByInts2<Option<NBSideNum>>,
            nbsideincls_by_nbsidenum: ~[NBSideInclusions],
            num_b_sides: uint,
            intg_rel_err: R,
@@ -418,7 +418,7 @@ impl<Mon:Monomial> TriMesh<Mon> {
     TriMesh {
       fes: fes,
       oshapes: oshapes,
-      nbsidenums_by_fe_face: nbsidenums_by_fe_face,
+      nbsidenums_by_fe_sf: nbsidenums_by_fe_sf,
       nbsideincls_by_nbsidenum: nbsideincls_by_nbsidenum,
       num_fes: num_fes,
       num_nb_sides: num_nb_sides,
