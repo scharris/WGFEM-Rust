@@ -1,4 +1,4 @@
-use common::{R, pow, Dim, Deg, DEFAULT_INTEGRATION_REL_ERR, DEFAULT_INTEGRATION_ABS_ERR};
+use common::{R, pow, Dim, Deg, approx_eq, DEFAULT_INTEGRATION_REL_ERR, DEFAULT_INTEGRATION_ABS_ERR};
 use monomial::{Monomial, Mon2d};
 use polynomial::{poly};
 use vector_monomial::VectorMonomial;
@@ -11,6 +11,7 @@ use std::io::mem::BufReader;
 use std::num::{sqrt, abs};
 
 static intg_tol: R = 1e-12;
+static res_tol: R = 1e-13;
 
 // Test retrieval of side face endpoints.
 
@@ -62,7 +63,8 @@ fn test_ref_tri_normals() {
 fn test_1_intg_btw_pt_and_vert_seg() {
   let one = |_: &[R]| { 1. };
   let max_var_deg = Deg(0);
-  assert!(intg_poly_fn_btw_pt_and_vert_seg(one, max_var_deg, (-1.,-2.), -3., 2., 3.).approx_eq(&40.));
+  assert!(approx_eq(intg_poly_fn_btw_pt_and_vert_seg(one, max_var_deg, (-1.,-2.), -3., 2., 3.),
+                    40., res_tol));
 }
 
 /*
@@ -78,14 +80,14 @@ fn test_1_intg_btw_pt_and_vert_seg() {
 */
 #[test]
 fn test_xy_intg_btw_pt_and_vert_seg() {
-  assert!(intg_poly_fn_btw_pt_and_vert_seg(|x| x[0]*x[1], Deg(1), (2.,1.), -1., 1., 3.)
-            .approx_eq(&(2. + 2./3.)));
+  assert!(approx_eq(intg_poly_fn_btw_pt_and_vert_seg(|x| x[0]*x[1], Deg(1), (2.,1.), -1., 1., 3.),
+                    2. + 2./3., res_tol));
 }
 
 #[test]
 fn test_xy_intg_btw_pt_and_vert_seg_flipped() {
-  assert!(intg_poly_fn_btw_pt_and_vert_seg(|x| x[0]*x[1], Deg(1), (-2.,1.), -1., 1., -3.)
-            .approx_eq(&(-(2. + 2./3.))));
+  assert!(approx_eq(intg_poly_fn_btw_pt_and_vert_seg(|x| x[0]*x[1], Deg(1), (-2.,1.), -1., 1., -3.),
+                    -(2. + 2./3.), res_tol));
 }
 
 // Do the same integrals this time with general function integration (adaptive quadrature).
@@ -94,20 +96,20 @@ fn test_xy_intg_btw_pt_and_vert_seg_flipped() {
 fn test_gen_fn_1_intg_btw_pt_and_vert_seg() {
   let one = |_: &[R]| { 1. };
   let max_var_deg = Deg(0);
-  assert!(intg_fn_btw_pt_and_vert_seg(one, (-1.,-2.), -3., 2., 3., intg_tol, intg_tol)
-            .approx_eq(&40.));
+  assert!(approx_eq(intg_fn_btw_pt_and_vert_seg(one, (-1.,-2.), -3., 2., 3., intg_tol, intg_tol),
+                    40., res_tol));
 }
 
 #[test]
 fn test_gen_fn_xy_intg_btw_pt_and_vert_seg() {
-  assert!(intg_fn_btw_pt_and_vert_seg(|x:&[R]| x[0]*x[1], (2.,1.), -1., 1., 3., intg_tol, intg_tol)
-            .approx_eq(&(2. + 2./3.)));
+  assert!(approx_eq(intg_fn_btw_pt_and_vert_seg(|x:&[R]| x[0]*x[1], (2.,1.), -1., 1., 3., intg_tol, intg_tol),
+                    2. + 2./3., res_tol));
 }
 
 #[test]
 fn test_gen_fn_xy_intg_btw_pt_and_vert_seg_flipped() {
-  assert!(intg_fn_btw_pt_and_vert_seg(|x:&[R]| x[0]*x[1], (-2.,1.), -1., 1., -3., intg_tol, intg_tol)
-            .approx_eq(&(-(2. + 2./3.))));
+  assert!(approx_eq(intg_fn_btw_pt_and_vert_seg(|x:&[R]| x[0]*x[1], (-2.,1.), -1., 1., -3., intg_tol, intg_tol),
+                    -(2. + 2./3.), res_tol));
 }
 
 /*
@@ -120,9 +122,9 @@ fn test_gen_fn_xy_intg_btw_pt_and_vert_seg_flipped() {
  */
 
 #[test]
-fn test_right_tri_mesh_1_subdiv_basic_properties() {
-  let msh_is = &mut str_rdr(msh_1);
-  let mesh: TriMesh<Mon2d> = TriMeshBuilder::from_gmsh_msh_stream(msh_is, 1u /*subdiv iters*/,
+fn test_msh1_1_subdiv_basic_properties() {
+  let msh_is = &mut str_rdr(msh1);
+  let mesh: TriMesh<Mon2d> = TriMeshBuilder::from_gmsh_msh_stream(msh_is, 1u /* subdiv iters */,
                                                                   intg_tol, intg_tol,
                                                                   false); // don't load tags
   assert_eq!(mesh.num_fes(), 4);
@@ -132,9 +134,9 @@ fn test_right_tri_mesh_1_subdiv_basic_properties() {
 }
 
 #[test]
-fn test_right_tri_mesh_1_subdiv_subtris() {
-  let msh_is = &mut str_rdr(msh_1);
-  let mesh: TriMesh<Mon2d> = TriMeshBuilder::from_gmsh_msh_stream(msh_is, 1u /*subdiv iters*/,
+fn test_msh1_1_subdiv_subtris() {
+  let msh_is = &mut str_rdr(msh1);
+  let mesh: TriMesh<Mon2d> = TriMeshBuilder::from_gmsh_msh_stream(msh_is, 1u /* subdiv iters */,
                                                                   intg_tol, intg_tol,
                                                                   false); // don't load tags
   // 3 primary subtriangles
@@ -155,9 +157,9 @@ fn test_right_tri_mesh_1_subdiv_subtris() {
 }
 
 #[test]
-fn test_right_tri_mesh_1_subdiv_primary_oshape() {
-  let msh_is = &mut str_rdr(msh_1);
-  let mesh: TriMesh<Mon2d> = TriMeshBuilder::from_gmsh_msh_stream(msh_is, 1u /*subdiv iters*/,
+fn test_msh1_1_subdiv_primary_oshape() {
+  let msh_is = &mut str_rdr(msh1);
+  let mesh: TriMesh<Mon2d> = TriMeshBuilder::from_gmsh_msh_stream(msh_is, 1u /* subdiv iters */,
                                                                   intg_tol, intg_tol,
                                                                   false); // don't load tags
   assert_eq!(mesh.num_side_faces_for_oshape(OShape(0)), 3);
@@ -171,9 +173,9 @@ fn test_right_tri_mesh_1_subdiv_primary_oshape() {
 }
 
 #[test]
-fn test_right_tri_mesh_1_subdiv_secondary_oshape() {
-  let msh_is = &mut str_rdr(msh_1);
-  let mesh: TriMesh<Mon2d> = TriMeshBuilder::from_gmsh_msh_stream(msh_is, 1u /*subdiv iters*/,
+fn test_msh1_1_subdiv_secondary_oshape() {
+  let msh_is = &mut str_rdr(msh1);
+  let mesh: TriMesh<Mon2d> = TriMeshBuilder::from_gmsh_msh_stream(msh_is, 1u /* subdiv iters */,
                                                                   intg_tol, intg_tol,
                                                                   false); // don't load tags
   assert_eq!(mesh.num_side_faces_for_oshape(OShape(1)), 3);
@@ -187,9 +189,9 @@ fn test_right_tri_mesh_1_subdiv_secondary_oshape() {
 }
 
 #[test]
-fn test_right_tri_mesh_1_subdiv_boundary_sides() {
-  let msh_is = &mut str_rdr(msh_1);
-  let mesh: TriMesh<Mon2d> = TriMeshBuilder::from_gmsh_msh_stream(msh_is, 1u /*subdiv iters*/,
+fn test_msh1_1_subdiv_boundary_sides() {
+  let msh_is = &mut str_rdr(msh1);
+  let mesh: TriMesh<Mon2d> = TriMeshBuilder::from_gmsh_msh_stream(msh_is, 1u /* subdiv iters */,
                                                                   intg_tol, intg_tol,
                                                                   false); // don't load tags
   assert_eq!(mesh.num_boundary_sides(), 6);
@@ -205,9 +207,9 @@ fn test_right_tri_mesh_1_subdiv_boundary_sides() {
 }
 
 #[test]
-fn test_right_tri_mesh_1_subdiv_nb_side_incls() {
-  let msh_is = &mut str_rdr(msh_1);
-  let mesh: TriMesh<Mon2d> = TriMeshBuilder::from_gmsh_msh_stream(msh_is, 1u /*subdiv iters*/,
+fn test_msh1_1_subdiv_nb_side_incls() {
+  let msh_is = &mut str_rdr(msh1);
+  let mesh: TriMesh<Mon2d> = TriMeshBuilder::from_gmsh_msh_stream(msh_is, 1u /* subdiv iters */,
                                                                   intg_tol, intg_tol,
                                                                   false); // don't load tags
   assert_eq!(mesh.nbsideincls_by_nbsidenum.len(), 3);
@@ -216,7 +218,7 @@ fn test_right_tri_mesh_1_subdiv_nb_side_incls() {
   assert_eq!(mesh.fe_inclusions_of_nb_side(nbsn_fe0sf1),
              NBSideInclusions { nb_side_num: nbsn_fe0sf1,
                                 fe1: FENum(0), side_face_in_fe1: SideFace(1),
-                                fe2: FENum(3), side_face_in_fe2: SideFace(2)});
+                                fe2: FENum(3), side_face_in_fe2: SideFace(2) });
   
   assert_eq!(mesh.nbsideincls_by_nbsidenum.len(), 3);
   let nbsn_fe1sf2 = mesh.nb_side_num_for_fe_side(FENum(1), SideFace(2));
@@ -224,7 +226,7 @@ fn test_right_tri_mesh_1_subdiv_nb_side_incls() {
   assert_eq!(mesh.fe_inclusions_of_nb_side(nbsn_fe1sf2),
              NBSideInclusions { nb_side_num: nbsn_fe1sf2,
                                 fe1: FENum(1), side_face_in_fe1: SideFace(2),
-                                fe2: FENum(3), side_face_in_fe2: SideFace(0)});
+                                fe2: FENum(3), side_face_in_fe2: SideFace(0) });
   
   assert_eq!(mesh.nbsideincls_by_nbsidenum.len(), 3);
   let nbsn_fe2sf0 = mesh.nb_side_num_for_fe_side(FENum(2), SideFace(0));
@@ -232,8 +234,108 @@ fn test_right_tri_mesh_1_subdiv_nb_side_incls() {
   assert_eq!(mesh.fe_inclusions_of_nb_side(nbsn_fe2sf0),
              NBSideInclusions { nb_side_num: nbsn_fe2sf0,
                                 fe1: FENum(2), side_face_in_fe1: SideFace(0),
-                                fe2: FENum(3), side_face_in_fe2: SideFace(1)});
+                                fe2: FENum(3), side_face_in_fe2: SideFace(1) });
 }
+
+/* msh2 with 1 global subdivision iteration, and an additional iteration specified for the left base triangle.
+ *
+ * The following tests are testing (among other things) the specific numbering strategy of the triangle mesh builder.
+ * Subdivided primary triangles are processed starting with the lower left, then lower right, followed by the upper,
+ * and ending with the central secondary subtriangle. If no further iterations are specified, then the finite elements
+ * are assigned ascending numbers in this order. If further iterations are called for, then these subtriangles are 
+ * processed to yield their finite elements (and oshapes) in this same order.  New oriented shape numbers are assigned
+ * as new oriented shapes are encountered using the same processing order.
+ * 
+ *                         (1,1)
+ *                           *
+ *                          /|\
+ *                         / | \
+ *                        /  |  \
+ *                       /   |   \
+ *                      / 10 |    \
+ *                     /-----|     \ 
+ *                    /| 11 /|      \ 
+ *                   / |   / |  18   \ 
+ *                  /  |  /  |        \ 
+ *                 / 8 | / 9 |         \ 
+ *                /    |/    |          \ 
+ *               /-----------|-----------\
+ *              /| 14 /| 13 /|\          |\ 
+ *             / |   / |   / | \         | \ 
+ *            /  |  /  |  /  |  \        |  \ 
+ *           / 2 | /   | / 6 |   \   19  |   \ 
+ *          /    |/ 15 |/    |    \      |    \ 
+ *         /-----------------|     \     |     \ 
+ *        /|    /| 12 /|    /|      \    |      \ 
+ *       / | 3 / |   / | 7 / |  16   \   |  17   \ 
+ *      /  |  /  |  /  |  /  |        \  |        \ 
+ *     / 0 | / 1 | / 4 | / 5 |         \ |         \ 
+ *    /    |/    |/    |/    |          \|          \ 
+ *   *-----------------------*-----------------------* 
+ * (0,0)                   (1,0)                   (2,0)
+ */
+#[test]
+fn test_msh2_1_subdiv_basic_properties() {
+  let msh_is = &mut str_rdr(msh2);
+  let mesh: TriMesh<Mon2d> = TriMeshBuilder::from_gmsh_msh_stream(msh_is, 1u /* global subdiv iters */,
+                                                                  intg_tol, intg_tol,
+                                                                  true); // load tags
+  assert_eq!(mesh.num_fes(), 20);
+  assert_eq!(mesh.num_nb_sides(), 25);
+  assert_eq!(mesh.num_oriented_element_shapes(), 5);
+  assert!(approx_eq(mesh.max_fe_diameter(), 1./sqrt(2.), res_tol));
+}
+
+
+#[test]
+fn test_msh2_left_base_tri_subtris() {
+  let msh_is = &mut str_rdr(msh2);
+  let mesh: TriMesh<Mon2d> = TriMeshBuilder::from_gmsh_msh_stream(msh_is, 1u /* subdiv iters */,
+                                                                  intg_tol, intg_tol,
+                                                                  false); // don't load tags
+  // Elements 0-3 are from the first subdivision's lower left triangle. 
+  
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(0)), OShape(0));
+  assert_eq!(mesh.fes[0].v0, (0.,0.));
+
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(1)), OShape(0));
+  assert_eq!(mesh.fes[1].v0, (0.25,0.));
+
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(2)), OShape(0));
+  assert_eq!(mesh.fes[2].v0, (0.25,0.25));
+
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(3)), OShape(1));
+  assert_eq!(mesh.fes[3].v0, (0.25,0.));
+
+  // Elements 4-7 are from the first subdivision's lower right triangle. 
+  
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(4)), OShape(0));
+  assert_eq!(mesh.fes[4].v0, (0.5,0.));
+
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(5)), OShape(0)); 
+  assert_eq!(mesh.fes[5].v0, (0.75,0.));
+
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(6)), OShape(0));
+  assert_eq!(mesh.fes[6].v0, (0.75,0.25));
+  
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(7)), OShape(1));
+  assert_eq!(mesh.fes[7].v0, (0.75,0.));
+  
+  // Elements 8-11 are from the first subdivision's upper triangle. 
+  
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(8)), OShape(0));
+  assert_eq!(mesh.fes[8].v0, (0.5,0.5));
+
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(9)), OShape(0)); 
+  assert_eq!(mesh.fes[9].v0, (0.75,0.5));
+
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(10)), OShape(0));
+  assert_eq!(mesh.fes[10].v0, (0.75,0.75));
+  
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(11)), OShape(1));
+  assert_eq!(mesh.fes[11].v0, (0.75,0.5));
+}
+
 
 /*
 # Test integrals.
@@ -619,7 +721,16 @@ fn str_rdr<'a>(s: &'a str) -> BufferedReader<BufReader<'a>> {
   BufferedReader::new(BufReader::new(s.as_bytes()))
 }
 
-static msh_1: &'static str = 
+
+/*
+ * input mesh, before subdivision
+ *    (0,3)
+ *       | .
+ *       |    .
+ *  (0,0)|_______.(4,0)
+ *  The base triangle's nodes are enumerated counterclockwise starting at (0,0).
+ */
+static msh1: &'static str = 
 "$MeshFormat
 2.2 0 8
 $EndMeshFormat
@@ -640,4 +751,33 @@ $Elements
 7 2 2 0 5 1 2 3
 $EndElements
 ";
+
+
+/* Mesh 2: Adjacent right triangles, extra subdivision operation specified for left triangle (leaving hanging nodes).
+ * input mesh, before subdivision
+ *        3:(1,1) .
+ *             .  |  .
+ *           .    |    .
+ *  1:(0,0).______|______.4:(2,0)
+ *            2:(1,0)
+ *  Left base triangle has one extra subdivision operation specified via tag.
+*/
+static msh2: &'static str = 
+"$MeshFormat
+2.2 0 8
+$EndMeshFormat
+$Nodes
+4
+1 0 0 0
+2 1 0 0
+3 1 1 0
+4 2 0 0
+$EndNodes
+$Elements
+2
+1 2 2 1 0 1 2 3
+2 2 2 0 0 2 4 3
+$EndElements
+";
+
 
