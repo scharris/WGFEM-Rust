@@ -242,9 +242,9 @@ fn test_msh1_1_subdiv_nb_side_incls() {
  * The following tests are testing (among other things) the specific numbering strategy of the triangle mesh builder.
  * Subdivided primary triangles are processed starting with the lower left, then lower right, followed by the upper,
  * and ending with the central secondary subtriangle. If no further iterations are specified, then the finite elements
- * are assigned ascending numbers in this order. If further iterations are called for, then these subtriangles are 
- * processed to yield their finite elements (and oshapes) in this same order.  New oriented shape numbers are assigned
- * as new oriented shapes are encountered using the same processing order.
+ * are assigned ascending numbers in this order. If further iterations are called for, then each subtriangle is processed 
+ * recursively to yield its finite elements in the same way. New oriented shape numbers are assigned as new oriented shapes
+ * are encountered using the same processing order.
  * 
  *                         (1,1)
  *                           *
@@ -262,8 +262,8 @@ fn test_msh1_1_subdiv_nb_side_incls() {
  *               /-----------|-----------\
  *              /| 14 /| 13 /|\          |\ 
  *             / |   / |   / | \         | \ 
- *            /  |  /  |  /  |  \        |  \ 
- *           / 2 | /   | / 6 |   \   19  |   \ 
+ *            /  |  /  |  /  |  \   19   |  \ 
+ *           / 2 | /   | / 6 |   \       |   \ 
  *          /    |/ 15 |/    |    \      |    \ 
  *         /-----------------|     \     |     \ 
  *        /|    /| 12 /|    /|      \    |      \ 
@@ -293,49 +293,105 @@ fn test_msh2_left_base_tri_subtris() {
   let mesh: TriMesh<Mon2d> = TriMeshBuilder::from_gmsh_msh_stream(msh_is, 1u /* subdiv iters */,
                                                                   intg_tol, intg_tol,
                                                                   false); // don't load tags
+  
+  // Both oriented shapes in this left base triangle should have the usual 3 side faces.
+  let pri_oshape = mesh.oriented_shape_for_fe(FENum(0));
+  let sec_oshape = mesh.oriented_shape_for_fe(FENum(3));
+  assert_eq!(mesh.num_side_faces_for_oshape(pri_oshape), 3);
+  assert_eq!(mesh.num_side_faces_for_oshape(sec_oshape), 3);
+  
   // Elements 0-3 are from the first subdivision's lower left triangle. 
   
-  assert_eq!(mesh.oriented_shape_for_fe(FENum(0)), OShape(0));
   assert_eq!(mesh.fes[0].v0, (0.,0.));
 
-  assert_eq!(mesh.oriented_shape_for_fe(FENum(1)), OShape(0));
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(1)), pri_oshape);
   assert_eq!(mesh.fes[1].v0, (0.25,0.));
 
-  assert_eq!(mesh.oriented_shape_for_fe(FENum(2)), OShape(0));
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(2)), pri_oshape);
   assert_eq!(mesh.fes[2].v0, (0.25,0.25));
 
-  assert_eq!(mesh.oriented_shape_for_fe(FENum(3)), OShape(1));
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(3)), sec_oshape);
   assert_eq!(mesh.fes[3].v0, (0.25,0.));
 
   // Elements 4-7 are from the first subdivision's lower right triangle. 
   
-  assert_eq!(mesh.oriented_shape_for_fe(FENum(4)), OShape(0));
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(4)), pri_oshape);
   assert_eq!(mesh.fes[4].v0, (0.5,0.));
 
-  assert_eq!(mesh.oriented_shape_for_fe(FENum(5)), OShape(0)); 
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(5)), pri_oshape); 
   assert_eq!(mesh.fes[5].v0, (0.75,0.));
 
-  assert_eq!(mesh.oriented_shape_for_fe(FENum(6)), OShape(0));
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(6)), pri_oshape);
   assert_eq!(mesh.fes[6].v0, (0.75,0.25));
   
-  assert_eq!(mesh.oriented_shape_for_fe(FENum(7)), OShape(1));
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(7)), sec_oshape);
   assert_eq!(mesh.fes[7].v0, (0.75,0.));
   
   // Elements 8-11 are from the first subdivision's upper triangle. 
   
-  assert_eq!(mesh.oriented_shape_for_fe(FENum(8)), OShape(0));
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(8)), pri_oshape);
   assert_eq!(mesh.fes[8].v0, (0.5,0.5));
 
-  assert_eq!(mesh.oriented_shape_for_fe(FENum(9)), OShape(0)); 
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(9)), pri_oshape); 
   assert_eq!(mesh.fes[9].v0, (0.75,0.5));
 
-  assert_eq!(mesh.oriented_shape_for_fe(FENum(10)), OShape(0));
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(10)), pri_oshape);
   assert_eq!(mesh.fes[10].v0, (0.75,0.75));
   
-  assert_eq!(mesh.oriented_shape_for_fe(FENum(11)), OShape(1));
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(11)), sec_oshape);
   assert_eq!(mesh.fes[11].v0, (0.75,0.5));
+
+  // Elements 12-15 are from the first subdivision's central inverted triangle. 
+  
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(12)), sec_oshape);
+  assert_eq!(mesh.fes[12].v0, (0.5,0.0));
+
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(13)), sec_oshape); 
+  assert_eq!(mesh.fes[13].v0, (0.75,0.25));
+
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(14)), sec_oshape);
+  assert_eq!(mesh.fes[14].v0, (0.5,0.25));
+  
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(15)), pri_oshape);
+  assert_eq!(mesh.fes[15].v0, (0.5,0.25));
 }
 
+#[test]
+fn test_msh2_right_base_tri_subtris() {
+  let msh_is = &mut str_rdr(msh2);
+  let mesh: TriMesh<Mon2d> = TriMeshBuilder::from_gmsh_msh_stream(msh_is, 1u /* subdiv iters */,
+                                                                  intg_tol, intg_tol,
+                                                                  false); // don't load tags
+  // Elements 16-19 are from the first and only subdivision of the right side base triangle.
+
+  // Element 16 should have an oriented shape having two side faces between the left vertexes (vertexes 0 and 2).
+  let two_left_sfs_oshape = mesh.oriented_shape_for_fe(FENum(16));
+  assert_eq!(mesh.num_side_faces_for_oshape(two_left_sfs_oshape), 4);
+  assert!(two_left_sfs_oshape != OShape(0));
+  assert!(two_left_sfs_oshape != OShape(1));
+  assert_eq!(mesh.fes[16].v0, (1.,0.));
+
+  // Element 17 has the normal 3 side faces.
+  let lower_right_oshape = mesh.oriented_shape_for_fe(FENum(17));
+  assert_eq!(mesh.num_side_faces_for_oshape(lower_right_oshape), 3);
+  assert!(lower_right_oshape != OShape(0));
+  assert!(lower_right_oshape != OShape(1));
+  assert!(lower_right_oshape != two_left_sfs_oshape);
+  assert_eq!(mesh.fes[17].v0, (1.5,0.));
+
+  // Element 18 should have the same oriented shape as element 16.
+  assert_eq!(mesh.oriented_shape_for_fe(FENum(18)), two_left_sfs_oshape);
+  assert_eq!(mesh.fes[18].v0, (1.0,0.5));
+
+  // Element 19 has the normal 3 side faces.
+  let central_oshape = mesh.oriented_shape_for_fe(FENum(19));
+  assert_eq!(mesh.num_side_faces_for_oshape(central_oshape), 3);
+  assert!(central_oshape != OShape(0));
+  assert!(central_oshape != OShape(1));
+  assert!(central_oshape != two_left_sfs_oshape);
+  assert!(central_oshape != lower_right_oshape);
+  assert_eq!(mesh.fes[19].v0, (1.5,0.));
+}
 
 /*
 # Test integrals.
